@@ -479,7 +479,7 @@ class Flighttracker():
             file_exists=True
         return file_exists
         
-    def get_synthetic_flight_track(self):
+    def get_synthetic_flight_track(self,as_dict=False):
         #self.check_if_synthetic_tracks_already_exist()
         self.flight_name=self.flight
         if self.load_save_instantan:
@@ -498,7 +498,8 @@ class Flighttracker():
                 #                                merge_all=merge_all_legs,
                 #                                pick_legs=pick_legs)
             self.save_created_flight_track_as_csv()
-         
+        if as_dict:
+            aircraft_df=self.make_dict_from_aircraft_df()
         return aircraft_df,campaign_path 
     
     def make_dict_from_aircraft_df(self):
