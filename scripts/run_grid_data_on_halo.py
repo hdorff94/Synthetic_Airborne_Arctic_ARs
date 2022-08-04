@@ -41,7 +41,8 @@ warnings.filterwarnings("ignore")
     Main Script for running interpolation of griddata on flight path
 ###############################################################################
 """    
-def main(campaign="NA_February_Run",hmp_plotting_desired=False,
+def main(config_file_path=os.getcwd(),
+         campaign="NA_February_Run",hmp_plotting_desired=False,
          hmc_plotting_desired=True,
          plot_data=True,ar_of_day="AR_internal",
          flight=["SRF04"],
@@ -119,7 +120,8 @@ def main(campaign="NA_February_Run",hmp_plotting_desired=False,
     analysing_campaign=True
     
     # Load config file
-    config_file=data_config.load_config_file(os.getcwd(),"data_config_file")
+    config_file=data_config.load_config_file(config_file_path,
+                                             "data_config_file")
     
     
     print("Analyse given flight: ",flight[0])
