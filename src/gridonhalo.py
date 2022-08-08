@@ -17,9 +17,9 @@ from metpy.units import units
 
 
 if "ERA5" not in sys.modules:
-    from Reanalysis import ERA5 as ERA5
+    from reanalysis import ERA5 as ERA5
 if "CARRA" not in sys.modules:
-    from Reanalysis import CARRA as CARRA
+    from reanalysis import CARRA as CARRA
     #    import ERA as ERA_module
 #if "ICON" not in sys.modules:
 from ICON import ICON_NWP as ICON

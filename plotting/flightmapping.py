@@ -15,13 +15,13 @@ except:
 
 import data_config
 # Real Campaigns
-from Flight_Campaign import Campaign as flight_campaign
-from Flight_Campaign import NAWDEX
-from Flight_Campaign import HALO_AC3
+from flightcampaign import Campaign as flight_campaign
+from flightcampaign import NAWDEX
+from flightcampaign import HALO_AC3
 # Synthetic Campaigns
-from Flight_Campaign import Synthetic_Campaign as synthetic_campaign
-from Flight_Campaign import North_Atlantic_February_Run
-from Flight_Campaign import Second_Synthetic_Study
+from flightcampaign import Synthetic_Campaign as synthetic_campaign
+from flightcampaign import North_Atlantic_February_Run
+from flightcampaign import Second_Synthetic_Study
 
 """
 FlightMaps inherits from Campaign of Flight_Campaign
@@ -427,7 +427,7 @@ class FlightMaps(flight_campaign):
                 #if int(flight_date[0:4])>=2020:
                 #   show_AR_detection=False
             if show_AR_detection:    
-                import AR
+                import atmospheric_rivers as AR
                 AR=AR.Atmospheric_Rivers("ERA",use_era5=use_era5_ARs)
                 AR_era_ds=AR.open_AR_catalogue(after_2019=int(flight_date[0:4])>2019,
                                                year=campaign_cls.year,
@@ -713,7 +713,7 @@ class FlightMaps(flight_campaign):
         plt.rcParams.update({'hatch.color': 'lightgrey'})
         
         if show_AR_detection:    
-            import AR
+            import atmospheric_rivers as AR
     
             AR=AR.Atmospheric_Rivers("ERA")
             AR_era_ds=AR.open_AR_catalogue(after_2019=int(flight_date[0:4])>2019)
@@ -951,7 +951,7 @@ class FlightMaps(flight_campaign):
                                             edgecolors="black",
                                             transform=ccrs.PlateCarree())
                if include_ARs:
-                   import AR
+                   import atmospheric_rivers as AR
                    from era5_on_halo_backup import ERA_on_HALO
                    era_on_halo=ERA_on_HALO()
                    print("Use AR Catalogue from Guan & Waliser")
@@ -1105,10 +1105,10 @@ class FlightMaps(flight_campaign):
         import matplotlib
         import cartopy.crs as ccrs
         
-        import AR
+        import atmospheric_rivers as AR
         
         #if not "ERA" in sys.modules:
-        import Reanalysis
+        import reanalysis
             #from era5_on_halo_backup import ERA5
         #if not "ICON" in sys.modules:
         #    import ICON
@@ -1152,7 +1152,7 @@ class FlightMaps(flight_campaign):
                     campaign_cls.flight_month[flight_str]+"_"+\
                     campaign_cls.flight_day[flight_str]+".nc"    
         
-        era5=Reanalysis.ERA5(for_flight_campaign=True,campaign="NAWDEX",
+        era5=reanalysis.ERA5(for_flight_campaign=True,campaign="NAWDEX",
                   research_flights=self.flight,
                   era_path=campaign_cls.campaign_path+"/data/ERA-5/")
         
@@ -1612,8 +1612,8 @@ class FlightMaps(flight_campaign):
         import matplotlib
         import cartopy.crs as ccrs
         
-        import AR
-        import Reanalysis
+        import atmospheric_rivers as AR
+        import reanalysis as Reanalysis
         ERA5_on_HALO=era_on_halo_cls
         from mpl_toolkits.axes_grid1.inset_locator import inset_axes
         
@@ -1693,7 +1693,7 @@ class FlightMaps(flight_campaign):
                                         interpolate_flight_from_waypoints(\
                                         halo_waypoints[flight_str])
         
-                halo_df=halo_dict[fligh_str] 
+                halo_df=halo_dict[flight_str] 
             elif campaign_cls.name=="NA_February_Run" or \
                 campaign_cls.name=="NAWDEX" or \
                     campaign_cls.name=="Second_Synthetic_Study":
@@ -2300,8 +2300,8 @@ class FlightMaps(flight_campaign):
         import matplotlib
         import cartopy.crs as ccrs
         
-        import AR
-        import Reanalysis
+        import atmospheric_rivers as AR
+        import reanalysis as Reanalysis
         ERA5_on_HALO=era_on_halo_cls
         from mpl_toolkits.axes_grid1.inset_locator import inset_axes
         
@@ -2774,8 +2774,8 @@ class FlightMaps(flight_campaign):
         
         import cartopy.crs as ccrs
         
-        import AR
-        import Reanalysis
+        import atmospheric_rivers as AR
+        import reanalysis as Reanalysis
         import ICON
         
         
@@ -3195,7 +3195,7 @@ class FlightMaps(flight_campaign):
         from matplotlib.colors import BoundaryNorm
         import cartopy.crs as ccrs
         
-        import AR
+        import atmospheric_rivers as AR
         
         from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
@@ -3268,7 +3268,7 @@ class FlightMaps(flight_campaign):
         #          research_flights=flight,
         #          era_path=campaign_cls.campaign_path+"/data/ERA-5/")
         #except:
-        import Reanalysis
+        import reanalysis as Reanalysis
         era5=Reanalysis.ERA5(for_flight_campaign=True,campaign=campaign_cls.name,
                   research_flights=self.flight,
                   era_path=campaign_cls.campaign_path+"/data/ERA-5/")

@@ -14,24 +14,14 @@ import pandas as pd
 import xarray as xr
 
 ###############################################################################
-import Flight_Campaign
-from Flight_Mapping import FlightMaps
+import flightcampaign
 
 ###############################################################################
 #Grid Data
-from Reanalysis import ERA5,CARRA 
+from reanalysis import ERA5,CARRA 
 from ICON import ICON_NWP as ICON
-import Grid_on_HALO
+import gridonhalo as Grid_on_HALO
 ###############################################################################
-# Plot scripts
-import matplotlib.pyplot as plt
-
-try:
-    from typhon.plots import styles
-except:
-    print("Typhon module cannot be imported")
-
-import Interp_Data_Plotting 
 #-----------------------------------------------------------------------------#
 import warnings
 warnings.filterwarnings("ignore")
@@ -147,14 +137,31 @@ def main(config_file_path=os.getcwd(),
         ar_of_day="S"+ar_of_day
         if synthetic_icon_lat!=0:
             ar_of_day=ar_of_day+"_"+str(synthetic_icon_lat)
-    #if flight[0]=="SRF06":
-    #    carra_is_desired=False
     
+    if plot_data:
+        if not any("plotting" in path for path in sys.path):
+            # add plot_path to import things
+            current_path=os.getcwd()
+            plot_path=current_path+"/plotting/"
+            print(sys.path)
+        # Plot modules
+        import matplotlib.pyplot as plt
+        try:
+            from typhon.plots import styles
+        except:
+            print("Typhon module cannot be imported")
+        
+        from flightmapping import FlightMaps
+        import interpdata_plotting 
+
+    else:
+        print("No data is plotted.")
+        
     # Load Halo Dataset
     if not synthetic_campaign:
         if campaign=="NAWDEX":
             # Load the class
-            nawdex=Flight_Campaign.NAWDEX(is_flight_campaign=True,
+            nawdex=flightcampaign.NAWDEX(is_flight_campaign=True,
                 major_path=config_file["Data_Paths"]["campaign_path"],
                 aircraft="HALO",instruments=["radar","radiometer","sonde"])
         
@@ -196,7 +203,7 @@ def main(config_file_path=os.getcwd(),
     else:
          # Flight Campaign is Synthetic
          if campaign=="NA_February_Run":
-             na_run=Flight_Campaign.North_Atlantic_February_Run(
+             na_run=flightcampaign.North_Atlantic_February_Run(
                                     is_flight_campaign=True,
                                     major_path=config_file["Data_Paths"]\
                                                 ["campaign_path"],aircraft="HALO",
@@ -204,7 +211,7 @@ def main(config_file_path=os.getcwd(),
                                     instruments=["radar","radiometer","sonde"])
          elif campaign=="Second_Synthetic_Study":
              cpgn_cls_name="Second_Synthetic_Study"
-             na_run=Flight_Campaign.Second_Synthetic_Study(
+             na_run=flightcampaign.Second_Synthetic_Study(
                              is_flight_campaign=True,
                              major_path=config_file["Data_Paths"]["campaign_path"],
                              aircraft="HALO",interested_flights=flights,
@@ -494,11 +501,11 @@ def main(config_file_path=os.getcwd(),
             os.mkdir(plot_path)
     #-------------------------------------------------------------------------#
     # Major Plotter Function Classes
-    ERA_HALO_Plotting   = Interp_Data_Plotting.ERA_HALO_Plotting(
+    ERA_HALO_Plotting   = interpdata_plotting.ERA_HALO_Plotting(
                                         flight,ar_of_day=ar_of_day,
                                         plot_path=plot_path,
                                         synthetic_campaign=synthetic_flight)    
-    CARRA_HALO_Plotting = Interp_Data_Plotting.CARRA_HALO_Plotting(
+    CARRA_HALO_Plotting = interpdata_plotting.CARRA_HALO_Plotting(
                                         plot_path=plot_path,
                                         flight=flight,ar_of_day=ar_of_day,
                                         synthetic_campaign=synthetic_flight)
@@ -512,7 +519,7 @@ def main(config_file_path=os.getcwd(),
         icon_plot_path=plot_path # If ICON is not included, 
                                  # plot_path remains due to IVT-plot                        
     
-    ICON_HALO_Plotting  = Interp_Data_Plotting.ICON_HALO_Plotting(cmpgn_cls,
+    ICON_HALO_Plotting  = interpdata_plotting.ICON_HALO_Plotting(cmpgn_cls,
                                 plot_path=icon_plot_path,
                                 flight=flight,ar_of_day=ar_of_day,
                                 synthetic_campaign=synthetic_flight)

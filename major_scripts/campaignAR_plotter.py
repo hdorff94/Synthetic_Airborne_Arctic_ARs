@@ -34,7 +34,7 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
     sys.path.insert(4,airborne_data_importer_path)
     # %% Load relevant modules
     
-    import flight_campaign as Flight_Campaign
+    import flightcampaign
     import run_grid_data_on_halo
     # Load config file
     config_file=data_config.load_config_file(airborne_data_importer_path,
@@ -51,14 +51,14 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
     
     if campaign=="NAWDEX":
         cpgn_cls_name="NAWDEX"
-        NAWDEX=Flight_Campaign.NAWDEX(is_flight_campaign=True,
+        NAWDEX=flightcampaign.NAWDEX(is_flight_campaign=True,
                     major_path=config_file["Data_Paths"]["campaign_path"],
                     aircraft="HALO",instruments=["radar","radiometer","sonde"])
         NAWDEX.dropsonde_path=NAWDEX.major_path+NAWDEX.name+"/data/HALO-Dropsonden/"
         cmpgn_cls=NAWDEX
     elif campaign=="North_Atlantic_Run":
         cpgn_cls_name="NA_February_Run"
-        na_run=Flight_Campaign.North_Atlantic_February_Run(
+        na_run=flightcampaign.North_Atlantic_February_Run(
                                         is_flight_campaign=True,
                                         major_path=config_file["Data_Paths"]\
                                                     ["campaign_path"],
@@ -68,7 +68,7 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
         cmpgn_cls=na_run
     elif campaign=="Second_Synthetic_Study":
         cpgn_cls_name="Second_Synthetic_Study"
-        na_run=Flight_Campaign.Second_Synthetic_Study(
+        na_run=flightcampaign.Second_Synthetic_Study(
             is_flight_campaign=True,major_path=config_file["Data_Paths"]["campaign_path"],
             aircraft="HALO",interested_flights=flights,
             instruments=["radar","radiometer","sonde"])
@@ -157,7 +157,7 @@ if __name__=="__main__":
     # Relevant specifications for running , those are default values
     calc_hmp=True
     calc_hmc=False
-    do_plotting=False
+    do_plotting=True
     flights_to_analyse={#"SRF02":"20180224",#,#,
                         #"SRF04":"20190319",#}#,#,
                         #"SRF07":"20200416",#}#,#,#}#,#}#,
@@ -175,7 +175,7 @@ if __name__=="__main__":
         }        
     campaign_name="Second_Synthetic_Study"#"North_Atlantic_Run"##
     use_era=True
-    use_carra=False
+    use_carra=True
     use_icon=False
     flights=[*flights_to_analyse.keys()]
     do_instantaneous=False
