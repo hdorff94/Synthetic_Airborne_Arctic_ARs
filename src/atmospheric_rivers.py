@@ -690,7 +690,27 @@ class Atmospheric_Rivers():
         AR_outflow_dict["AR_outflow_cold_sector"]=ar_outflow_cold_sector
         
         return AR_inflow_dict,AR_outflow_dict
-    
+    def calc_TIVT_of_cross_sections_in_AR_sector(AR_inflow,AR_outflow,grid_name):
+        if grid_name=="ERA5":
+            ivt_var_arg="Interp_IVT"
+        elif grid_name=="CARRA":
+            ivt_var_arg="highres_Interp_IVT"
+        else:
+            print("Others also like ICON-2km are not yet included.")
+        # Adapt the IVT max distance for both flow cross-sections
+        AR_inflow["IVT_max_distance"]=AR_inflow["IVT_max_distance"]-AR_inflow[\
+                                        "IVT_max_distance"].iloc[\
+                                            AR_inflow[ivt_var_arg].argmax()]
+        AR_outflow["IVT_max_distance"]=AR_outflow["IVT_max_distance"]-AR_outflow[\
+                                        "IVT_max_distance"].iloc[
+                                            AR_outflow[ivt_var_arg].argmax()]
+        TIVT={}
+        # Total AR
+        TIVT["inflow"]=(AR_inflow[ivt_var_arg].rolling(2).mean()*\
+                           AR_inflow["IVT_max_distance"].diff()).sum()
+        TIVT["outflow"]=(AR_outflow[ivt_var_arg].rolling(2).mean()*\
+                            AR_outflow["IVT_max_distance"].diff()).sum()
+        return TIVT
     def calc_TIVT_of_sectors(AR_inflow_dict,AR_outflow_dict,grid_name):
         # Calc TIVT
         if grid_name=="ERA5":

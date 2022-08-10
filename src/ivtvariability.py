@@ -22,9 +22,9 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from matplotlib.patches import Patch
 
-import Flight_Campaign
+import flightcampaign
 
-import Grid_on_HALO as grid_halo
+import gridonhalo as grid_halo
 import ICON
 
 def calc_halo_delta_distances(halo_df):
@@ -240,10 +240,10 @@ class IVT_variability():
         if isinstance(grid_dict_hmp,pd.DataFrame):
             self.grid_data_name=grid_dict_hmp.name
             self.grid_dict=grid_dict_hmp
-        
-        if isinstance(grid_dict_hmc,pd.DataFrame) or isinstance(grid_dict_hmc,dict):
-            self.grid_data_name=grid_dict_hmc["name"]
-            self.grid_dict=grid_dict_hmc
+        else:
+            if isinstance(grid_dict_hmc,pd.DataFrame) or isinstance(grid_dict_hmc,dict):
+                self.grid_data_name=grid_dict_hmc["name"]
+                self.grid_dict=grid_dict_hmc
         
         self.sonde_dict=sonde_dict
         
@@ -314,7 +314,8 @@ class IVT_variability():
                 grid_ivt_array=np.array(self.grid_ivt.rolling(2).mean().iloc[1:])
                 delta_distance=np.array(self.halo["delta_distance"].reindex(
                                                     self.grid_ivt.index).iloc[1:])
-                self.tivt_grid=(grid_ivt_array*delta_distance).sum()
+                product_array=grid_ivt_array*delta_distance
+                self.tivt_grid=product_array.sum()
             # Create synthetic soundings
             else: 
                 grid_ivt_array=np.array(self.sonde_ivt.rolling(2).mean().iloc[1:])
@@ -1054,6 +1055,8 @@ class IVT_Variability_Plotter(IVT_variability):
         #import matplotlib.dates as mdates
     
     def plot_model_sounding_frequency_comparison(self,name_of_grid_data="ERA5"):
+        matplotlib.rcParams.update({"font.size":20})
+        
         #self.grid_sounding_profiles=True
         if not self.flight.startswith("S"):
             if not self.model_sounding_profiles:
@@ -1099,6 +1102,7 @@ class IVT_Variability_Plotter(IVT_variability):
         print("Create synthetic sondes")
         start=self.halo.index[0]
         end=self.halo.index[-1]
+        
         if isinstance(self.hmp_dict,dict):
             if not self.hmp_dict[self.flight]["AR_internal"].name=="CARRA":
                 ivt_continuous=self.hmp_dict[self.flight]["AR_internal"]["Interp_IVT"]
@@ -1115,11 +1119,12 @@ class IVT_Variability_Plotter(IVT_variability):
             else:
                 ivt_continuous=self.hmp_dict["highres_Interp_IVT"]
                 iwv_continuous=self.hmp_dict["highres_Interp_IWV"]
-                    
+                        
             ivt_continuous=ivt_continuous.loc[start:end]
             iwv_continuous=iwv_continuous.loc[start:end]
         else:
             TypeError("HMP_dict is of wrong type. Recheck the class init")
+        
         import seaborn as sns
         import matplotlib.pyplot as plt
         import matplotlib.dates as mdates
@@ -1175,7 +1180,7 @@ class IVT_Variability_Plotter(IVT_variability):
                  color="darkgreen",lw=3,ls="-",
                  label="TIVT="+str((self.tivt_grid/1e6).round(1))+\
                      " x1e6 $\mathrm{kgs}^{-1}$")
-        ax1.set_ylim([0,650])
+        ax1.set_ylim([0,700])
         ax2.plot(iwv_continuous.index,
                  iwv_continuous.values,
                  color="darkblue",lw=3,ls="-")
@@ -1194,11 +1199,10 @@ class IVT_Variability_Plotter(IVT_variability):
         ax1.tick_params(length=10,width=3)
         ax2.tick_params(length=10,width=3)
         sns.despine(offset=10)
-        file_name=self.plot_path+self.flight+"/"+\
-                    self.flight+self.ar_of_day+\
-                    "_"+name_of_grid_data+"_TIVT_sounding_dependency.png"
-                    
-        release_fig.savefig(file_name,dpi=300,bbox_inches="tight")
+        plot_path=self.plot_path+self.flight+"//"
+        file_name=self.flight+"_"+str(name_of_grid_data)+"_TIVT_sounding_dependency.png"
+        print("File name:",plot_path+file_name)            
+        release_fig.savefig(plot_path+file_name,dpi=300,bbox_inches="tight")
         print("Figure saved as: ",file_name)
         
     def plot_distance_based_IVT(self,sondes_to_use,
