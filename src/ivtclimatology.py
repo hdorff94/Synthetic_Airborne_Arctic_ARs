@@ -14,7 +14,7 @@ import xarray as xr
 
 import matplotlib.pyplot as plt
 
-import Flight_Campaign
+import flightcampaign
 import data_config
 
 def is_mar_or_apr(month):
@@ -67,7 +67,7 @@ def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
         concrete dataset of AR cases from campaign
     """
     # Check if config-File exists and if not create the relevant first one
-    import Grid_on_HALO
+    import gridonhalo
     AR_unique_df=pd.DataFrame()
     #-------------------------------------------------------------------------#
     # Geolocate
@@ -86,7 +86,7 @@ def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
     values_list=[]
     performance=Performance.performance()
     # Loop over timesteps
-    for t in range(season_AR_era_ds.time.shape[0]):
+    for t in range(100):#season_AR_era_ds.time.shape[0]):
         #Add land mask to ignore ARs that are purely over land
         AR_id_field=pd.DataFrame(np.array(season_AR_era_ds["kidmap"][0,t,0,:,:])*\
                              np.invert(np.array(
@@ -156,7 +156,7 @@ def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
         #                        "SAR_internal",campaign=cmpgn_cls[0],
         #                        device="halo")    
         if add_single_flight=="RF10":
-            NAWDEX=Flight_Campaign.NAWDEX(is_flight_campaign=True,
+            NAWDEX=flightcampaign.NAWDEX(is_flight_campaign=True,
                 major_path=cfg_file["Data_Paths"]["campaign_path"],
                 aircraft="HALO",instruments=["radar","radiometer","sonde"])
             
@@ -566,10 +566,10 @@ def run_plot_IVT_long_term_stats(cmpgn_cls,HMPs,
 def run_plot_combined_campaign_IVT_long_term_stats(cmpgn_classes,
                                  upper_lat=90,lower_lat=55,
                                  western_lon=-30,eastern_lon=90,
-                                 add_single_flight="RF10"):
+                                 add_single_flight="RF10",other_plot_path=""):
     
     #from IVT_climatology import process_seasonal_AR_climatology
-    import AR
+    import atmospheric_rivers as AR
     config_name="data_config_file"
     #path=os.getcwd()
     campaign_name=cmpgn_classes[-1].name    

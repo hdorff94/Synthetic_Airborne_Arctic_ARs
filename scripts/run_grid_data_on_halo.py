@@ -500,12 +500,13 @@ def main(config_file_path=os.getcwd(),
         if not os.path.exists(plot_path):
             os.mkdir(plot_path)
     #-------------------------------------------------------------------------#
-    # Major Plotter Function Classes
-    ERA_HALO_Plotting   = interpdata_plotting.ERA_HALO_Plotting(
+    if plot_data:
+        # Major Plotter Function Classes
+        ERA_HALO_Plotting   = interpdata_plotting.ERA_HALO_Plotting(
                                         flight,ar_of_day=ar_of_day,
                                         plot_path=plot_path,
                                         synthetic_campaign=synthetic_flight)    
-    CARRA_HALO_Plotting = interpdata_plotting.CARRA_HALO_Plotting(
+        CARRA_HALO_Plotting = interpdata_plotting.CARRA_HALO_Plotting(
                                         plot_path=plot_path,
                                         flight=flight,ar_of_day=ar_of_day,
                                         synthetic_campaign=synthetic_flight)
@@ -518,8 +519,8 @@ def main(config_file_path=os.getcwd(),
     else:
         icon_plot_path=plot_path # If ICON is not included, 
                                  # plot_path remains due to IVT-plot                        
-    
-    ICON_HALO_Plotting  = interpdata_plotting.ICON_HALO_Plotting(cmpgn_cls,
+    if plot_data:
+        ICON_HALO_Plotting  = interpdata_plotting.ICON_HALO_Plotting(cmpgn_cls,
                                 plot_path=icon_plot_path,
                                 flight=flight,ar_of_day=ar_of_day,
                                 synthetic_campaign=synthetic_flight)
@@ -531,8 +532,8 @@ def main(config_file_path=os.getcwd(),
             track_dict=aircraft_dict.copy()
     else:
         track_dict=None
-        
-    Flightmap=FlightMaps(cmpgn_cls.major_path,cmpgn_cls.campaign_path,
+    if plot_data:    
+        Flightmap=FlightMaps(cmpgn_cls.major_path,cmpgn_cls.campaign_path,
                          cmpgn_cls.aircraft,cmpgn_cls.instruments,
                          cmpgn_cls.interested_flights,plot_path=plot_path,
                          flight=flight[0],ar_of_day=ar_of_day,
@@ -542,29 +543,28 @@ def main(config_file_path=os.getcwd(),
                          track_type=track_type,pick_legs=pick_legs,
                          track_dict=track_dict)
     
-    AR_IWV_section_combined_mapping=\
+        AR_IWV_section_combined_mapping=\
                             Flightmap.plot_flight_combined_IWV_map_AR_crossing
-    AR_flight_section_mapping=Flightmap.plot_flight_map_AR_crossing
-    #-------------------------------------------------------------------------#
-    set_font=ERA_HALO_Plotting.specify_plotting()
-    style_name="typhon"
-    if plot_cfad:
-        try:
-            cfad_hist=cmpgn_cls.calculate_cfad_radar_reflectivity(
+        AR_flight_section_mapping=Flightmap.plot_flight_map_AR_crossing
+        #---------------------------------------------------------------------#
+        set_font=ERA_HALO_Plotting.specify_plotting()
+        style_name="typhon"
+        if plot_cfad:
+            try:
+                cfad_hist=cmpgn_cls.calculate_cfad_radar_reflectivity(
                                 radar["Reflectivity"])
         
-            with plt.style.context(styles(style_name)):
-                print("Plots created with Typhon")
-                new_cfad=cmpgn_cls.plot_cfad_2d_hist(
-                    cfad_hist,plot_path=plot_path,
-                    flagged_data=True,
-                    ar_of_day=ar_of_day)
-        except:
-            pass
-    ###########################################################################
-    ## HMP visualization
-    plt.close()
-    if plot_data:
+                with plt.style.context(styles(style_name)):
+                    print("Plots created with Typhon")
+                    new_cfad=cmpgn_cls.plot_cfad_2d_hist(
+                        cfad_hist,plot_path=plot_path,
+                        flagged_data=True,
+                        ar_of_day=ar_of_day)
+            except:
+                pass
+            plt.close()
+        ###################################################################
+        ## HMP visualization
         if hmp_plotting_desired:
             icon_plot_path=plot_path+"ICON_2km/"
             #ERA_HALO_Plotting.plot_radar_era5_time_series(

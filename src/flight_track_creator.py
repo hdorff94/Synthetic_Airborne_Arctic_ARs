@@ -502,6 +502,30 @@ class Flighttracker():
             aircraft_df=self.make_dict_from_aircraft_df()
         return aircraft_df,campaign_path 
     
+    def get_all_synthetic_flights(self,cmpgn_cls_dict):
+        """
+        
+
+        Parameters
+        ----------
+        cmpgn_cls_dict : dictionary
+            Specification of campaign cls (dict.values) for all given dates
+            (dict.keys).
+
+        Returns 
+        -------
+        flight_dict : dictionary
+            Dictionary with all flight tracks and sorted along date
+
+        """
+        flight_dict={}
+        for date in cmpgn_cls_dict.keys():
+            self.cmpgn_cls=cmpgn_cls_dict[date][0]
+            self.flight=cmpgn_cls_dict[date][1]
+            self.aircraft_data_path=self.cmpgn_cls.campaign_path+\
+                "/data/aircraft_position/"
+            flight_dict[date],_temp=self.get_synthetic_flight_track()
+        return flight_dict
     def make_dict_from_aircraft_df(self):
         
         self.aircraft_dict={}

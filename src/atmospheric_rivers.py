@@ -126,7 +126,7 @@ class Atmospheric_Rivers():
                                                        single_ARs=""):
         store_AR_ds=AR_ds.copy()
         unique_AR=np.empty(1)
-        from Grid_on_HALO import ERA_on_HALO
+        from gridonhalo import ERA_on_HALO
         #era_on_halo=ERA_on_HALO()
         print("Use AR Catalogue from Guan & Waliser")
         
