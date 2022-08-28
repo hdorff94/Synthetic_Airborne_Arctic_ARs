@@ -31,13 +31,21 @@ import ivtclimatology
 config_file_path=airborne_data_importer_path
 config_file=data_config.load_config_file(config_file_path,
                                              "data_config_file")
-cmpgn_cls=flightcampaign.North_Atlantic_February_Run(
+cmpgn_cls_st=flightcampaign.North_Atlantic_February_Run(
             is_flight_campaign=True,
             major_path=config_file["Data_Paths"]\
                 ["campaign_path"],aircraft="HALO",
-            interested_flights="SRF02",instruments=[])
-#%% Create Figure
-ivtclimatology.run_plot_combined_campaign_IVT_long_term_stats([cmpgn_cls,cmpgn_cls],
+            interested_flights=["SRF02","SRF04","SRF07","SRF08"],instruments=[])
+cmpgn_cls_snd=flightcampaign.Second_Synthetic_Study(
+            is_flight_campaign=True,
+            major_path=config_file["Data_Paths"]\
+                ["campaign_path"],aircraft="HALO",
+            interested_flights=["SRF02","SRF03","SRF08","SRF09","SRF12"],
+            instruments=[])
+
+    #%% Create Figure
+ivtclimatology.run_plot_combined_campaign_IVT_long_term_stats([cmpgn_cls_st,
+                                                               cmpgn_cls_snd],
                                  upper_lat=90,lower_lat=55,
                                  western_lon=-30,eastern_lon=90,
-                                 add_single_flight="RF10")    
+                                 add_single_flight=None)    

@@ -308,7 +308,7 @@ class ERA_on_HALO(ERA5):
                         performance.updt(iterative_length,i)
             
                 hmc_interp_point=pd.DataFrame(data=interp_array,
-                                        index=halo_era_t.index[0:self.last_index],
+                                        index=halo_era_t.index[0:iterative_length],
                                         columns=upsampled_data[var]["level"],
                                         dtype=float)
                 
@@ -945,7 +945,7 @@ class CARRA_on_HALO(CARRA):
             fig_path=os.getcwd()+"/"+self.campaign+"/"
             map_fig.savefig(fig_path+fig_name,bbox_inches="tight")
             print("Quicklook saved as:",fig_path+fig_name)
-    def calc_ivt_from_origin_carra_ds(self,do_quicklook=True):
+    def calc_ivt_from_origin_carra_ds(self,do_quicklook=False):
         self.calc_specific_humidity_from_relative_humidity()
         self.calc_IVT_from_q()
         if do_quicklook:

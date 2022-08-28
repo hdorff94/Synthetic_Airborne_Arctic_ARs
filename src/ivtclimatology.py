@@ -86,7 +86,7 @@ def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
     values_list=[]
     performance=Performance.performance()
     # Loop over timesteps
-    for t in range(100):#season_AR_era_ds.time.shape[0]):
+    for t in range(season_AR_era_ds.time.shape[0]):
         #Add land mask to ignore ARs that are purely over land
         AR_id_field=pd.DataFrame(np.array(season_AR_era_ds["kidmap"][0,t,0,:,:])*\
                              np.invert(np.array(
@@ -183,8 +183,8 @@ def plot_AR_IVT_climatology(north_atlantic_ARs,plot_path,
     
     import seaborn as sns
     snsplot=sns.jointplot(data=north_atlantic_ARs,x="ivt",y="clat",
-                      s=5,color="deepskyblue",space=1.0)
-    snsplot.plot_joint(sns.kdeplot, color="darkblue", zorder=1, levels=3)
+                      s=5,color="mediumseagreen",space=1.0)
+    snsplot.plot_joint(sns.kdeplot, color="forestgreen", zorder=1, levels=3)
     snsplot.ax_marg_x.set_xticklabels("")
     snsplot.ax_marg_y.set_yticklabels("")
     snsplot.ax_joint.set_xlabel("$\overline{IVT}$ ($\mathrm{kgms}^{-1})$")
@@ -487,14 +487,14 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
                    "2020-04-19":"green"}        
     # Plotting
     snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",
-                          s=5,alpha=0.5,
+                          s=5,alpha=0.5,color="mediumseagreen",
                           space=1.2,height=8)
     
     #snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",hue="season",
     #                      s=3,alpha=0.3,space=1.2,height=8)
     #    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=3)
         
-    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=3)
+    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=3,color="green")
     #AR_campaign_df
     # get legend entries depending on available indices and flights
     legend_label=[str(AR_campaign_df.index[i]) \
@@ -523,9 +523,9 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
     sns.despine(offset=2)
     output_path=cmpgn_cls.plot_path
     
-    snsplot.savefig(output_path+"Seasonal_AR_statistics.png",
+    snsplot.savefig(output_path+"Fig02_Seasonal_AR_statistics.png",
                         dpi=300,bbox_inches="tight")
-    print("Statistics saved as:",output_path+"Seasonal_AR_statistics.png")
+    print("Statistics saved as:",output_path+"Fig02_Seasonal_AR_statistics.png")
 
     return None    
 

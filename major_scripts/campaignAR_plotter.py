@@ -164,18 +164,18 @@ if __name__=="__main__":
                         "SRF08":"20200419"#,}
         #Second Synthetic Study
         
-        #"SRF02":"20110317",
-        #"SRF03":"20110423",#,
+#        "SRF02":"20110317",
+#        "SRF03":"20110423",#,
             #"SRF06":"20140325",#,                    
                         #"SRF07":"20150307"}#,
         
-        #"SRF08":"20150314",#,
-        #"SRF09":"20160311",#,
-        #"SRF12":"20180225"
+#        "SRF08":"20150314",#,
+#        "SRF09":"20160311",#,
+#        "SRF12":"20180225"
         }        
-    campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"#"North_Atlantic_Run"##
+    campaign_name="North_Atlantic_Run"#Second_Synthetic_Study"#"North_Atlantic_Run"##
     use_era=True
-    use_carra=False
+    use_carra=True
     use_icon=False
     flights=[*flights_to_analyse.keys()]
     do_instantaneous=False

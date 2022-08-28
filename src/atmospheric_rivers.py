@@ -179,8 +179,19 @@ class Atmospheric_Rivers():
                                                     track_type="internal",
                                                     shifted_lat=0,
                                                     shifted_lon=0)
-                    track_df,cmpgn_path=Tracker.run_flight_track_creator()
-                    aircraft_position[flight]=track_df["inflow"]
+                    track_df,campaign_path=Tracker.get_synthetic_flight_track()
+                    aircraft_dict=Tracker.make_dict_from_aircraft_df()
+             
+                    print("Synthetic flight track loaded")
+                    # If halo df is a dict, then this may arise from the 
+                    # internal leg created flight track. So merge it to a 
+                    # single dataframe, or loc current leg from it
+                    #if isinstance(halo_df,dict):
+                    #    aircraft_dict=halo_df.copy()
+                    #    halo_df,leg_dicts=Flight_Tracker.concat_track_dict_to_df()
+                    
+                    #track_df,cmpgn_path=Tracker.run_flight_track_creator()
+                    aircraft_position[flight]=aircraft_dict["inflow"]
                 else:
                     #continue
                     import Flight_Campaign
