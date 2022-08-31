@@ -768,7 +768,18 @@ class IVT_variability():
     def calc_grid_vars_mean_std(self):
         
         self.grid_mean={}
-        self.grid_mean["p"]                 = self.grid_ivt["p"].mean(axis=0)
+        if not "p" in self.grid_ivt.keys():
+            # Probably the data is given on pressure levels
+            try:
+                self.grid_mean["p"]         = pd.Series(
+                                    self.grid_ivt["q"].columns.astype(float))
+            except:
+                raise Exception("Something went wrong with your grid data. ",
+                                "Apparently pressure p is neither a variable nor",
+                                " it is well-defined in the columns.")
+        else:
+            self.grid_mean["p"]                 = self.grid_ivt["p"].mean(axis=0)
+        
         self.grid_mean["wind"]              = self.grid_ivt["wind"].mean(axis=0)
         try:
             self.grid_mean["q"]             = self.grid_ivt["q"].mean(axis=0)
@@ -857,7 +868,7 @@ class IVT_variability():
         else:
             self.grid_mean["cumsum"]=scint.cumtrapz(
                                     y=self.grid_mean["moist_transport"],
-                                    x=self.grid_ivt["p"].mean(axis=0))
+                                    x=self.grid_mean["p"])
             
         #icon_ivt_cumsum2=scint.cumtrapz(y=self.icon_mean["moist_transport"][::-1],
         #                                x=self.icon_ivt["Pres"].mean(axis=0)[::-1])
@@ -882,7 +893,7 @@ class IVT_variability():
                                                               "90","97","100"],
                                 do_all_preps=False):
         
-        #ICON
+        # Grid data (ERA5,CARRA or ICON)
         if use_grid:
             if do_all_preps:
                 # Add vertical vars to IVT dict
@@ -911,6 +922,13 @@ class IVT_variability():
             
             # relative vertical contribution
             rows_to_cut=self.grid_ivt["moist_transport"].isna().sum()
+            if not "p" in self.grid_ivt.keys():
+                pressure_array=np.expand_dims(self.grid_mean["p"].values,axis=0)
+                pressure_array=np.repeat(pressure_array,self.grid_ivt["q"].shape[0],
+                                         axis=0)
+                self.grid_ivt["p"]=pd.DataFrame(data=pressure_array,
+                                                columns=self.grid_ivt["q"].columns,
+                                                index=self.grid_ivt["q"].index)
             vertical_index=np.array(self.grid_ivt["p"].loc[:,
                                     rows_to_cut[rows_to_cut<\
                                     self.grid_ivt["moist_transport"].shape[0]/2].index]\
@@ -1470,38 +1488,121 @@ class IVT_Variability_Plotter(IVT_variability):
         print("Sounding saved as: ",self.plot_path+file_name)
         return None
 
-    def plot_IVT_vertical_variability(self):
+    def plot_IVT_vertical_variability(self,subsample_day="",save_figure=True,
+                                      undefault_path="default",
+                                      manuscript_figure=True):
         # start plotting
+        with_sondes=False
         #if not hasattr(self,"icon_p_quantile"):
         self.calc_vertical_quantiles(do_all_preps=True)
-        self.calc_vertical_quantiles(use_grid=False,
+        if not self.sounding_frequency==None:
+            self.calc_vertical_quantiles(use_grid=False,
                                          do_all_preps=True)
-
-        with_sondes=True
-
+            pressure=self.sonde_mean["Pres"]
+            if pressure.max()>1100:
+                pressure=pressure/100 
+            if self.sonde_mean["q"]<1:
+               self.sonde_mean["q"]*=1000
+            with_sondes=True
+            
         fig=plt.figure(figsize=(18,12))
         matplotlib.rcParams.update({"font.size":22})
-        #if self.grid_sounding_profiles:
-        #    pressure=self.sonde_mean["P"]/100
-        #else:
-        
-        pressure=self.sonde_mean["Pres"]
-        if pressure.max()>1100:
-           pressure=pressure/100 
         model_pressure=self.grid_mean["p"]
         if model_pressure.max()>1100:
             model_pressure=model_pressure/100
         if model_pressure.max()<100:
             model_pressure=model_pressure*100
+        if self.grid_mean["q"].max()<1:
+            self.grid_mean["q"]*=1000
+            self.grid_std["q"]*=1000
+            self.grid_mean["moist_transport"]*=1000
+            self.grid_std["moist_transport"]*=1000
+        #Define axis width
+        ax1=fig.add_subplot(131)
+        # Specific Humidity
+        ax2=fig.add_subplot(132,sharey=ax1)
+        # Moisture transport
+        ax3=fig.add_subplot(133,sharey=ax2)
+        
+        for axis in ["left","bottom"]:
+                        ax1.spines[axis].set_linewidth(2.0)
+                        ax1.xaxis.set_tick_params(width=2,length=10)
+                        ax1.yaxis.set_tick_params(width=2,length=10)
+                        ax2.spines[axis].set_linewidth(2.0)
+                        ax2.xaxis.set_tick_params(width=2,length=10)
+                        ax2.yaxis.set_tick_params(width=2,length=10)
+                        ax3.spines[axis].set_linewidth(2.0)
+                        ax3.xaxis.set_tick_params(width=2,length=10)
+                        ax3.yaxis.set_tick_params(width=2,length=10)
         #---------------------------------------------------------------------#
         #Sondes
         # Wind
-        ax1=fig.add_subplot(131)
-
-        ax1.errorbar(self.sonde_mean["Wind"],pressure,
+        if with_sondes:
+            ax1.errorbar(self.sonde_mean["Wind"],pressure,
                      xerr=self.sonde_std["Wind"],
                      color="magenta",fmt='v',alpha=0.8)
+            ax2.errorbar(self.sonde_mean["q"],pressure,
+                     xerr=self.sonde_std["q"],color="blue",
+                     fmt='x',alpha=0.8)
+            ax3.errorbar(self.sonde_mean["moist_transport"],
+                     pressure.loc[self.sonde_mean["moist_transport"].index],
+                     xerr=self.sonde_std["moist_transport"],
+                     color="black",fmt='o',alpha=0.8)
+            self.sonde_mean["moist_transport"]=\
+                self.sonde_mean["moist_transport"].loc[\
+                                    self.sonde_std["moist_transport"].index]
+            if not self.sounding_frequency=="Upsampled":
+                sonde_label="Dropsondes"
+            else: 
+                sonde_label="Upsampled \n Sondes"
         
+            if self.grid_sounding_profiles:
+                sonde_label=" Synthetic\n"+sonde_label
+        #Extreme day
+        if subsample_day!="":
+            sub_mean={}
+            sub_mean["q"]=self.grid_ivt["q"].loc[subsample_day].mean(axis=0)
+            sub_mean["wind"]=self.grid_ivt["wind"].loc[subsample_day].mean(axis=0)
+            sub_mean["moist_transport"]=self.grid_ivt["moist_transport"].loc[\
+                                                                subsample_day].\
+                mean(axis=0)
+            sub_std={}
+            sub_std["q"]=self.grid_ivt["q"].loc[subsample_day].std(axis=0)
+            sub_std["wind"]=self.grid_ivt["wind"].loc[subsample_day].std(axis=0)
+            sub_std["moist_transport"]=self.grid_ivt["moist_transport"].loc[\
+                                                                subsample_day].\
+                std(axis=0)
+            ax1.errorbar(sub_mean["wind"],model_pressure,
+                     xerr=sub_std["wind"],
+                     color="magenta",fmt='v',alpha=0.8)
+            ax2.errorbar(sub_mean["q"],model_pressure,
+                     xerr=sub_std["q"],color="blue",
+                     fmt='x',alpha=0.8)
+            ax3.errorbar(sub_mean["moist_transport"],
+                     model_pressure,
+                     xerr=sub_std["moist_transport"],
+                     color="black",fmt='o',alpha=0.8)
+            
+        #---------------------------------------------------------------------#
+        # Model grid
+        ax1.fill_betweenx(y=model_pressure,
+                  x1=self.grid_mean["wind"]-self.grid_std["wind"],
+                  x2=self.grid_mean["wind"]+self.grid_std["wind"],
+                  color="mistyrose")
+        ax2.fill_betweenx(y=model_pressure,
+                  x1=(self.grid_mean["q"]-self.grid_std["q"]),
+                  x2=(self.grid_mean["q"]+self.grid_std["q"]),
+                  color="lightsteelblue")
+        ax3.fill_betweenx(y=model_pressure,
+                  x1=(self.grid_mean["moist_transport"]-\
+                      self.grid_std["moist_transport"]),
+                  x2=(self.grid_mean["moist_transport"]+\
+                      self.grid_std["moist_transport"]),
+                  color="darkgrey")
+        #---------------------------------------------------------------------#
+        # Plot specifications
+        # ax1
+        xlim_wind_max=self.grid_mean["wind"].max()//10*10+10
         ax1.invert_yaxis()
         plt.yscale("log")
         ax1.set_xlabel(r'${v}_{\mathrm{h}}$ (m/s)')
@@ -1509,82 +1610,45 @@ class IVT_Variability_Plotter(IVT_variability):
         ax1.set_yticks([400,500,600,700,850,925,1000])
         ax1.set_yticklabels(["400","500","600","700","850","925","1000"])
         ax1.set_ylim([1000,350])
-        xlim_wind_max=self.grid_mean["wind"].max()//10*10+10
         ax1.set_xlim([5,xlim_wind_max+5])
         
-        # Specific Humidity
-        ax2=fig.add_subplot(132,sharey=ax1)
-        ax2.errorbar(self.sonde_mean["q"]*1000,pressure,
-                     xerr=self.sonde_std["q"]*1000,color="blue",
-                     fmt='x',alpha=0.8)
-        
+        # ax2
+        xlim_q_max=self.grid_mean["q"].max()//6*6+6  
         ax2.set_xlabel("q (g/kg)")
-        xlim_q_max=self.grid_mean["q"].max()*1000//6*6+6
         ax2.set_xlim([0,xlim_q_max])
+        ax2.spines["left"].set_visible(False)
+        ax2.yaxis.set_visible(False)
         
-        # Moisture transport
-        ax3=fig.add_subplot(133,sharey=ax2)
-        self.sonde_mean["moist_transport"]=self.sonde_mean["moist_transport"].loc[\
-                                    self.sonde_std["moist_transport"].index]
-        ax3.errorbar(self.sonde_mean["moist_transport"],
-                     pressure.loc[self.sonde_mean["moist_transport"].index],
-                     xerr=self.sonde_std["moist_transport"],
-                     color="black",fmt='o',alpha=0.8)
-        xlim_transport_max=self.grid_mean["moist_transport"].max()*1000//5*5+10
-        #print(xlim_transport_max)
+        # ax3 
+        xlim_transport_max=self.grid_mean["moist_transport"].max()//5*5+10
         ax3.set_xlim([0,xlim_transport_max])
         ax3.set_xlabel(r'$\frac{1}{g}\cdot q\cdot{v}_{\mathrm{h}}$'+\
                        ' (g/kg$\cdot\mathrm{s}$)')
+        ax3.spines["left"].set_visible(False)
+        ax3.yaxis.set_visible(False)
         
         # Axis spines handling
         sns.despine(offset=15)
-        ax2.spines["left"].set_visible(False)
-        ax2.yaxis.set_visible(False)
-        ax3.spines["left"].set_visible(False)
-        ax3.yaxis.set_visible(False)
-        #---------------------------------------------------------------------#
-        # Model grid
         
-        ax1.fill_betweenx(y=model_pressure,
-                  x1=self.grid_mean["wind"]-self.grid_std["wind"],
-                  x2=self.grid_mean["wind"]+self.grid_std["wind"],
-                  color="mistyrose")
-        ax2.fill_betweenx(y=model_pressure,
-                  x1=(self.grid_mean["q"]-self.grid_std["q"])*1000,
-                  x2=(self.grid_mean["q"]+self.grid_std["q"])*1000,
-                  color="lightsteelblue")
-        ax3.fill_betweenx(y=model_pressure,
-                  x1=(self.grid_mean["moist_transport"]-\
-                      self.grid_std["moist_transport"])*1000,
-                  x2=(self.grid_mean["moist_transport"]+\
-                      self.grid_std["moist_transport"])*1000,
-                  color="darkgrey")
-        
-        if not self.sounding_frequency=="Upsampled":
-            sonde_label="Dropsondes"
-        else: 
-            sonde_label="Upsampled \n Sondes"
-        
-        if self.grid_sounding_profiles:
-            sonde_label=" Synthetic\n"+sonde_label
-        
-        legend_elements=[mlines.Line2D([0],[0],color="magenta",lw=3,
-                                       marker="v",markersize=10,
-                                       label=sonde_label),
-                     Patch(facecolor="mistyrose",edgecolor="salmon",
+        if with_sondes:
+            legend_elements=[mlines.Line2D([0],[0],color="magenta",lw=3,
+                                marker="v",markersize=10,label=sonde_label),
+            Patch(facecolor="mistyrose",edgecolor="salmon",
                            label="ICON")]
-        ax1.legend(handles=legend_elements,loc="upper left")
+            ax1.legend(handles=legend_elements,loc="upper left")
+        
+        elif subsample_day!=" ":
+            legend_elements=[mlines.Line2D([0],[0],color="magenta",lw=3,
+                                marker="v",markersize=10,label=subsample_day)]
+            #Patch(facecolor="mistyrose",edgecolor="salmon",
+            #               label=subsample_day)]
+            ax1.legend(handles=legend_elements,loc="upper left")
+        else:
+            pass
         ## Add height z
-        # ax3
-        # ax3.yaxis.tick_right()
         h_pos=xlim_transport_max#+0.1*xlim_transport_max
-        #if self.ar_of_day=="AR1":
-        #    h_pos=18.0
-        #elif self.ar_of_day=="AR2":
-        #    h_pos=8.0
-        #elif self.ar_of_day=="AR3":
-        #    h_pos=13.0
-        #ivt_z_quantile=self.icon_ivt_quant_z
+        
+        
         ivt_p=pd.Series(self.grid_ivt_quant_p)
         if ivt_p.values.max()<100:
             ivt_p=ivt_p*100
@@ -1630,46 +1694,43 @@ class IVT_Variability_Plotter(IVT_variability):
         ax3.add_line(l4_hline)
         ax3.add_line(l5)
         ax3.add_line(l5_hline)
-
-        #Define axis width
-        for axis in ["left","bottom"]:
-                        ax1.spines[axis].set_linewidth(2.0)
-                        ax1.xaxis.set_tick_params(width=2,length=10)
-                        ax1.yaxis.set_tick_params(width=2,length=10)
-                        ax2.spines[axis].set_linewidth(2.0)
-                        ax2.xaxis.set_tick_params(width=2,length=10)
-                        ax2.yaxis.set_tick_params(width=2,length=10)
-                        ax3.spines[axis].set_linewidth(2.0)
-                        ax3.xaxis.set_tick_params(width=2,length=10)
-                        ax3.yaxis.set_tick_params(width=2,length=10)
-                    
         handles, labels=ax3.get_legend_handles_labels()
         ax3.legend(handles[::-1],labels[::-1],title="Fraction \nof IVT",
            loc="upper center")
         plt.subplots_adjust(wspace=0.2)
-        #plot_path=
-        fig.suptitle(self.flight+": "+self.ar_of_day+" "+"lateral variability",
-                     fontsize=22,y=0.95)
-        major_name=self.ar_of_day+"_"+self.flight+"_IVT_lateral_variability_"
-       
-        file_format=".png"
-        if self.sounding_frequency=="standard":
-            if not self.grid_sounding_profiles:
-                major_name=major_name+"Dropsondes_"
+        
+        if save_figure:
+            
+            if not manuscript_figure:
+                fig.suptitle(self.flight+": "+self.ar_of_day+" "+\
+                         "lateral variability",
+                             fontsize=22,y=0.95)
+                major_name=self.ar_of_day+"_"+self.flight+\
+                        "_IVT_lateral_variability_"
+            else:
+                major_name="Fig10_IVT_lateral_variability"
+            file_format=".pdf"
+            if self.sounding_frequency=="standard":
+                if not self.grid_sounding_profiles:
+                    major_name=major_name+"Dropsondes_"
+                else:
+                    pass
+            elif self.sounding_frequency!=None:
+                major_name=major_name+"Upsampled_Dropsondes_"
             else:
                 pass
-        else:
-            major_name=major_name+"Upsampled_Dropsondes_"
-        #if self.grid_sounding_profiles:
-        #    major_name=major_name+"_ICON_Sondes"
-        #else:
-        #    major_name=major_name+"ICON"
-        if self.grid_sounding_profiles:
-            major_name=major_name+"_Synthetic_"+self.grid_data_name+"_Sondes"
-        plot_file=major_name+file_format
-        fig.savefig(self.plot_path+self.flight+"/"+plot_file,
+            if self.grid_sounding_profiles:
+                major_name=major_name+"_Synthetic_"+\
+                    self.grid_data_name+"_Sondes"
+            plot_file=major_name+file_format
+            if not undefault_path=="default":
+                plot_path=undefault_path
+            else:
+                plot_path=self.plot_path+self.flight+"/"
+            fig.savefig(plot_path+plot_file,
                     dpi=300,bbox_inches="tight")
-        print("Figure saved as: ",self.plot_path+self.flight+"/"+plot_file)
+            print("Figure saved as: ",
+                  plot_path+plot_file)
         return None
     
     def plot_TIVT_error_study(self,resolution_study=False):

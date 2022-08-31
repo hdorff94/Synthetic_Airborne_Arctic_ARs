@@ -147,9 +147,9 @@ class Flighttracker():
                     self.flight_track_cfg["altitude"]=10000
                     
                     if self.flight=="SRF02":
-                        self.flight_track_cfg["start_lat"]=68.25
-                        self.flight_track_cfg["start_lon"]=-5.
-                        self.flight_track_cfg["bearing"]=266
+                        self.flight_track_cfg["start_lat"]=68.
+                        self.flight_track_cfg["start_lon"]=-4.
+                        self.flight_track_cfg["bearing"]=275
                     elif self.flight=="SRF03":
                         if self.ar.endswith("internal"):
                             self.flight_track_cfg["start_lat"]=59
@@ -188,7 +188,7 @@ class Flighttracker():
                 
                     if self.flight=="SRF02":
                         shifted_halo["longitude"]=shifted_halo["longitude"]+1.5
-                        shifted_halo["latitude"]=shifted_halo["latitude"]-1.65
+                        shifted_halo["latitude"]=shifted_halo["latitude"]-1.75
                        
                     if self.flight=="SRF03":
                         shifted_halo["latitude"]=shifted_halo["latitude"]-1.0
@@ -273,7 +273,7 @@ class Flighttracker():
                    self.flight_track_cfg["end_date"]=date+" 14:20"
                 
                 if self.flight=="SRF08":
-                   self.flight_track_cfg["bearing"]=280
+                   self.flight_track_cfg["bearing"]=283
                    self.flight_track_cfg["start_lat"]=71.5
                    self.flight_track_cfg["start_lon"]=4
                    self.flight_track_cfg["start_date"]=date+" 16:30"
@@ -678,7 +678,7 @@ class Flighttracker():
 def main(campaign="NA_February_Run",flight="SRF04",ar_of_day="SAR_internal",
          shifted_lat=0,shifted_lon=-12):
 
-    import Flight_Campaign
+    import flightcampaign as Flight_Campaign
     import data_config
     config_file=data_config.load_config_file(os.getcwd(),"data_config_file")
 
