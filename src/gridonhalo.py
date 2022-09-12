@@ -136,7 +136,7 @@ class ERA_on_HALO(ERA5):
              self.flight=flight[0]
              if do_instantaneous==True:
                  if not self.flight.endswith("instantan"):
-                     self.flight==self.flight+"_instantan"
+                     self.flight=self.flight+"_instantan"
              self.interpolated_lvls_file=interpolated_lvls_file
              self.date=date
              self.halo_df=halo_df
@@ -423,6 +423,8 @@ class ERA_on_HALO(ERA5):
             string_AR=""
         #Save individual variables as csv files: 
         #    (Row: Time Index, Columns= Heights)
+        #flight_name=self.flight
+        #if self.instantan
         for var in self.lvl_var_dict.keys():
             if not self.synthetic_flight:                
                 hmc_fname=self.hydrometeor_lvls_path+self.flight+"_"+\

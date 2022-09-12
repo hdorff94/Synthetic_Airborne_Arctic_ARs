@@ -290,11 +290,11 @@ def create_fig11_q_v_flavor(paths_dict,config_file,flight_dates,
                               y=pres_index/100,color="lightgrey")
         
         axes[d].plot(1/g*moisture_transport_flights_dict[date]["stats"]["q_dash_v"],
-                     pres_index/100,color="blue",lw=2,label="NIVTv'="+\
-                         str(round(relative_v_dash,2)))
+                     pres_index/100,color="blue",lw=2,label="NIVTq'="+\
+                         str(round(relative_q_dash,2)))
         axes[d].plot(1/g*moisture_transport_flights_dict[date]["stats"]["q_v_dash"],
-                     pres_index/100,color="magenta",lw=2,label="NIVTq'="+\
-                         str(round(relative_q_dash,2))) 
+                     pres_index/100,color="magenta",lw=2,label="NIVTv'="+\
+                         str(round(relative_v_dash,2))) 
         axes[d].text(0.7,0.9,transform=axes[d].transAxes,s=date,color="black",
                   fontsize=14)
         #axes[d].set_yticklabels([])
