@@ -1722,6 +1722,8 @@ class IVT_Variability_Plotter(IVT_variability):
             if self.grid_sounding_profiles:
                 major_name=major_name+"_Synthetic_"+\
                     self.grid_data_name+"_Sondes"
+            if not subsample_day=="":
+                major_name=major_name+"_"+subsample_day
             plot_file=major_name+file_format
             if not undefault_path=="default":
                 plot_path=undefault_path

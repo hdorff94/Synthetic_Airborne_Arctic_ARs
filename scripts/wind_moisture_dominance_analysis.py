@@ -331,7 +331,7 @@ def plotter(figures_to_create,flight_dates,reanalysis_to_use):
         fct(paths_dict,config_file,flight_dates,reanalysis_to_use)
          
 #%%
-def main(reanalysis_to_use="ERA-5",figures_to_create="fig11"):
+def main(reanalysis_to_use="ERA-5",figures_to_create="fig10"):
     #plot_fct_kwargs={"fig10":[paths_dict,config_file,
     #                          flight_dates,reanalysis_to_use],
     #                 "fig11":[],
