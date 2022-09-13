@@ -77,11 +77,22 @@ sys.path.insert(script_path,1)
 import run_sonde_freq_ivt_var_analysis
 
 ```
-
+The figure as well as some correlations are created by the notebook **TIVT_IVT_Variability_analysis.ipynb**
 ##### Create Figure 10
+This is the vertical statistics of q,v, and moisture transport.
+```python 
+import wind_moisture_dominance_analysis
+
+wind_moisture_dominance_analysis.main(figures_to_create="fig10")
+```
 
 ##### Create Figure 11
+This shows the variability dominanting quantity for all the cases in a multiplot of vertical profiles.
+```python 
+import wind_moisture_dominance_analysis
 
+wind_moisture_dominance_analysis.main(figures_to_create="fig11")
+```
 ##### Create Figure 12
 
 ##### Create Figure 4
