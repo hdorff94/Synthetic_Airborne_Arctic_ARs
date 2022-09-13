@@ -19,7 +19,7 @@ campaignAR_plotter.main()
 most of them require the plotting modules
 ```python 
 import os 
-plotting_script_path=os.getcwd()+"/major_scripts/"
+plotting_script_path=os.getcwd()+"/plotting/"
 sys.path.insert(plotting_script_path,1)
 ```
 
@@ -38,23 +38,51 @@ import ar_ivt_climatology_plotting
 This is a sketch of HALO observing AR boxes for the representative moisture budget components. This was created independently with image processing software.
 ##### Create Figure 4
 
-##### Create Figure 4
+```python 
+import ar_ivt_climatology_plotting
+# this creates the KDE-plot of mean AR-IVT as a function of AR centered latitude (long-time series 1979-2020).
+# The nine ARs during observation periods are highlighted therein for climalogical framing.
+```
 
 ##### Create Figure 4
+This is the aircraft flight time bar plot showing the duration for flying all AR cross-sections with given constant flight speed of 250 m/s.
+Go to subpath "/notebooks/"
+and open **Aircraft_Flight_Time.ipnyb**
+##### Create Figure 5
+This is the illustration of the AR sectors along the cross-section (warm prefrontal, core, cold postfrontal)
+showing the positioning of seven synthetic sondes along the in- and outflow corridors used for divergence calculations.  
+##### Create Figure 6
+This is AR IVT shape multiplot indicating all nine inflow AR-IVT shapes. 
+So far this plot is created manually by repeating the distance-based AR-IVT inflow cross-section plot. **Open issue to create a plot routine**
+##### Create Figure 7
+This is the distance based AR-IVT together with synthetic soundings and gaussian fit for CARRA-IVT compared to ERA5-IVT 
+```python 
+import campaignAR_plotter
 
-##### Create Figure 4
+campaignAR_plotter.main(campaign="Second_Synthetic_Study",flights=["SRF02"],calc_hmp=True,
+                        use_era=True,use_carra_True,do_plotting=True)
+# inside main you can specify the flights that are commented out and the subcampaign for variable campaign_name
+```
+##### Create Figure 8
+This is the plot of AR-IVT along cross-section (so far with time on y-axis **need to be updated**) for 2011-04-23.
+CARRA-IVT is shown as continuous representation together with sporadic sounding representation declining from 10 to 4 sondes and indicating TIVT.
 
-##### Create Figure 4
+##### Create Figure 9
+This is the TIVT dependency on sounding frequency. For that, the following is required to create the data:
+```python 
+import os 
+script_path=os.getcwd()+"/scripts/"
+sys.path.insert(script_path,1)
 
-##### Create Figure 4
+import run_sonde_freq_ivt_var_analysis
 
-##### Create Figure 4
+```
 
-##### Create Figure 4
+##### Create Figure 10
 
-##### Create Figure 4
+##### Create Figure 11
 
-##### Create Figure 4
+##### Create Figure 12
 
 ##### Create Figure 4
 
