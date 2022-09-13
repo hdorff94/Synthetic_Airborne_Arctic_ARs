@@ -1781,10 +1781,13 @@ class IVT_Variability_Plotter(IVT_variability):
             sonde_freq_fig.savefig(fig_path+fig_name,
                                dpi=300,bbox_inches="tight")
             print("Figure successfully saved as: ",fig_path+fig_name)
+    
     @staticmethod
     def multiplot_inflow_outflow_IVT_sectors(cmpn_cls,HALO_dict,HMP_dict,
-                                             grid_name):
-        import AR
+                                             grid_name,plot_path=""):
+        import matplotlib
+        matplotlib.rcParams.update({"font.size":16})
+        import atmospheric_rivers as AR
         Flights_inflow_dict={}
         Flights_outflow_dict={}
         Flights_TIVT_inflow={}
@@ -1898,7 +1901,7 @@ class IVT_Variability_Plotter(IVT_variability):
                  lw=3,ls="-.",color="darkred")
             plot_ax.set_title(flight,fontsize=16,loc="left",y=0.9)
             plot_ax.set_xlim([-500,500])
-            plot_ax.set_ylim([100,650])
+            plot_ax.set_ylim([100,700])
             for axis in ["left","bottom"]:
                 plot_ax.spines[axis].set_linewidth(2)
                 plot_ax.tick_params(length=6,width=2)
@@ -1915,8 +1918,10 @@ class IVT_Variability_Plotter(IVT_variability):
                                     str((TIVT_outflow_total/1e6).round(1))+\
                                     "$\cdot 1\mathrm{e}6\,\mathrm{kgs}^{-1}$")]
             legend_loc="upper right"
-            if hmp_inflow[ivt_var_arg].max()>450:
-                legend_loc="lower right"
+            ivt_max=hmp_inflow[ivt_var_arg].max()
+            print(ivt_max)
+            if ivt_max>450:
+                legend_loc="lower center"
             #line_core_in[0],line_core_out[0],
             lgd = plot_ax.legend(handles=[\
                                       legend_patches[0],legend_patches[1]],
@@ -1924,9 +1929,12 @@ class IVT_Variability_Plotter(IVT_variability):
                 
             i+=1
         sns.despine(offset=10)
-        fig_name=grid_name+"_AR_TIVT_cases_overview.pdf"
-        plot_path=cmpn_cls.plot_path
-        f.savefig(plot_path+fig_name,
+        fig_name="Fig12_"+grid_name+"_AR_TIVT_cases_overview.pdf"
+        if plot_path=="":
+            plt_path=cmpn_cls.plot_path
+        else:
+            plt_path=plot_path
+        f.savefig(plt_path+fig_name,
                     dpi=60,bbox_inches="tight")
         print("Figure saved as:", cmpn_cls.plot_path+fig_name)
         return None

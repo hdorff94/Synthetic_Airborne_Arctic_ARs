@@ -4,8 +4,7 @@ Created on Thu May 19 16:32:51 2022
 
 @author: u300737
 """
-import data_config
-#import logging
+#import data_config
 import os
 import sys
 
@@ -14,13 +13,14 @@ import pandas as pd
     
 import matplotlib
 import matplotlib.pyplot as plt
-from matplotlib import ticker as tick_right
+#from matplotlib import ticker as tick_right
 
 import seaborn as sns
-from IVT_Variability_handler import IVT_Variability_Plotter
+from ivtvariability import IVT_Variability_Plotter
 
-import Grid_on_HALO
-import Flight_Campaign
+#import Grid_on_HALO
+if not "flightcampaign" in sys.modules:
+    import flightcampaign as Flight_Campaign
 class Moisture_Budgets():
     def __init__(self):
         
