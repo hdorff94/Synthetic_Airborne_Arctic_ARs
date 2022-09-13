@@ -255,7 +255,7 @@ def create_fig10_q_v_vertical_variability(paths_dict,config_file,flight_dates,
                                     extra_output["cmpgn_cls"].plot_path,
                                     "SAR_internal","all",ivt_logger)
 
-    IVT_var_Plotter.plot_IVT_vertical_variability(subsample_day="2015-03-14",
+    IVT_var_Plotter.plot_IVT_vertical_variability(subsample_day="2011-03-17",
             save_figure=True,undefault_path=paths_dict["plot_figures_path"])
 
 def create_fig11_q_v_flavor(paths_dict,config_file,flight_dates,

@@ -158,8 +158,8 @@ if __name__=="__main__":
     calc_hmp=False
     calc_hmc=True
     do_plotting=False
-    flights_to_analyse={#"SRF02":"20180224",#,#,
-                        #"SRF04":"20190319",#}#,#,
+    flights_to_analyse={"SRF02":"20180224",#,#,
+                        "SRF04":"20190319",#}#,#,
                         "SRF07":"20200416",#}#,#,#}#,#}#,
                         "SRF08":"20200419"#,}
         #Second Synthetic Study
