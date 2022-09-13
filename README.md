@@ -94,7 +94,9 @@ import wind_moisture_dominance_analysis
 wind_moisture_dominance_analysis.main(figures_to_create="fig11")
 ```
 ##### Create Figure 12
-
+This shows the frontal sector based AR cross-sections for in- and outflow corridor in multiplot. 
+It is created by running the notebook **AR_sector_multiplot_in-outflow.ipynb**  
+This notebook basically runs multiplot_inflow_outflow_IVT sectors from ```python class IVT_Variability_Plotter```.
 ##### Create Figure 4
 
 
