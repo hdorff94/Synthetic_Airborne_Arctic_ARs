@@ -45,7 +45,8 @@ Go to subpath "/notebooks/"
 and open **Aircraft_Flight_Time.ipnyb**
 #### Figure 5 (AR sectors approach)
 This is the illustration of the AR sectors along the cross-section (warm prefrontal, core, cold postfrontal)
-showing the positioning of seven synthetic sondes along the in- and outflow corridors used for divergence calculations.  
+showing the positioning of seven synthetic sondes along the in- and outflow corridors used for divergence calculations. 
+Go to subpath "/notebooks/" and open **AR_Sector_Illustration.ipnyb**
 ### IVT Variability
 #### Figure 6 (AR-IVT shapes)
 This is AR IVT shape multiplot indicating all nine inflow AR-IVT shapes. 
