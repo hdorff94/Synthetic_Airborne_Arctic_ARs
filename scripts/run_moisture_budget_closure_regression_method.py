@@ -4,27 +4,14 @@ Created on Fri May 20 14:05:50 2022
 
 @author: u300737
 """
-
-#Basics
-import data_config
-import os
-# Calc Tools
+# Principal Tools
 import numpy as np
 import pandas as pd
+import os
+import sys
+import warnings
+warnings.filterwarnings("ignore")
 
-# Relevant created classes and modules
-#import Flight_Campaign
-#from Flight_Mapping import FlightMaps
-from AR import Atmospheric_Rivers
-
-#Grid Data
-# Run routines
-#import run_grid_data_on_halo # to run single days
-import Campaign_AR_plotter # to run analysis for sequence of single days and create combined plots
-
-# IVT variability
-from IVT_Variability_handler import IVT_Variability_Plotter
-#------------------------------------------------------------------------------#
 # Plot scripts
 import matplotlib.pyplot as plt
 
@@ -33,44 +20,72 @@ try:
 except:
     print("Typhon module cannot be imported")
 
-import Interp_Data_Plotting
-import Moisture_Budget as Budgets
-#sys.exit()
-#-----------------------------------------------------------------------------#
+import seaborn as sns
+# Change path to working script directory
+current_path=os.getcwd()
+print(current_path)
+major_path = os.path.abspath("../../../")
+base_working_path=major_path+"/my_GIT/Synthetic_Airborne_Arctic_ARs"
+aircraft_base_path=major_path+"/Work/GIT_Repository/"
+config_path         = base_working_path+"/config/"
+working_path        = base_working_path+"/src/"
+script_path         = base_working_path+"/scripts/"
+major_script_path   = base_working_path+"/major_scripts/"
+#plotting_path = base_working_path+"/plotting/"
 
-import warnings
-warnings.filterwarnings("ignore")
+sys.path.insert(1, os.path.join(sys.path[0], working_path))
+sys.path.insert(2, os.path.join(sys.path[0], config_path))
+sys.path.insert(3, os.path.join(sys.path[0], script_path))
+sys.path.insert(4, os.path.join(sys.path[0],major_script_path))
+print(working_path)
+os.chdir(working_path)
 
+# Relevant created classes and modules
+#import Flight_Campaign
+#from Flight_Mapping import FlightMaps
+from atmospheric_rivers import Atmospheric_Rivers
+
+#Grid Data
+# Run routines
+#import run_grid_data_on_halo # to run single days
+import campaignAR_plotter # to run analysis for sequence of single days and create combined plots
+import data_config
+# IVT variability
+from ivtvariability import IVT_Variability_Plotter
+#------------------------------------------------------------------------------#
+
+import interpdata_plotting
+import moisturebudget as Budgets
 # Config File
-config_file=data_config.load_config_file(os.getcwd(),"data_config_file")
+config_file=data_config.load_config_file(aircraft_base_path,"data_config_file")
 
 
 
 #%% Get data from all flights
 #
 flight_dates={"North_Atlantic_Run":
-              {"SRF02":"20180224",
+              {#"SRF02":"20180224",
                "SRF04":"20190319",#},
-               "SRF07":"20200416",#},
-               "SRF08":"20200419"
+               #"SRF07":"20200416",#},
+               #"SRF08":"20200419"
               },
               "Second_Synthetic_Study":
-              {"SRF02":"20110317",
-               "SRF03":"20110423",
-               "SRF08":"20150314",
-               "SRF09":"20160311",
-               "SRF12":"20180225"
+              {#"SRF02":"20110317",
+               #"SRF03":"20110423",
+               #"SRF08":"20150314",
+               #"SRF09":"20160311",
+               #"SRF12":"20180225"
                }}
 
 # Major configurations
-campaign="Second_Synthetic_Study"
+campaign="North_Atlantic_Run"#"Second_Synthetic_Study"
 #"North_Atlantic_Run"#"Second_Synthetic_Study"#"North_Atlantic_Run"### 
 do_plotting=False
-instantan=True
+instantan=False
 
 # 
-calc_hmp=True
-calc_hmc=False
+calc_hmp=False
+calc_hmc=True
 # What to use
 use_era=True
 use_carra=True
@@ -84,15 +99,15 @@ elif use_carra:
 
 flights=[*flight_dates[campaign].keys()]
 
-Hydrometeors,HALO_Dict,cmpgn_cls=Campaign_AR_plotter.main(campaign=campaign,flights=flights,
+Hydrometeors,HALO_Dict,cmpgn_cls=campaignAR_plotter.main(campaign=campaign,flights=flights,
                                           era_is_desired=use_era, 
                                           icon_is_desired=use_icon,
                                           carra_is_desired=use_carra,
                                           do_daily_plots=do_plotting,
-                                          calc_hmp=calc_hmp,calc_hmc=calc_hmc,
+                                          calc_hmp=True,calc_hmc=False,
                                           do_instantaneous=instantan)
 
-HMCs,HALO_Dict,cmpgn_cls=Campaign_AR_plotter.main(campaign=campaign,flights=flights,
+HMCs,HALO_Dict,cmpgn_cls=campaignAR_plotter.main(campaign=campaign,flights=flights,
                                           era_is_desired=use_era, 
                                           icon_is_desired=use_icon,
                                           carra_is_desired=use_carra,
@@ -109,7 +124,7 @@ budget_plot_path=cmpgn_cls.plot_path+"budget/"
 if not os.path.exists(budget_plot_path):
     os.makedirs(budget_plot_path)
 
-            
+#sys.exit()            
 for flight in flights:
     if instantan:
         flight=flight+"_instantan"
@@ -121,22 +136,36 @@ for flight in flights:
                  grid_name=grid_name,do_instantan=instantan)
     Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,config_file,
                  grid_name=grid_name,do_instantan=instantan)
+    
+    ar_of_day="SAR_internal"
+    #working_path=os.getcwd()
+    grid_name=Hydrometeors[flight]["AR_internal"].name
+            
+    AR_inflow,AR_outflow=Atmospheric_Rivers.locate_AR_cross_section_sectors(
+                                    HALO_Dict,Hydrometeors,analysed_flight)
+    TIVT_inflow,TIVT_outflow=Atmospheric_Rivers.calc_TIVT_of_sectors(
+                                    AR_inflow,AR_outflow,grid_name)
+    #sys.exit()
+    # Old rough stuff
+    ar_inflow=AR_inflow["AR_inflow"]
+    ar_outflow=AR_outflow["AR_outflow"]
 
+    Budget_plots.plot_AR_TIVT_cumsum_quicklook(
+                ar_inflow,ar_outflow)
+            
+    IVT_Variability_Plotter.plot_inflow_outflow_IVT_sectors(cmpgn_cls,
+                                                        AR_inflow,AR_outflow,
+                                                        TIVT_inflow,TIVT_outflow,
+                                                        grid_name,flight)
+                
     for sector in ["cold_sector","core","warm_sector"]:
         if flight.startswith("SRF12"):
             if sector=="cold_sector":
                 continue
-        for number_of_sondes in [2,100]:    
+            
+        for number_of_sondes in [3,100]:    
             print(flight)
             #flight_dates=["2016"]
-            ar_of_day="SAR_internal"
-            working_path=os.getcwd()
-            grid_name=Hydrometeors[analysed_flight]["AR_internal"].name
-            
-            AR_inflow,AR_outflow=Atmospheric_Rivers.locate_AR_cross_section_sectors(
-                                    HALO_Dict,Hydrometeors,analysed_flight)
-            TIVT_inflow,TIVT_outflow=Atmospheric_Rivers.calc_TIVT_of_sectors(
-                                    AR_inflow,AR_outflow,grid_name)
             
             #%%
             #sector="core" # warm_sector, # cold_sector
@@ -158,6 +187,7 @@ for flight in flights:
             sondes_pos_outflow=AR_outflow["AR_outflow_"+sector][\
                                 ["Halo_Lat","Halo_Lon"]].loc[outflow_sondes_times]
             sondes_pos_all=pd.concat([sondes_pos_inflow,sondes_pos_outflow])
+            #sys.exit()
             #%%
             if not "q" in HMCs[analysed_flight]["AR_internal"].keys():
                 HMCs[analysed_flight]["AR_internal"]["q"]=\
@@ -186,20 +216,9 @@ for flight in flights:
                                         v_outflow_sondes**2)
             
             moist_transport_outflow=q_outflow_sondes*wind_outflow_sondes
-            
+            #sys.exit()
             ###################################################################
             #%%
-            # Old rough stuff
-            ar_inflow=AR_inflow["AR_inflow"]
-            ar_outflow=AR_outflow["AR_outflow"]
-
-            Budget_plots.plot_AR_TIVT_cumsum_quicklook(
-                ar_inflow,ar_outflow)
-            
-            IVT_Variability_Plotter.plot_inflow_outflow_IVT_sectors(cmpgn_cls,
-                                                        AR_inflow,AR_outflow,
-                                                        TIVT_inflow,TIVT_outflow,
-                                                        grid_name,flight)
             HMCs[analysed_flight]["AR_internal"]["wind"]=np.sqrt(
                 HMCs[analysed_flight]["AR_internal"]["u"]**2+\
                     HMCs[analysed_flight]["AR_internal"]["v"]**2)

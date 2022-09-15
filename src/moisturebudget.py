@@ -82,9 +82,7 @@ class Moisture_Convergence(Moisture_Budgets):
         outflow_lat_lon=(AR_outflow["AR_outflow_"+sector]["Halo_Lat"].mean(),
                      AR_outflow["AR_outflow_"+sector]["Halo_Lat"].mean())
         
-        #grid_module_name="Grid_on_HALO"
-        #if grid_module_name not in sys.modules:
-        import Grid_on_HALO
+        import gridonhalo as Grid_on_HALO
         
         mean_distance=Grid_on_HALO.harvesine_distance(inflow_lat_lon,
                                                       outflow_lat_lon)
@@ -724,9 +722,12 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.set_xlabel("Cumsum distance as timesteps")
         ax1.legend()
         fig_name=self.flight+"_"+self.grid_name+"_TIVT_inflow_outflow_cumsum.png"
-        fig.savefig(self.plot_path+fig_name,
+        plot_path=self.plot_path+"/supplementary/"
+        if not os.path.exists(plot_path):
+            os.makedirs(plot_path)
+        fig.savefig(plot_path+fig_name,
                 dpi=200,bbox_inches="tight")
-        print("Figure saved as:",self.plot_path+fig_name)
+        print("Figure saved as:",plot_path+fig_name)
     
     def plot_comparison_sector_leg_wind_q_transport(self,
                         mean_trpz_wind,mean_trpz_q,mean_trpz_moist_transport,
@@ -756,17 +757,22 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.legend(loc="best",fontsize=12)
         fig_name=self.flight+"_"+self.grid_name+"_"+sector+"_Mean_Moisture_Transport.png"
         if not self.plot_path.endswith("budget/"):
-            plot_path=self.plot_path+"/budget/"
+            plot_path=self.plot_path+"/budget/supplementary/"
         else:
-            plot_path=self.plot_path
+            plot_path=self.plot_path+"/supplementary/"
+        
+        if not os.path.exists(plot_path):
+            os.makedirs(plot_path)
+        
         sns.despine(offset=10)
         profile.savefig(plot_path+fig_name,dpi=300,bbox_inches="tight")
         print("Figure saved as:",plot_path+fig_name)
 
-    def plot_moisture_budget_divergence_components(self,q_core_inflow,
-        q_core_outflow,wind_core_inflow,wind_core_outflow,
-        moist_transport_core_inflow,moist_transport_core_outflow,
-        mean_core_trpz_q,mean_core_trpz_wind,mean_core_trpz_moist_transport,
+    def plot_moisture_budget_divergence_components(self,q_sector_inflow,
+        q_sector_outflow,wind_sector_inflow,wind_sector_outflow,
+        moist_transport_sector_inflow,moist_transport_sector_outflow,
+        mean_sector_trpz_q,mean_sector_trpz_wind,
+        mean_sector_trpz_moist_transport,
         pressure,mean_distance,sector):
     
         budget_profile_df=pd.DataFrame(data=np.nan,index=pressure.astype(int),
@@ -775,21 +781,21 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         profile=plt.figure(figsize=(12,9))
         #######################################################################
         #Moisture advection
-        q_diff=(q_core_outflow.mean()-q_core_inflow.mean())*1000
+        q_diff=(q_sector_outflow.mean()-q_sector_inflow.mean())*1000
         #print(mean_core_trpz_wind*q_diff/(mean_distance*1000))
-        budget_profile_df["ADV"]=np.array(mean_core_trpz_wind*q_diff/\
+        budget_profile_df["ADV"]=np.array(mean_sector_trpz_wind*q_diff/\
                                       (mean_distance*1000))
         
         ax1=profile.add_subplot(131)
-        ax1.plot(mean_core_trpz_wind*q_diff/(mean_distance*1000),
+        ax1.plot(mean_sector_trpz_wind*q_diff/(mean_distance*1000),
          pressure,label="q: out-in",color="darkblue")
         ax1.axvline(0,ls="--",lw=2,color="k")
         ax1.fill_betweenx(y=q_diff.index.astype(float),
-                      x1=mean_core_trpz_wind*q_diff/(mean_distance*1000),
+                      x1=mean_sector_trpz_wind*q_diff/(mean_distance*1000),
                       x2=0, where=(q_diff > 0),
                   color="saddlebrown",alpha=0.3)
         ax1.fill_betweenx(y=q_diff.index.astype(float),
-                      x1=mean_core_trpz_wind*q_diff/(mean_distance*1000),
+                      x1=mean_sector_trpz_wind*q_diff/(mean_distance*1000),
                       where=(q_diff<0),x2=0,color="teal",alpha=0.3)
         for axis in ['top','bottom','left','right']:
             ax1.spines[axis].set_linewidth(3)
@@ -806,23 +812,23 @@ class Moisture_Budget_Plots(Moisture_Convergence):
     
         sns.despine(ax=ax1,offset=10)
         #######################################################################
-        wind_diff=(wind_core_outflow.mean()-wind_core_inflow.mean())
-        budget_profile_df["CONV"]=np.array(wind_diff*mean_core_trpz_q*1000/\
+        wind_diff=(wind_sector_outflow.mean()-wind_sector_inflow.mean())
+        budget_profile_df["CONV"]=np.array(wind_diff*mean_sector_trpz_q*1000/\
                                        (mean_distance*1000))
     
     
         ax2=profile.add_subplot(132)
         ax2.axvline(0,ls="--",lw=2,color="k")
-        ax2.plot(wind_diff*mean_core_trpz_q*1000/(mean_distance*1000),
+        ax2.plot(wind_diff*mean_sector_trpz_q*1000/(mean_distance*1000),
              pressure,label="wind: out-in",color="purple")
 
         ax2.fill_betweenx(y=wind_diff.index.astype(float),
-                  x1=wind_diff*mean_core_trpz_q*1000/(mean_distance*1000),
-                  where=(wind_diff*mean_core_trpz_q>0),
+                  x1=wind_diff*mean_sector_trpz_q*1000/(mean_distance*1000),
+                  where=(wind_diff*mean_sector_trpz_q>0),
                   x2=0,color="saddlebrown",alpha=0.3)
         ax2.fill_betweenx(y=wind_diff.index.astype(float),
-                  x1=wind_diff*mean_core_trpz_q*1000/(mean_distance*1000),
-                  where=(wind_diff*mean_core_trpz_q<0),
+                  x1=wind_diff*mean_sector_trpz_q*1000/(mean_distance*1000),
+                  where=(wind_diff*mean_sector_trpz_q<0),
                   x2=0,color="teal",alpha=0.3)
         for axis in ['top','bottom','left','right']:
             ax2.spines[axis].set_linewidth(3)
@@ -840,8 +846,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax2.legend(loc="upper center",fontsize=14)
         sns.despine(ax=ax2,offset=10)
         ###########################################################################
-        transport_diff=moist_transport_core_outflow.mean()-\
-                    moist_transport_core_inflow.mean()
+        transport_diff=moist_transport_sector_outflow.mean()-\
+                    moist_transport_sector_inflow.mean()
         budget_profile_df["moist_transp"]=np.array(transport_diff*1000/\
                                                (mean_distance*1000))
         ax3=profile.add_subplot(133)
@@ -898,8 +904,15 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         #plot_path=cmpgn_cls.plot_path+"/budget/"
         fig_name=self.flight+"_"+self.grid_name+"_"+\
             sector+"_Moisture_transport_Divergence.png"
-        profile.savefig(self.plot_path+fig_name,dpi=300,bbox_inches="tight")
-        print("Figure saved as:",self.plot_path+fig_name)
+        if not self.plot_path.endswith("budget/"):
+            plot_path=self.plot_path+"/budget/"
+        else:
+            plot_path=self.plot_path
+        plot_path=plot_path+"/supplementary/"
+        if not os.path.exists(plot_path):
+            os.makedirs(plot_path)
+        profile.savefig(plot_path+fig_name,dpi=300,bbox_inches="tight")
+        print("Figure saved as:",plot_path+fig_name)
         return budget_profile_df
     ###############################################################################
     #%% Major functions
