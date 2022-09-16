@@ -95,6 +95,10 @@ This shows the frontal sector based AR cross-sections for in- and outflow corrid
 It is created by running the notebook **AR_sector_multiplot_in-outflow.ipynb**  
 This notebook basically runs multiplot_inflow_outflow_IVT sectors from ```python class IVT_Variability_Plotter```.
 #### Figure 13 (Case Sector-Based Vertical Profiles of Divergence)
-
+To create the divergence results just run:
+```python 
+import run_moisture_budget_closure_regression_method
+```
+the divergence values are then stored in the airborne data folder under budgets. Some additional figures are created and stored under "plots/budget/supplementary/"
 
 
