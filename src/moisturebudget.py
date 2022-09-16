@@ -1137,10 +1137,15 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                     "_regr_sonde_no_"+\
                         str(number_of_sondes)+".png"
             
-        fig.savefig(self.plot_path+budget_plot_file_name,
+        if self.plot_path.endswith("budget/"):
+            plot_path=self.plot_path+"/supplementary/"
+        else:
+            pass
+        fig.savefig(plot_path+budget_plot_file_name,
                         dpi=300,bbox_inches="tight")
         plt.close()
-        print("Figure saved as:",self.plot_path+budget_plot_file_name)
+        
+        print("Figure saved as:",plot_path+budget_plot_file_name)
             
             
     ###########################################################################

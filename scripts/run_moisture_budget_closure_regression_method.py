@@ -274,24 +274,32 @@ for flight in flights:
             domain_values["wind"]=pd.concat([wind_inflow_sondes,
                                                   wind_outflow_sondes])
             
-            mean_u,dx_u,dy_u=Moisture_CONV.run_regression(sondes_pos_all,domain_values,
-                                               "u")
-            mean_v,dx_v,dy_v=Moisture_CONV.run_regression(sondes_pos_all,domain_values,
-                                               "v")
+            mean_u,dx_u,dy_u=Budgets.Moisture_Convergence.run_regression(
+                                                        sondes_pos_all,
+                                                        domain_values,"u")
+            mean_v,dx_v,dy_v=Budgets.Moisture_Convergence.run_regression(
+                                                        sondes_pos_all,
+                                                        domain_values,"v")
             
-            mean_qv,dx_qv,dy_qv=Moisture_CONV.run_regression(sondes_pos_all,domain_values,
-                                               "transport")
+            mean_qv,dx_qv,dy_qv=Budgets.Moisture_Convergence.run_regression(
+                                                    sondes_pos_all,
+                                                    domain_values,"transport")
             
-            mean_q,dx_q_calc,dy_q_calc=Moisture_CONV.run_regression(sondes_pos_all,domain_values,
+            mean_q,dx_q_calc,dy_q_calc=Budgets.Moisture_Convergence.run_regression(sondes_pos_all,domain_values,
                                                "q")
             
-            mean_scalar_wind,dx_scalar_wind,dy_scalar_wind=Moisture_CONV.run_regression(
-                                    sondes_pos_all,domain_values,"wind")
+            mean_scalar_wind,dx_scalar_wind,dy_scalar_wind=Budgets.\
+                                                        Moisture_Convergence.\
+                                                            run_regression(
+                                                                sondes_pos_all,
+                                                                domain_values,
+                                                                "wind")
             
             div_qv=(dx_qv+dy_qv)*1000
-            #div_wind=(dx_u+dy_v)
+            
+            div_wind=(dx_u+dy_v)
             div_scalar_wind=(dx_scalar_wind+dy_scalar_wind)
-            #div_mass=div_wind*domain_values["q"].mean(axis=0).values*1000
+            div_mass=div_wind*domain_values["q"].mean(axis=0).values*1000
             div_scalar_mass=div_scalar_wind*\
                 domain_values["q"].mean(axis=0).values*1000
             adv_q_calc=(dx_q_calc+dy_q_calc)*\
@@ -306,8 +314,10 @@ for flight in flights:
                                                     adv_q_calc,adv_q_scalar)
             
             # Save the data
-            budget_regression_profile_df=pd.DataFrame(data=np.nan,index=div_qv.index,
-                                                      columns=["CONV","ADV","TRANSP"])
+            budget_regression_profile_df=pd.DataFrame(data=np.nan,
+                                                      index=div_qv.index,
+                                                      columns=["CONV","ADV",
+                                                               "TRANSP"])
             budget_regression_profile_df["CONV"]=div_scalar_mass.values
             budget_regression_profile_df["ADV"]=adv_q_calc.values
             budget_regression_profile_df["TRANSP"]=div_qv.values
