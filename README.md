@@ -99,6 +99,7 @@ To create the divergence results just run:
 ```python 
 import run_moisture_budget_closure_regression_method
 ```
+This script itself calls ```Moisture_Convergence.calc_moisture_convergence_from_regression_method```
 the divergence values are then stored in the airborne data folder under budgets. Some additional figures are created and stored under "plots/budget/supplementary/"
 
 
