@@ -23,12 +23,11 @@ if not "flightcampaign" in sys.modules:
     import flightcampaign as Flight_Campaign
 class Moisture_Budgets():
     def __init__(self):
-        
         pass
-
 class Moisture_Convergence(Moisture_Budgets):
     
     def __init__(self,cmpgn_cls,flight,config_file,
+                 flight_dates={},sonde_no=3,
                  grid_name="ERA5",do_instantan=False):
         
         self.cmpgn_cls=cmpgn_cls
@@ -36,7 +35,9 @@ class Moisture_Convergence(Moisture_Budgets):
         self.do_instantan=do_instantan
         self.flight=flight
         self.config_file=config_file
-        self.flight_dates={"North_Atlantic_Run":
+        if flight_dates=={}:
+            
+            self.flight_dates={"North_Atlantic_Run":
                                {"SRF02":"20180224",
                                 "SRF04":"20190319",#},
                                 "SRF07":"20200416",#},
@@ -49,15 +50,20 @@ class Moisture_Convergence(Moisture_Budgets):
                                 "SRF09":"20160311",
                                 "SRF12":"20180225"
                                 }}
-
-
+        self.flight_dates=flight_dates
+        self.sonde_no=sonde_no
+        self.sector_colors={"warm_sector":"orange",
+                            "core":"darkgreen",
+                            "cold_sector":"darkblue"}            
+    
     #%% Budget functions
     def run_rough_budget_closure(self,wind_field,q_field,moisture_transport,
                                  wind_sector_inflow,wind_sector_outflow,
                                  q_sector_inflow,q_sector_outflow,
                                  moist_transport_sector_inflow,
                                  moist_transport_sector_outflow,pressure,
-                                 AR_inflow,AR_outflow,sector="core"):
+                                 AR_inflow,AR_outflow,sector="core",
+                                 do_supplements=False):
         
         #mean q_core
         mean_trpz_wind=wind_field.mean()
@@ -90,20 +96,20 @@ class Moisture_Convergence(Moisture_Budgets):
                                            self.flight,
                                            self.config_file,
                                            grid_name=self.grid_name)
-        Budget_plots.plot_comparison_sector_leg_wind_q_transport(
+        if do_supplements:
+            Budget_plots.plot_comparison_sector_leg_wind_q_transport(
             mean_trpz_wind,mean_trpz_q,mean_trpz_moist_transport,
             mean_sector_trpz_q,mean_sector_trpz_wind,
             mean_sector_trpz_moist_transport,
             pressure,sector)
     
-        budget_profile_df=Budget_plots.plot_moisture_budget_divergence_components(
+            budget_profile_df=Budget_plots.plot_moisture_budget_divergence_components(
             q_sector_inflow,q_sector_outflow,wind_sector_inflow,wind_sector_outflow,
             moist_transport_sector_inflow,moist_transport_sector_outflow,
             mean_sector_trpz_q,mean_sector_trpz_wind,mean_sector_trpz_moist_transport,
             pressure,mean_distance,sector)
     
-    def load_moisture_convergence_single_case(self,campaign="same",
-                                              sonde_no="2"):
+    def load_moisture_convergence_single_case(self,campaign="same"):
         """
     
 
@@ -179,10 +185,12 @@ class Moisture_Convergence(Moisture_Budgets):
         #s
         for sector in sectors:
             #if not self.do_instantan:
-            budget_file=self.flight+"_AR_"+sector+"_"+self.grid_name+"_regr_sonde_no_"+sonde_no+".csv"
+            budget_file=self.flight+"_AR_"+sector+"_"+self.grid_name+\
+                            "_regr_sonde_no_"+self.sonde_no+".csv"
             if sector=="core":
                 print("Read budget file",budget_file)
-            budget_ideal_file=self.flight+"_AR_"+sector+"_"+self.grid_name+"_regr_sonde_no_100"+".csv"
+            budget_ideal_file=self.flight+"_AR_"+sector+"_"+self.grid_name+\
+                                "_regr_sonde_no_100"+".csv"
             #else:
             #    budget_file=self.flight+"_instantan_AR_"+sector+"_"+self.grid_name+\
             #    "_regr_sonde_no_"+sonde_no+".csv"
@@ -195,7 +203,8 @@ class Moisture_Convergence(Moisture_Budgets):
                 del sector_values["Unnamed: 0"]
                 Sectors[sector]=sector_values
         
-                sector_values_ideal=pd.read_csv(budget_data_path+budget_ideal_file)
+                sector_values_ideal=pd.read_csv(budget_data_path+\
+                                                budget_ideal_file)
                 sector_values_ideal.index=sector_values_ideal["Unnamed: 0"]
                 Ideal_Sectors[sector]=sector_values_ideal
             else:
@@ -205,7 +214,8 @@ class Moisture_Convergence(Moisture_Budgets):
                     del sector_values["Unnamed: 0"]
                     Sectors[sector]=sector_values
                     
-                    sector_values_ideal=pd.read_csv(budget_data_path+budget_ideal_file)
+                    sector_values_ideal=pd.read_csv(budget_data_path+\
+                                                    budget_ideal_file)
                     sector_values_ideal.index=sector_values_ideal["Unnamed: 0"]
                     Ideal_Sectors[sector]=sector_values_ideal
                 else:
@@ -343,245 +353,368 @@ class Moisture_Convergence(Moisture_Budgets):
         return Summary_Budgets, Summary_Ideal_Budgets
     
     def calc_moisture_convergence_from_regression_method(self,
-            campaign="Second_Synthetic_Study",do_plotting=False,
+            config_file_path="",do_plotting=False,
             calc_hmp=True,calc_hmc=False,use_era=True,use_carra=False,
-            use_icon=False):
+            use_icon=False,do_supplements=False):
         
-        if not "NAWDEX_AR_plotter" in sys.modules:
-            import NAWDEX_AR_plotter
-        if not "Atmospheric_Rivers" in sys.modules:
-            import Atmospheric_Rivers
+        import data_config
+        import flightcampaign
+        
+        if config_file_path=="":
+            aircraft_base_path=os.getcwd()
+        else:
+            aircraft_base_path=config_file_path
+        #if not "data_config" in sys.modules:
+        if not "campaignAR_plotter" in sys.modules:
+            import campaignAR_plotter
+        if not "atmospheric_rivers" in sys.modules:
+            import atmospheric_rivers
+        #if not "flightcampaign" in sys.modules:
         # Config File
-        self.config_file=data_config.load_config_file(os.getcwd(),
+        self.config_file=data_config.load_config_file(aircraft_base_path,
                                                       "data_config_file")
 
 
 
-        flights=[*self.flight_dates[campaign].keys()]
-        Hydrometeors,HALO_Dict,cmpgn_cls=NAWDEX_AR_plotter.main(
+        for campaign in self.flight_dates:
+            init_flight="SRF02" # this is just for initiating the class
+            if campaign=="North_Atlantic_Run":
+                self.cmpgn_cls=flightcampaign.North_Atlantic_February_Run(
+                    is_flight_campaign=True,
+                    major_path=self.config_file["Data_Paths"]["campaign_path"],
+                    aircraft="HALO",interested_flights=init_flight,
+                    instruments=["radar","radiometer","sonde"])
+            elif campaign=="Second_Synthetic_Study":
+                self.cmpgn_cls=flightcampaign.Second_Synthetic_Study(
+                    is_flight_campaign=True,
+                    major_path=self.config_file["Data_Paths"]["campaign_path"],
+                    aircraft="HALO",interested_flights=init_flight,
+                    instruments=["radar","radiometer","sonde"])
+                
+            else:
+                raise Exception("Wrong campaign assigned.")
+            flights=[*self.flight_dates[campaign].keys()]
+            Hydrometeors,HALO_Dict,cmpgn_cls=campaignAR_plotter.main(
                                         campaign=campaign,flights=flights,
                                         era_is_desired=use_era, 
                                         icon_is_desired=use_icon,
                                         carra_is_desired=use_carra,
                                         do_daily_plots=do_plotting,
-                                        calc_hmp=calc_hmp,calc_hmc=calc_hmc,
-                                        do_instantaneous=self.instantan)
+                                        calc_hmp=True,calc_hmc=False,
+                                        do_instantaneous=self.do_instantan)
 
-        HMCs,HALO_Dict,cmpgn_cls=NAWDEX_AR_plotter.main(
+            HMCs,HALO_Dict,cmpgn_cls=campaignAR_plotter.main(
                                         campaign=campaign,flights=flights,
                                         era_is_desired=use_era, 
                                         icon_is_desired=use_icon,
                                         carra_is_desired=use_carra,
                                         do_daily_plots=do_plotting,
                                         calc_hmp=False,calc_hmc=True,
-                                        do_instantaneous=self.instantan)
+                                        do_instantaneous=self.do_instantan)
 
-        budget_data_path=cmpgn_cls.campaign_data_path+"budget/"
-        if not os.path.exists(budget_data_path):
-            os.makedirs(budget_data_path)            
+            budget_data_path=cmpgn_cls.campaign_data_path+"budget/"
+            if not os.path.exists(budget_data_path):
+                os.makedirs(budget_data_path)            
             budget_plot_path=cmpgn_cls.plot_path+"budget/"
-        if not os.path.exists(budget_plot_path):
-            os.makedirs(budget_plot_path)
+            if not os.path.exists(budget_plot_path):
+                os.makedirs(budget_plot_path)
             
-        for flight in flights:
-            if self.instantan:
-                flight=flight+"_instantan"
-                analysed_flight=flight.split("_")[0]
-            else:
-                analysed_flight=flight        
-            for sector in ["cold_sector","core","warm_sector"]:
-                if flight.startswith("SRF12"):
-                    if sector=="cold_sector":
-                        continue
-                for number_of_sondes in [2,100]:    
-                    print(flight)
-                    #flight_dates=["2016"]
-                    ar_of_day="SAR_internal"
-                    working_path=os.getcwd()
-                    grid_name=Hydrometeors[analysed_flight]["AR_internal"].name
+            # create mean values plots
+            mean_profile_fig=plt.figure(figsize=(16,9))
+            ax1_mean=mean_profile_fig.add_subplot(131)
+            ax2_mean=mean_profile_fig.add_subplot(132)
+            ax3_mean=mean_profile_fig.add_subplot(133)
+        
             
-                    AR_inflow,AR_outflow=Atmospheric_Rivers.\
-                                            locate_AR_cross_section_sectors(
-                                                HALO_Dict,Hydrometeors,
-                                                analysed_flight)
-                    TIVT_inflow,TIVT_outflow=Atmospheric_Rivers.calc_TIVT_of_sectors(
-                                    AR_inflow,AR_outflow,grid_name)
-            
-                    #%%
-                    #sector="core" # warm_sector, # cold_sector
-                    # Sonde number
-                    #number_of_sondes=2
-                    sondes_selection={}
-                    sondes_selection["inflow_"+sector]=np.linspace(
-                                    0,AR_inflow["AR_inflow_"+sector].shape[0]-1,
-                                    num=number_of_sondes).astype(int)
-                    sondes_selection["outflow_"+sector]=np.linspace(
-                                    0,AR_outflow["AR_outflow_"+sector].shape[0]-1,
-                                    num=number_of_sondes).astype(int)
-                    #%% Loc and locate sondes for regression method
-                    inflow_sondes_times=AR_inflow["AR_inflow_"+sector].index[\
-                                        sondes_selection["inflow_"+sector]]
-                    outflow_sondes_times=AR_outflow["AR_outflow_"+sector].index[\
-                                    sondes_selection["outflow_"+sector]]
-            
-                    sondes_pos_inflow=AR_inflow["AR_inflow_"+sector][\
-                                ["Halo_Lat","Halo_Lon"]].loc[inflow_sondes_times]
-                    sondes_pos_outflow=AR_outflow["AR_outflow_"+sector][\
-                                ["Halo_Lat","Halo_Lon"]].loc[outflow_sondes_times]
-                    sondes_pos_all=pd.concat([sondes_pos_inflow,sondes_pos_outflow])
-            #%%
-            if not "q" in HMCs[analysed_flight]["AR_internal"].keys():
-                HMCs[analysed_flight]["AR_internal"]["q"]=\
-                    HMCs[analysed_flight]["AR_internal"]["specific_humidity"].copy()
-            q_inflow_sondes=HMCs[analysed_flight]["AR_internal"]["q"].loc[\
-                                                    inflow_sondes_times]
-            q_outflow_sondes=HMCs[analysed_flight]["AR_internal"]["q"].loc[\
-                                                    outflow_sondes_times]
-            
-            u_inflow_sondes=HMCs[analysed_flight]["AR_internal"]["u"].loc[\
-                                                    inflow_sondes_times]
-            u_outflow_sondes=HMCs[analysed_flight]["AR_internal"]["u"].loc[\
-                                                    outflow_sondes_times]
-            
-            v_inflow_sondes=HMCs[analysed_flight]["AR_internal"]["v"].loc[\
-                                                    inflow_sondes_times]
-            v_outflow_sondes=HMCs[analysed_flight]["AR_internal"]["v"].loc[\
-                                                    outflow_sondes_times]
-            
-            wind_inflow_sondes=np.sqrt(u_inflow_sondes**2+\
-                                       v_inflow_sondes**2)
-            
-            moist_transport_inflow=q_inflow_sondes*wind_inflow_sondes
-            
-            wind_outflow_sondes=np.sqrt(u_outflow_sondes**2+\
-                                        v_outflow_sondes**2)
-            
-            moist_transport_outflow=q_outflow_sondes*wind_outflow_sondes
-            
-            ###################################################################
-            #%%
-            # Old rough stuff
-            ar_inflow=AR_inflow["AR_inflow"]
-            ar_outflow=AR_outflow["AR_outflow"]
-            Budget_plots=Moisture_Budget_Plots(cmpgn_cls, flight, 
-                            self.config_file,grid_name=self.grid_name,
-                            do_instantan=self.do_instantan)
-            Budget_plots.plot_AR_TIVT_cumsum_quicklook(
-                ar_inflow,ar_outflow,cmpgn_cls,flight,grid_name)
-            #IVT_Variability_Plotter=IVT_Variability_handler.IVT_Variability_Plotter
-            IVT_Variability_Plotter.plot_inflow_outflow_IVT_sectors(cmpgn_cls,
+            for flight in flights:
+                # Init Plot class
+                Budget_plots=Moisture_Budget_Plots(cmpgn_cls, flight, 
+                                self.config_file,grid_name=self.grid_name,
+                                do_instantan=self.do_instantan)
+                        
+                if self.do_instantan:
+                    flight=flight+"_instantan"
+                    analysed_flight=flight.split("_")[0]
+                else:
+                    analysed_flight=flight        
+                ar_of_day="SAR_internal"
+                #working_path=os.getcwd()
+                grid_name=HMCs[analysed_flight]\
+                                        ["AR_internal"]["name"]
+                
+                AR_inflow,AR_outflow=atmospheric_rivers.Atmospheric_Rivers.\
+                                                locate_AR_cross_section_sectors(
+                                                    HALO_Dict,Hydrometeors,
+                                                    analysed_flight)
+                TIVT_inflow,TIVT_outflow=atmospheric_rivers.Atmospheric_Rivers.\
+                                                    calc_TIVT_of_sectors(
                                                         AR_inflow,AR_outflow,
-                                                        TIVT_inflow,TIVT_outflow,
-                                                        grid_name,flight)
-            HMCs[analysed_flight]["AR_internal"]["wind"]=np.sqrt(
-                HMCs[analysed_flight]["AR_internal"]["u"]**2+\
-                    HMCs[analysed_flight]["AR_internal"]["v"]**2)
-
-            q_field=HMCs[analysed_flight]["AR_internal"]["q"].copy()
-            wind_field=HMCs[analysed_flight]["AR_internal"]["wind"].copy()
-
-            moisture_transport=q_field*wind_field
-
-            q_sector_inflow=q_field.loc[AR_inflow["AR_inflow_"+sector].index]
-            q_sector_outflow=q_field.loc[AR_outflow["AR_outflow_"+sector].index]
-
-            wind_sector_inflow=wind_field.loc[AR_inflow["AR_inflow_"+sector].index]
-            wind_sector_outflow=wind_field.loc[AR_outflow["AR_outflow_"+sector].index]
-
-            moist_transport_sector_inflow=moisture_transport.loc[\
+                                                        grid_name)
+                for sector in ["cold_sector","core","warm_sector"]:
+                    if flight.startswith("SRF12"):
+                        if sector=="cold_sector":
+                            continue
+                    for number_of_sondes in [self.sonde_no,100]:    
+                        print(flight)
+                        #flight_dates=["2016"]
+                        
+                
+                        #%%
+                        # Sonde number
+                        sondes_selection={}
+                        sondes_selection["inflow_"+sector]=np.linspace(
+                                0,AR_inflow["AR_inflow_"+sector].shape[0]-1,
+                                num=number_of_sondes).astype(int)
+                        sondes_selection["outflow_"+sector]=np.linspace(
+                                0,AR_outflow["AR_outflow_"+sector].shape[0]-1,
+                                num=number_of_sondes).astype(int)
+                        #%% Loc and locate sondes for regression method
+                        inflow_sondes_times=\
+                                AR_inflow["AR_inflow_"+sector].index[\
+                                    sondes_selection["inflow_"+sector]]
+                        outflow_sondes_times=\
+                                AR_outflow["AR_outflow_"+sector].index[\
+                                        sondes_selection["outflow_"+sector]]
+                
+                        sondes_pos_inflow=\
+                                AR_inflow["AR_inflow_"+sector][\
+                                    ["Halo_Lat","Halo_Lon"]].loc[\
+                                                        inflow_sondes_times]
+                        sondes_pos_outflow=\
+                                AR_outflow["AR_outflow_"+sector][\
+                                    ["Halo_Lat","Halo_Lon"]].loc[\
+                                        outflow_sondes_times]
+                        sondes_pos_all=pd.concat(
+                                [sondes_pos_inflow,sondes_pos_outflow])
+                #%%
+                        if not "q" in HMCs[analysed_flight]["AR_internal"].keys():
+                            HMCs[analysed_flight]["AR_internal"]["q"]=\
+                                    HMCs[analysed_flight]["AR_internal"]\
+                                        ["specific_humidity"].copy()
+                        q_inflow_sondes=\
+                                HMCs[analysed_flight]["AR_internal"]["q"].loc[\
+                                                        inflow_sondes_times]
+                        q_outflow_sondes=\
+                            HMCs[analysed_flight]["AR_internal"]["q"].loc[\
+                                                        outflow_sondes_times]
+                
+                        u_inflow_sondes=\
+                            HMCs[analysed_flight]["AR_internal"]["u"].loc[\
+                                                        inflow_sondes_times]
+                        u_outflow_sondes=\
+                            HMCs[analysed_flight]["AR_internal"]["u"].loc[\
+                                                        outflow_sondes_times]
+                
+                        v_inflow_sondes=\
+                            HMCs[analysed_flight]["AR_internal"]["v"].loc[\
+                                                        inflow_sondes_times]
+                        v_outflow_sondes=\
+                            HMCs[analysed_flight]["AR_internal"]["v"].loc[\
+                                                        outflow_sondes_times]
+                
+                        wind_inflow_sondes=np.sqrt(u_inflow_sondes**2+\
+                                           v_inflow_sondes**2)
+                
+                        moist_transport_inflow=\
+                            q_inflow_sondes*wind_inflow_sondes
+                
+                        wind_outflow_sondes=np.sqrt(u_outflow_sondes**2+\
+                                            v_outflow_sondes**2)
+                
+                        moist_transport_outflow=q_outflow_sondes*\
+                            wind_outflow_sondes
+                
+                        #######################################################
+                        ar_inflow=AR_inflow["AR_inflow"]
+                        ar_outflow=AR_outflow["AR_outflow"]
+                        
+                        if number_of_sondes<10:
+                            Budget_plots.plot_AR_TIVT_cumsum_quicklook(
+                                ar_inflow,ar_outflow)
+                
+                            IVT_Variability_Plotter.plot_inflow_outflow_IVT_sectors(
+                                                cmpgn_cls,AR_inflow,AR_outflow,
+                                                TIVT_inflow,TIVT_outflow,
+                                                grid_name,flight)
+                        HMCs[analysed_flight]["AR_internal"]["wind"]=np.sqrt(
+                            HMCs[analysed_flight]["AR_internal"]["u"]**2+\
+                                HMCs[analysed_flight]["AR_internal"]["v"]**2)
+    
+                        if do_supplements:
+                            q_field=HMCs[analysed_flight]\
+                                        ["AR_internal"]["q"].copy()
+                            wind_field=HMCs[analysed_flight]["AR_internal"]\
+                                        ["wind"].copy()
+    
+                            moisture_transport=q_field*wind_field
+                        
+                            q_sector_inflow=\
+                                q_field.loc[AR_inflow[\
+                                                "AR_inflow_"+sector].index]
+                            q_sector_outflow=q_field.loc[AR_outflow[\
+                                                "AR_outflow_"+sector].index]
+    
+                            wind_sector_inflow=wind_field.loc[AR_inflow[\
+                                                "AR_inflow_"+sector].index]
+                            wind_sector_outflow=wind_field.loc[AR_outflow[\
+                                                "AR_outflow_"+sector].index]
+    
+                            moist_transport_sector_inflow=moisture_transport.loc[\
                                                 AR_inflow["AR_inflow_"+sector].index]
-            moist_transport_sector_outflow=moisture_transport.loc[\
+                            moist_transport_sector_outflow=moisture_transport.loc[\
                                                 AR_outflow["AR_outflow_"+sector].index]
-
-            pressure=q_field.columns.astype(float)
-            self.run_rough_budget_closure()
-            ###################################################################
-            #%%
-            ### Prepare the pattern for regression method
-            
-            sondes_pos_all=self.get_xy_coords_for_domain(sondes_pos_all)
-            
-            domain_values={}
-            moist_transport_inflow=moist_transport_inflow.groupby(level=0).last()
-            moist_transport_outflow=moist_transport_outflow.groupby(level=0).last()
-            u_inflow_sondes=u_inflow_sondes.groupby(level=0).last()
-            u_outflow_sondes=u_outflow_sondes.groupby(level=0).last()
-            v_inflow_sondes=v_inflow_sondes.groupby(level=0).last()
-            v_outflow_sondes=v_outflow_sondes.groupby(level=0).last()
-            q_inflow_sondes=q_inflow_sondes.groupby(level=0).last()
-            q_outflow_sondes=q_outflow_sondes.groupby(level=0).last()
-            wind_inflow_sondes=wind_inflow_sondes.groupby(level=0).last()
-            wind_outflow_sondes=wind_outflow_sondes.groupby(level=0).last()
-            domain_values["transport"]=pd.concat([moist_transport_inflow,
-                                                  moist_transport_outflow])
-            domain_values["u"]=pd.concat([u_inflow_sondes,
-                                                  u_outflow_sondes])
-            
-            domain_values["v"]=pd.concat([v_inflow_sondes,
-                                                  v_outflow_sondes])
-            domain_values["q"]=pd.concat([q_inflow_sondes,
-                                                  q_outflow_sondes])
-            domain_values["wind"]=pd.concat([wind_inflow_sondes,
-                                                  wind_outflow_sondes])
-            
-            mean_u,dx_u,dy_u=self.run_regression(sondes_pos_all,domain_values,
-                                               "u")
-            mean_v,dx_v,dy_v=self.run_regression(sondes_pos_all,domain_values,
-                                               "v")
-            
-            mean_qv,dx_qv,dy_qv=self.run_regression(sondes_pos_all,domain_values,
-                                               "transport")
-            
-            mean_q,dx_q_calc,dy_q_calc=self.run_regression(sondes_pos_all,domain_values,
-                                               "q")
-            
-            mean_scalar_wind,dx_scalar_wind,dy_scalar_wind=self.run_regression(
-                                    sondes_pos_all,domain_values,"wind")
-            
-            div_qv=(dx_qv+dy_qv)*1000
-            #div_wind=(dx_u+dy_v)
-            div_scalar_wind=(dx_scalar_wind+dy_scalar_wind)
-            #div_mass=div_wind*domain_values["q"].mean(axis=0).values*1000
-            div_scalar_mass=div_scalar_wind*\
-                domain_values["q"].mean(axis=0).values*1000
-            adv_q_calc=(dx_q_calc+dy_q_calc)*\
-                domain_values["wind"].mean(axis=0).values*1000
-            #adv_q=div_qv-div_mass
-            adv_q_scalar=div_qv-div_scalar_mass
-            fig=plt.figure(figsize=(9,12))
-            ax1=fig.add_subplot(111)
-            ax1.plot(div_qv.values,div_qv.index,label="div: transp")
-            ax1.axvline(x=0,ls="--",color="grey",lw=2)
-            #plt.plot(div_mass.values,div_mass.index,label="div: mass")
-            ax1.plot(div_scalar_mass.values,div_scalar_mass.index,label="div: scalar mass")
-            #plt.plot(adv_q.values,adv_q.index,label="adv: q")
-            ax1.plot(adv_q_calc,adv_q_calc.index,label="adv_calc:q",c="darkgreen")
-            ax1.plot(adv_q_scalar,adv_q_scalar.index,label="adv_scalar:q",c="green",ls="--")
-            ax1.invert_yaxis()
-            ax1.set_xlim([-2e-4,1e-4])
-            ax1.set_xticks([-2e-4,0,2e-4])
-            ax1.set_ylim([1000,300])
-            ax1.legend()
+    
+                            pressure=q_field.columns.astype(float)
+                        
+                            self.run_rough_budget_closure(
+                                    wind_field,q_field,moisture_transport,
+                                    wind_sector_inflow,wind_sector_outflow,
+                                    q_sector_inflow,q_sector_outflow,
+                                    moist_transport_sector_inflow,
+                                    moist_transport_sector_outflow,pressure,
+                                    AR_inflow,AR_outflow,sector=sector)
+                        #######################################################
+                        #%%
+                        ### Prepare the pattern for regression method
                 
-            budget_plot_file_name=flight+"_"+grid_name+"_AR_"+sector+\
-                "_regr_sonde_no_"+\
-                str(number_of_sondes)+".png"
-            
-            fig.savefig(budget_plot_path+budget_plot_file_name,
-                        dpi=300,bbox_inches="tight")
-            plt.close()
-            print("Figure saved as:",budget_plot_path+budget_plot_file_name)
-            
-            budget_regression_profile_df=pd.DataFrame(data=np.nan,index=div_qv.index,
-                                                      columns=["CONV","ADV","TRANSP"])
-            budget_regression_profile_df["CONV"]=div_scalar_mass.values
-            budget_regression_profile_df["ADV"]=adv_q_calc.values
-            budget_regression_profile_df["TRANSP"]=div_qv.values
-            
+                        sondes_pos_all=self.get_xy_coords_for_domain(
+                                                sondes_pos_all)
                 
-            budget_file_name=flight+"_AR_"+sector+"_"+grid_name+"_regr_sonde_no_"+\
-                str(number_of_sondes)+".csv"
-            budget_regression_profile_df.to_csv(path_or_buf=budget_data_path+budget_file_name)    
+                        domain_values={}
+                        moist_transport_inflow=moist_transport_inflow.groupby(level=0).last()
+                        moist_transport_outflow=moist_transport_outflow.groupby(level=0).last()
+                        u_inflow_sondes=u_inflow_sondes.groupby(level=0).last()
+                        u_outflow_sondes=u_outflow_sondes.groupby(level=0).last()
+                        v_inflow_sondes=v_inflow_sondes.groupby(level=0).last()
+                        v_outflow_sondes=v_outflow_sondes.groupby(level=0).last()
+                        q_inflow_sondes=q_inflow_sondes.groupby(level=0).last()
+                        q_outflow_sondes=q_outflow_sondes.groupby(level=0).last()
+                        wind_inflow_sondes=wind_inflow_sondes.groupby(level=0).last()
+                        wind_outflow_sondes=wind_outflow_sondes.groupby(level=0).last()
+                        domain_values["transport"]=pd.concat([moist_transport_inflow,
+                                                              moist_transport_outflow])
+                        domain_values["u"]=pd.concat([u_inflow_sondes,
+                                                          u_outflow_sondes])
+                        
+                        domain_values["v"]=pd.concat([v_inflow_sondes,
+                                                          v_outflow_sondes])
+                        domain_values["q"]=pd.concat([q_inflow_sondes,
+                                                          q_outflow_sondes])
+                        domain_values["wind"]=pd.concat([wind_inflow_sondes,
+                                                      wind_outflow_sondes])
+                
+                        mean_u,dx_u,dy_u=self.run_regression(sondes_pos_all,
+                                                     domain_values,"u")
+                        mean_v,dx_v,dy_v=self.run_regression(sondes_pos_all,
+                                                     domain_values,"v")
+                
+                        mean_qv,dx_qv,dy_qv=self.run_regression(sondes_pos_all,
+                                                        domain_values,"transport")
+                
+                        mean_q,dx_q_calc,dy_q_calc=self.run_regression(sondes_pos_all,
+                                                               domain_values,"q")
+                
+                        mean_scalar_wind,dx_scalar_wind,dy_scalar_wind=self.run_regression(
+                                        sondes_pos_all,domain_values,"wind")
+                
+                        div_qv=(dx_qv+dy_qv)*1000
+                        div_scalar_wind=(dx_scalar_wind+dy_scalar_wind)
+                        #div_mass=div_wind*domain_values["q"].mean(axis=0).values*1000
+                        div_scalar_mass=div_scalar_wind*\
+                            domain_values["q"].mean(axis=0).values*1000
+                        # Adv term based on divergence of q from run_regression
+                        adv_q_calc=(dx_q_calc+dy_q_calc)*\
+                            domain_values["wind"].mean(axis=0).values*1000
+                        # Simply the difference of Moisture transport divergence and
+                        # and the scalar based mass divergence
+                        adv_q_scalar=div_qv-div_scalar_mass
+                
+                        if do_supplements:
+                            Budget_plots.\
+                            plot_single_flight_and_sector_regression_divergence(
+                            sector,self.sonde_no,div_qv,div_scalar_mass,
+                            adv_q_calc,adv_q_scalar)
+                    
+                            # Sector-based comparison of values
+                            fig=plt.figure(figsize=(9,12))
+                            ax1=fig.add_subplot(111)
+                            ax1.plot(div_qv.values,div_qv.index,label="div: transp")
+                            ax1.axvline(x=0,ls="--",color="grey",lw=2)
+                            
+                            ax1.plot(div_scalar_mass.values,
+                                     div_scalar_mass.index,
+                                     label="div: scalar mass")
+                            
+                            ax1.plot(adv_q_calc,adv_q_calc.index,
+                                     label="adv_calc:q",c="darkgreen")
+                            
+                            ax1.plot(adv_q_scalar,adv_q_scalar.index,
+                             label="adv_scalar:q",c="green",ls="--")
+                    
+                            ax1.invert_yaxis()
+                            ax1.set_xlim([-2e-4,1e-4])
+                            ax1.set_xticks([-2e-4,0,2e-4])
+                            ax1.set_ylim([1000,300])
+                            ax1.legend()
+                            budget_plot_file_name=flight+"_"+grid_name+\
+                                "_AR_"+sector+"_regr_sonde_no_"+\
+                                    str(number_of_sondes)+".png"
+                            fig.savefig(budget_plot_path+"/supplementary/"+
+                                        budget_plot_file_name,
+                                        dpi=300,bbox_inches="tight")
+                            print("Figure saved as:",budget_plot_path+\
+                                  "/supplements/"+budget_plot_file_name)
+                        
+                        if number_of_sondes<10:
+                            ax1_mean.plot(domain_values["wind"].mean()*\
+                              (q_outflow_sondes.mean()-q_inflow_sondes.mean()),
+                              q_inflow_sondes.columns.astype(float),
+                              color=Budget_plots.sector_colors[sector])
+                            ax1_mean.text(-0.01,150,"ADV")
+                            ax2_mean.plot(domain_values["q"].mean()*\
+                              (wind_outflow_sondes.mean()-\
+                               wind_inflow_sondes.mean()),
+                              wind_outflow_sondes.columns.astype(float),
+                              color=Budget_plots.sector_colors[sector])
+                            ax2_mean.text(-0.01,150,"Mass Div")
+                            ax3_mean.plot(moist_transport_outflow.mean()-\
+                              moist_transport_inflow.mean(),
+                              moist_transport_outflow.columns.astype(float))
+                            ax3_mean.text(-0.01,150,s="Transp Div")
+                        # Save sonde budget components as dataframe
+                        budget_regression_profile_df=pd.DataFrame(data=np.nan,
+                                        index=div_qv.index,
+                                        columns=["CONV","ADV_calc","ADV_diff",
+                                                 "TRANSP"])
+                        budget_regression_profile_df["CONV"]=\
+                            div_scalar_mass.values
+                        budget_regression_profile_df["ADV_calc"]=\
+                            adv_q_calc.values
+                        budget_regression_profile_df["ADV_diff"]=\
+                            adv_q_scalar.values
+                        budget_regression_profile_df["TRANSP"]=\
+                            div_qv.values
+                
+                    
+                        budget_file_name=flight+"_AR_"+sector+"_"+\
+                                    grid_name+"_regr_sonde_no_"+\
+                                        str(number_of_sondes)+".csv"
+                        budget_regression_profile_df.to_csv(
+                            path_or_buf=budget_data_path+budget_file_name)    
+                        print("Convergence components saved as: ",
+                              budget_data_path+budget_file_name)
+                if do_supplements:
+                    ax1_mean.invert_yaxis()
+                    ax2_mean.invert_yaxis()
+                    ax3_mean.invert_yaxis() 
+                    ax1_mean.set_xlim([-0.02,0.02])
+                    ax2_mean.set_xlim([-0.02,0.02])
+                    ax3_mean.set_xlim([-0.02,0.02])  
+                    file_name=flight+"_simplified_divergence_sonde_no_"+\
+                                str(number_of_sondes)+".png"
+                    mean_profile_fig.savefig(budget_data_path+file_name)
+                    print("Figure saved as:",budget_data_path+file_name)
+            
 
     @staticmethod
     def get_xy_coords_for_domain(domain):
@@ -598,8 +731,6 @@ class Moisture_Convergence(Moisture_Budgets):
 
         delta_x = x_coor - xc  # *111*1000 # difference of sonde long from mean long
         delta_y = y_coor - yc  # *111*1000 # difference of sonde lat from mean lat
-        print(delta_x)
-        print(delta_y)
         domain["dx"] = delta_x
         domain["dy"] = delta_y
     
@@ -639,7 +770,7 @@ class Moisture_Convergence(Moisture_Budgets):
 
         
         return mean_parameter, dx_parameter, dy_parameter
-
+    @staticmethod
     def run_regression(geo_domain,domain_values, parameter):
         """
         Input :
