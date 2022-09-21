@@ -28,7 +28,7 @@ def importer():
     paths_dict["airborne_plotting_module_path"]=\
         paths_dict["actual_working_path"]+"/plotting/"
     paths_dict["manuscript_path"]=paths_dict["working_path"]+\
-        "Synthetic_AR_Paper/Manuscript/Paper_Plots/"
+        "Synthetic_AR_Paper/Work/Manuscript/Paper_Plots/"
     os.chdir(paths_dict["airborne_processing_module_path"])
     sys.path.insert(1,paths_dict["airborne_script_module_path"])
     sys.path.insert(2,paths_dict["airborne_processing_module_path"])
