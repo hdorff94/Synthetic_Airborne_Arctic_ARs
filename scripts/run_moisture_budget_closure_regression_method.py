@@ -41,7 +41,7 @@ def importer():
     return paths_dict
 
 def main(flight_dates,do_plotting=False,instantan=False,sector_sonde_no=3,
-         calc_hmp=False,calc_hmc=True,use_era=True,use_carra=True,
+         calc_hmp=False,calc_hmc=True,use_era=True,use_carra=False,
          use_icon=False,grid_name="ERA5"):    
     paths_dict=importer()
     # Relevant created classes and modules
@@ -110,18 +110,18 @@ if __name__=="__main__":
     #%% Get data from all flights
     #
     flight_dates={"North_Atlantic_Run":
-              {#"SRF02":"20180224",
-               "SRF04":"20190319",#},
+              {"SRF02":"20180224",
+               #"SRF04":"20190319",#},
                #"SRF07":"20200416",#},
                #"SRF08":"20200419"
               },
               "Second_Synthetic_Study":
               {#"SRF02":"20110317",
                #"SRF03":"20110423",
-               #"SRF08":"20150314",
+               "SRF08":"20150314",
                #"SRF09":"20160311",
                #"SRF12":"20180225"
                }}
 
     
-    main(flight_dates,grid_name="CARRA")
+    main(flight_dates,grid_name="ERA5")

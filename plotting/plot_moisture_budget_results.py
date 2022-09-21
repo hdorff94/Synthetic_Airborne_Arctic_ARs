@@ -53,28 +53,28 @@ def main(figure_to_create="fig13"):
     # Major configurations
     campaign="Second_Synthetic_Study"#"North_Atlantic_Run"#"Second_Synthetic_Study"# 
 
-    original_flight="SRF08"
-    grid_name="CARRA"#"CARRA"#"ERA5"
+    init_flight="SRF08"
+    grid_name="ERA5"#"CARRA"#"ERA5"
     sonde_no="3"
     do_instantan=False
     do_plotting=True
     if do_instantan:
-        flight=original_flight+"_instantan"
+        flight=init_flight+"_instantan"
     else:
-        flight=original_flight
+        flight=init_flight
 
     flight_dates={"North_Atlantic_Run":
-              {#"SRF02":"20180224",
-               #"SRF04":"20190319",
-               #"SRF07":"20200416",
-               #"SRF08":"20200419"
+              {"SRF02":"20180224",
+               "SRF04":"20190319",
+               "SRF07":"20200416",
+               "SRF08":"20200419"
               },
               "Second_Synthetic_Study":
-              {#"SRF02":"20110317",
-               #"SRF03":"20110423",
+              {"SRF02":"20110317",
+               "SRF03":"20110423",
                "SRF08":"20150314",
-               #"SRF09":"20160311",
-               #"SRF12":"20180225"
+               "SRF09":"20160311",
+               "SRF12":"20180225"
               }
         }
     # Access classes
@@ -101,18 +101,22 @@ def main(figure_to_create="fig13"):
                  grid_name=grid_name,do_instantan=do_instantan)
     Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,config_file,
                  grid_name=grid_name,do_instantan=do_instantan)
-    if figure_to_create=="fig13":
+    if figure_to_create.startswith("fig13"):
         Sectors,Ideal_Sectors,cmpgn_cls=\
-            Moisture_CONV.load_moisture_convergence_single_case(sonde_no=sonde_no)
+            Moisture_CONV.load_moisture_convergence_single_case()
         if do_plotting:
             Budget_plots.plot_single_case(Sectors,Ideal_Sectors,sonde_no)
-        Campaign_Budgets,Campaign_Ideal_Budgets=Moisture_CONV.get_overall_budgets(
-                                            flight_dates,sonde_no)
+    elif figure_to_create.startswith("fig14"):
+        Campaign_Budgets,Campaign_Ideal_Budgets=\
+            Moisture_CONV.get_overall_budgets(flight_dates,sonde_no)
         if do_plotting:
             Budget_plots.moisture_convergence_cases_overview(Campaign_Budgets,
                                                         Campaign_Ideal_Budgets)
 if __name__=="__main__":
-    main()
+    # Figures to create choices:
+    figure_to_create="fig13_single_case_sector_profiles"
+    #figure_to_create="fig14_campaign_divergence_overviews"
+    main(figure_to_create=figure_to_create)
 
 """
 if do_instantan:

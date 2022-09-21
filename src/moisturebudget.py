@@ -146,10 +146,10 @@ class Moisture_Convergence(Moisture_Budgets):
 
         """
         if not campaign=="same":
-            if not "Flight_Campaign" in sys.modules():
-                import Flight_Campaign
+           # if not "Flight_Campaign" in sys.modules():
+            import flightcampaign
             if campaign=="North_Atlantic_Run":
-                cmpgn_cls=Flight_Campaign.North_Atlantic_February_Run(
+                cmpgn_cls=flightcampaign.North_Atlantic_February_Run(
                                     is_flight_campaign=True,
                                     major_path=self.config_file["Data_Paths"]\
                                                 ["campaign_path"],aircraft="HALO",
@@ -158,7 +158,7 @@ class Moisture_Convergence(Moisture_Budgets):
 
             elif campaign=="Second_Synthetic_Study":
                 #cpgn_cls_name="Second_Synthetic_Study"
-                cmpgn_cls=Flight_Campaign.Second_Synthetic_Study(
+                cmpgn_cls=flightcampaign.Second_Synthetic_Study(
                              is_flight_campaign=True,
                              major_path=self.config_file["Data_Paths"]["campaign_path"],
                              aircraft="HALO",interested_flights=self.flight,
@@ -186,7 +186,7 @@ class Moisture_Convergence(Moisture_Budgets):
         for sector in sectors:
             #if not self.do_instantan:
             budget_file=self.flight+"_AR_"+sector+"_"+self.grid_name+\
-                            "_regr_sonde_no_"+self.sonde_no+".csv"
+                            "_regr_sonde_no_"+str(self.sonde_no)+".csv"
             if sector=="core":
                 print("Read budget file",budget_file)
             budget_ideal_file=self.flight+"_AR_"+sector+"_"+self.grid_name+\
@@ -224,7 +224,7 @@ class Moisture_Convergence(Moisture_Budgets):
         return Sectors,Ideal_Sectors, self.cmpgn_cls
     
     # get overall divergences
-    def get_overall_budgets(self,flight_dates,sonde_no):
+    def get_overall_budgets(self):
         # For sondes
         Summary_Budgets={}
         Summary_Ideal_Budgets={}
@@ -256,7 +256,7 @@ class Moisture_Convergence(Moisture_Budgets):
         cold_ideal_budgets["TRANSP"]=pd.Series()
         
             
-        for campaign in flight_dates.keys():
+        for campaign in self.flight_dates.keys():
             if campaign=="North_Atlantic_Run":
                 campaign_id="NA"
                 budget_data_path=self.cmpgn_cls.major_path+"NA_February_Run/data/budget/"
@@ -264,13 +264,13 @@ class Moisture_Convergence(Moisture_Budgets):
                 campaign_id="Snd"
                 budget_data_path=self.cmpgn_cls.major_path+campaign+"/data/budget/"
     
-            for flight in flight_dates[campaign].keys():
+            for flight in self.flight_dates[campaign].keys():
                 if self.do_instantan:
                     flight=flight+"_instantan"
                 
                 #Core
                 core_file=flight+"_AR_core_"+self.grid_name+\
-                "_regr_sonde_no_"+sonde_no+".csv"
+                "_regr_sonde_no_"+str(self.sonde_no)+".csv"
                 core_ideal_file=flight+"_AR_core_"+self.grid_name+\
                 "_regr_sonde_no_100.csv"
                 core=pd.read_csv(budget_data_path+core_file)
@@ -286,7 +286,7 @@ class Moisture_Convergence(Moisture_Budgets):
         
                 # Warm sector
                 warm_file=flight+"_AR_warm_sector_"+self.grid_name+\
-                    "_regr_sonde_no_"+sonde_no+".csv"
+                    "_regr_sonde_no_"+str(self.sonde_no)+".csv"
                 warm_ideal_file=flight+"_AR_warm_sector_"+self.grid_name+\
                     "_regr_sonde_no_100"+".csv"
                 warm=pd.read_csv(budget_data_path+warm_file)
@@ -303,7 +303,7 @@ class Moisture_Convergence(Moisture_Budgets):
                 # Cold sector
                 if not flight.startswith("SRF12"):
                     cold_file=flight+"_AR_cold_sector_"+self.grid_name+\
-                        "_regr_sonde_no_"+sonde_no+".csv"
+                        "_regr_sonde_no_"+str(self.sonde_no)+".csv"
                     cold_ideal_file=flight+"_AR_cold_sector_"+self.grid_name+\
                     "_regr_sonde_no_100.csv"
                     cold=pd.read_csv(budget_data_path+cold_file)
@@ -319,7 +319,7 @@ class Moisture_Convergence(Moisture_Budgets):
         
                 pres_index=pd.Series(core.index*100)
                 g=9.82
-                for term in ["ADV","CONV","TRANSP"]:
+                for term in ["ADV_calc","CONV","TRANSP"]:
                     core_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
                     1/g*np.trapz(core[term][::-1],axis=0,x=pres_index[::-1])
                     warm_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
@@ -1082,29 +1082,29 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         #######################################################################
         #Moisture advection
         ax1=profile.add_subplot(131)
-        ax1.plot(core["ADV"],
-             core["ADV"].index.astype(int),lw=2,label="core",color="darkgreen")
+        ax1.plot(core["ADV_calc"],
+             core["ADV_calc"].index.astype(int),lw=2,label="core",color="darkgreen")
     
-        ax1.plot(warm_sector["ADV"],
-             warm_sector["ADV"].index.astype(int),lw=2,
+        ax1.plot(warm_sector["ADV_calc"],
+             warm_sector["ADV_calc"].index.astype(int),lw=2,
              label="warm sector",color="darkorange")
     
-        ax1.plot(cold_sector["ADV"],
-             cold_sector["ADV"].index.astype(int),lw=2,
+        ax1.plot(cold_sector["ADV_calc"],
+             cold_sector["ADV_calc"].index.astype(int),lw=2,
              label="cold sector",color="darkblue")
     
         ax1.axvline(0,ls="--",lw=2,color="k")
         ax1.fill_betweenx(y=core.index.astype(float),
-                          x1=core["ADV"],
-                          x2=core_ideal["ADV"], 
+                          x1=core["ADV_calc"],
+                          x2=core_ideal["ADV_calc"], 
                           color="green",alpha=0.3)
         ax1.fill_betweenx(y=warm_sector.index.astype(float),
-                          x1=warm_sector["ADV"],
-                          x2=warm_sector_ideal["ADV"], 
+                          x1=warm_sector["ADV_calc"],
+                          x2=warm_sector_ideal["ADV_calc"], 
                           color="orange",alpha=0.3)
         ax1.fill_betweenx(y=core.index.astype(float),
-                          x1=cold_sector["ADV"],
-                          x2=cold_sector_ideal["ADV"], 
+                          x1=cold_sector["ADV_calc"],
+                          x2=cold_sector_ideal["ADV_calc"], 
                           color="blue",alpha=0.3)
     
         #ax1.fill_betweenx(y=q_diff.index.astype(float),
@@ -1234,7 +1234,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         plt.subplots_adjust(wspace=0.4)
         fig_name=self.flight+"_"+self.grid_name+"_sonde_no_"+\
             sonde_no+"_Moisture_transport_Divergence.png"
-        fig_plot_path=self.cmpgn_cls.plot_path+self.flight+"/budget/"
+        fig_plot_path=self.cmpgn_cls.plot_path+"/budget/"
         if not os.path.exists(fig_plot_path):
             os.makedirs(fig_plot_path)
         profile.savefig(fig_plot_path+fig_name,dpi=300,bbox_inches="tight")

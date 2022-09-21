@@ -273,11 +273,11 @@ class Flighttracker():
                    self.flight_track_cfg["end_date"]=date+" 14:20"
                 
                 if self.flight=="SRF08":
-                   self.flight_track_cfg["bearing"]=283
-                   self.flight_track_cfg["start_lat"]=71.5
-                   self.flight_track_cfg["start_lon"]=4
-                   self.flight_track_cfg["start_date"]=date+" 16:30"
-                   self.flight_track_cfg["end_date"]=date+" 17:25"
+                   self.flight_track_cfg["bearing"]=285
+                   self.flight_track_cfg["start_lat"]=72.75
+                   self.flight_track_cfg["start_lon"]=6
+                   self.flight_track_cfg["start_date"]=date+" 16:55"
+                   self.flight_track_cfg["end_date"]=date+" 17:55"
                 if self.flight=="SRF09":
                    self.flight_track_cfg["bearing"]=270
                    self.flight_track_cfg["start_lat"]=80.75
@@ -312,8 +312,9 @@ class Flighttracker():
                 if self.flight=="SRF03":
                     self.flight_track_cfg["end_date"]=date+" 16:52"
                 if self.flight=="SRF08":
-                    self.flight_track_cfg["end_date"]=date+" 17:15"
-                    shifted_halo["latitude"]=shifted_halo["latitude"]-0.1
+                    self.flight_track_cfg["end_date"]=date+" 17:45"
+                    shifted_halo["latitude"]=shifted_halo["latitude"]+0.2
+                    shifted_halo["longitude"]=shifted_halo["longitude"]+3
                 if self.flight=="SRF09":
                     shifted_halo["longitude"]=shifted_halo["longitude"]+5.5
                     shifted_halo["latitude"]=shifted_halo["latitude"]-0.5

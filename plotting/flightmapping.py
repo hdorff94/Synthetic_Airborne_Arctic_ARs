@@ -1,7 +1,11 @@
 import os
 import sys
 
-import netCDF4
+sys.path.insert(1,os.getcwd()+"/../scripts/")
+sys.path.insert(2,os.getcwd()+"/../src/")
+sys.path.insert(3,os.getcwd()+"/../config/")
+
+#import netCDF4
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -227,7 +231,7 @@ class FlightMaps(flight_campaign):
         import cartopy.crs as ccrs
         
         #from era5_on_halo_backup import ERA5
-        from Reanalysis import ERA5
+        from reanalysis import ERA5
         
         set_font=16
         matplotlib.rcParams.update({'font.size':set_font})
@@ -3888,8 +3892,8 @@ class FlightMaps(flight_campaign):
 ###############################################################################
 ###############################################################################
 def main():    
-    
-    path=os.getcwd()
+    base_path=os.getcwd()+"/../../../"
+    path=base_path+"/Work/GIT_Repository/"
     name="data_config_file"
     config_file_exists=False
     #campaign_name="NAWDEX"
@@ -4001,8 +4005,8 @@ def main():
         #                                                     include_ARs=True)
         
     if should_plot_era_map:
-        from Cloudnet import Cloudnet_Data
-        campaign_cloudnet=Cloudnet_Data(cmpgn_cls.campaign_path)
+        #from Cloudnet import Cloudnet_Data
+        #campaign_cloudnet=Cloudnet_Data(cmpgn_cls.campaign_path)
         #if not cmpgn_cls.is_synthetic_campaign:
         #    station_coords=campaign_cloudnet.get_cloudnet_station_coordinates(
         #                                        cmpgn_cls.campaign_path)
