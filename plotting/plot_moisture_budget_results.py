@@ -58,7 +58,7 @@ def main(figure_to_create="fig13"):
     sonde_no="3"
     do_instantan=False
     do_plotting=True
-    save_for_manuscript=False
+    save_for_manuscript=True
     if do_instantan:
         flight=init_flight+"_instantan"
     else:
@@ -99,7 +99,8 @@ def main(figure_to_create="fig13"):
     # Moisture Classes
     Moisture_CONV=\
         Budgets.Moisture_Convergence(cmpgn_cls,flight,config_file,
-                 grid_name=grid_name,do_instantan=do_instantan,sonde_no=sonde_no)
+                 flight_dates=flight_dates,grid_name=grid_name,
+                 do_instantan=do_instantan,sonde_no=sonde_no)
     Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,config_file,
                  grid_name=grid_name,do_instantan=do_instantan,sonde_no=sonde_no)
     if figure_to_create.startswith("fig13"):
@@ -110,7 +111,7 @@ def main(figure_to_create="fig13"):
                                 save_as_manuscript_figure=save_for_manuscript)
     elif figure_to_create.startswith("fig14"):
         Campaign_Budgets,Campaign_Ideal_Budgets=\
-            Moisture_CONV.get_overall_budgets(flight_dates,sonde_no)
+            Moisture_CONV.get_overall_budgets()
         if do_plotting:
             Budget_plots.moisture_convergence_cases_overview(Campaign_Budgets,
                                                         Campaign_Ideal_Budgets,

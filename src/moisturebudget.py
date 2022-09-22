@@ -319,27 +319,44 @@ class Moisture_Convergence(Moisture_Budgets):
         
                 pres_index=pd.Series(core.index*100)
                 g=9.82
-                for term in ["ADV_calc","CONV","TRANSP"]:
-                    core_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
-                    1/g*np.trapz(core[term][::-1],axis=0,x=pres_index[::-1])
-                    warm_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
-                    1/g*np.trapz(warm[term][::-1],axis=0,x=pres_index[::-1])
-            
-                    core_ideal_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
-                    1/g*np.trapz(core_ideal[term][::-1],axis=0,x=pres_index[::-1])
-                    warm_ideal_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
-                    1/g*np.trapz(warm_ideal[term][::-1],axis=0,x=pres_index[::-1])
-                    if not flight=="SRF12":
-                        cold_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
-                        1/g*np.trapz(cold[term][::-1],axis=0,x=pres_index[::-1])
-            
-                        cold_ideal_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
-                        1/g*np.trapz(cold_ideal[term][::-1],axis=0,x=pres_index[::-1])
+                for term in ["ADV","CONV","TRANSP"]:
+                    if term=="ADV":
+                        series_term=term+"_calc"
                     else:
-                        cold_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
+                        series_term=term
+                    core_budgets[term].at[campaign_id+flight+\
+                                          "_sonde_"+str(self.sonde_no)+term]=\
+                    1/g*np.trapz(core[series_term][::-1],axis=0,x=pres_index[::-1])
+                    warm_budgets[term].at[campaign_id+flight+\
+                                          "_sonde_"+str(self.sonde_no)+term]=\
+                    1/g*np.trapz(warm[series_term][::-1],
+                                 axis=0,x=pres_index[::-1])
+            
+                    core_ideal_budgets[term].at[campaign_id+flight+\
+                                          "_sonde_100"+term]=\
+                    1/g*np.trapz(core_ideal[series_term][::-1],
+                                 axis=0,x=pres_index[::-1])
+                    warm_ideal_budgets[term].at[campaign_id+flight+\
+                                          "_sonde_100"+term]=\
+                    1/g*np.trapz(warm_ideal[series_term][::-1],
+                                 axis=0,x=pres_index[::-1])
+                    if not flight=="SRF12":
+                        cold_budgets[term].at[campaign_id+flight+\
+                                          "_sonde_"+str(self.sonde_no)+term]=\
+                        1/g*np.trapz(cold[series_term][::-1],
+                                     axis=0,x=pres_index[::-1])
+            
+                        cold_ideal_budgets[term].at[campaign_id+flight+\
+                                          "_sonde_100"+term]=\
+                        1/g*np.trapz(cold_ideal[series_term][::-1],
+                                     axis=0,x=pres_index[::-1])
+                    else:
+                        cold_budgets[term].at[campaign_id+flight+\
+                                          "_sonde_"+self.sonde_no+term]=\
                         np.nan
             
-                        cold_ideal_budgets[term].at[campaign_id+flight+"_sonde_02"+term]=\
+                        cold_ideal_budgets[term].at[campaign_id+flight+\
+                                                    "_sonde_100"+term]=\
                         np.nan
             
         Summary_Budgets["core"]               = core_budgets
@@ -1362,7 +1379,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             plot_path=self.plot_path
         else:
             plot_path=self.plot_path+\
-                        "/../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
+                "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
             fig_name="Fig14_"+fig_name
         budget_boxplot.savefig(plot_path+fig_name,
                        dpi=300,bbox_inches="tight")
