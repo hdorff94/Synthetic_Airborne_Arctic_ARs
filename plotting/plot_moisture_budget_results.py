@@ -51,13 +51,14 @@ def main(figure_to_create="fig13"):
     #####################################################################
     #%% Specifications
     # Major configurations
-    campaign="Second_Synthetic_Study"#"North_Atlantic_Run"#"Second_Synthetic_Study"# 
+    campaign="North_Atlantic_Run"#"Second_Synthetic_Study"#"North_Atlantic_Run"#"Second_Synthetic_Study"# 
 
     init_flight="SRF08"
-    grid_name="ERA5"#"CARRA"#"ERA5"
+    grid_name="CARRA"#"CARRA"#"ERA5"
     sonde_no="3"
     do_instantan=False
     do_plotting=True
+    save_for_manuscript=False
     if do_instantan:
         flight=init_flight+"_instantan"
     else:
@@ -98,24 +99,26 @@ def main(figure_to_create="fig13"):
     # Moisture Classes
     Moisture_CONV=\
         Budgets.Moisture_Convergence(cmpgn_cls,flight,config_file,
-                 grid_name=grid_name,do_instantan=do_instantan)
+                 grid_name=grid_name,do_instantan=do_instantan,sonde_no=sonde_no)
     Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,config_file,
-                 grid_name=grid_name,do_instantan=do_instantan)
+                 grid_name=grid_name,do_instantan=do_instantan,sonde_no=sonde_no)
     if figure_to_create.startswith("fig13"):
         Sectors,Ideal_Sectors,cmpgn_cls=\
             Moisture_CONV.load_moisture_convergence_single_case()
         if do_plotting:
-            Budget_plots.plot_single_case(Sectors,Ideal_Sectors,sonde_no)
+            Budget_plots.plot_single_case(Sectors,Ideal_Sectors,
+                                save_as_manuscript_figure=save_for_manuscript)
     elif figure_to_create.startswith("fig14"):
         Campaign_Budgets,Campaign_Ideal_Budgets=\
             Moisture_CONV.get_overall_budgets(flight_dates,sonde_no)
         if do_plotting:
             Budget_plots.moisture_convergence_cases_overview(Campaign_Budgets,
-                                                        Campaign_Ideal_Budgets)
+                                                        Campaign_Ideal_Budgets,
+                                save_as_manuscript_figure=save_for_manuscript)
 if __name__=="__main__":
     # Figures to create choices:
-    figure_to_create="fig13_single_case_sector_profiles"
-    #figure_to_create="fig14_campaign_divergence_overviews"
+    #figure_to_create="fig13_single_case_sector_profiles"
+    figure_to_create="fig14_campaign_divergence_overviews"
     main(figure_to_create=figure_to_create)
 
 """

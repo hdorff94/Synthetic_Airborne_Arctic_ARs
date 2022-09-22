@@ -832,11 +832,12 @@ class Moisture_Convergence(Moisture_Budgets):
 class Moisture_Budget_Plots(Moisture_Convergence):
     #def __init__(self,Moisture_Convergence):
     def __init__(self,cmpgn_cls,flight,config_file,
-                 grid_name="ERA5",do_instantan=False):
+                 grid_name="ERA5",do_instantan=False,sonde_no=3):
         
         super().__init__(cmpgn_cls,flight,config_file,grid_name,do_instantan)
         self.plot_path=self.cmpgn_cls.plot_path+"/budget/" # ----> to be filled
-        
+        self.grid_name=grid_name
+        self.sonde_no=sonde_no
     # Quick functions of variables       
     def plot_AR_TIVT_cumsum_quicklook(self,ar_inflow,ar_outflow):
         fig=plt.figure(figsize=(10,10))
@@ -1047,7 +1048,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         return budget_profile_df
     ###############################################################################
     #%% Major functions
-    def plot_single_case(self,Sectors,Ideal_Sectors,sonde_no):
+    def plot_single_case(self,Sectors,Ideal_Sectors,
+                         save_as_manuscript_figure=False):
         """
     
         This function plots vertical profiles of moisture ADV and mass CONV and 
@@ -1233,10 +1235,15 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                 spine.set_position(('outward', 10)) 
         plt.subplots_adjust(wspace=0.4)
         fig_name=self.flight+"_"+self.grid_name+"_sonde_no_"+\
-            sonde_no+"_Moisture_transport_Divergence.png"
-        fig_plot_path=self.cmpgn_cls.plot_path+"/budget/"
-        if not os.path.exists(fig_plot_path):
-            os.makedirs(fig_plot_path)
+            str(self.sonde_no)+"_Moisture_transport_Divergence.png"
+        if not save_as_manuscript_figure:
+            fig_plot_path=self.cmpgn_cls.plot_path+"/budget/"
+            if not os.path.exists(fig_plot_path):
+                os.makedirs(fig_plot_path)
+        else:
+            fig_plot_path=self.cmpgn_cls.plot_path+"/../../../"+\
+                    "Synthetic_AR_Paper/"+"/Manuscript/Paper_Plots/"
+            fig_name="Fig13_"+fig_name
         profile.savefig(fig_plot_path+fig_name,dpi=300,bbox_inches="tight")
         print("Figure saved as:",fig_plot_path+fig_name)
     
@@ -1283,7 +1290,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
     #%%
     # Summarizing plots of campaign
     def moisture_convergence_cases_overview(self,Campaign_Budgets,
-                                            Campaign_Ideal_Budgets):
+                                            Campaign_Ideal_Budgets,
+                                            save_as_manuscript_figure=False):
         warm_budgets=Campaign_Budgets["warm_sector"]
         core_budgets=Campaign_Budgets["core"]
         cold_budgets=Campaign_Budgets["cold_sector"]
@@ -1350,9 +1358,15 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             fig_name=self.grid_name+"_Water_Vapour_Budget.png"
         else:
             fig_name=self.grid_name+"_inst"+"_Water_Vapour_Budget.png"
-        budget_boxplot.savefig(self.plot_path+fig_name,
+        if not save_as_manuscript_figure:
+            plot_path=self.plot_path
+        else:
+            plot_path=self.plot_path+\
+                        "/../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
+            fig_name="Fig14_"+fig_name
+        budget_boxplot.savefig(plot_path+fig_name,
                        dpi=300,bbox_inches="tight")
-        print("Figure saved as:",self.plot_path+fig_name)
+        print("Figure saved as:",plot_path+fig_name)
     
     def plot_div_term_instantan_comparison(self,flight_dates,div_var="CONV",
                                            limit_min_max=pd.DataFrame()):
