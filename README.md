@@ -90,16 +90,30 @@ import wind_moisture_dominance_analysis
 wind_moisture_dominance_analysis.main(figures_to_create="fig11")
 ```
 ### IVT Divergence
-#### Figure 12 (Frontal-specific IVT in- and outflow)
-This shows the frontal sector based AR cross-sections for in- and outflow corridor in multiplot. 
-It is created by running the notebook **AR_sector_multiplot_in-outflow.ipynb**  
-This notebook basically runs multiplot_inflow_outflow_IVT sectors from ```python class IVT_Variability_Plotter```.
-#### Figure 13 (Case Sector-Based Vertical Profiles of Divergence)
 To create the divergence results just run:
 ```python 
 import run_moisture_budget_closure_regression_method
 ```
 This script itself calls ```Moisture_Convergence.calc_moisture_convergence_from_regression_method```
 the divergence values are then stored in the airborne data folder under budgets. Some additional figures are created and stored under "plots/budget/supplementary/"
-
-
+#### Figure 12 (Frontal-specific IVT in- and outflow)
+This shows the frontal sector based AR cross-sections for in- and outflow corridor in multiplot. 
+It is created by running the notebook **AR_sector_multiplot_in-outflow.ipynb**  
+This notebook basically runs multiplot_inflow_outflow_IVT sectors from ```python class IVT_Variability_Plotter```.
+#### Figure 13 (Case Sector-Based Vertical Profiles of Divergence)
+To create the single case valuesjust run:
+```python 
+import plot_moisture_budget_results
+figure_to_create="Fig13_single_case_sector_profiles"
+plot_moisture_budget_results.main(figure_to_create=figure_to_create)
+```
+Inside the plot routine defines ```save_for_manuscript=True```
+#### Figure 14 (Case Sector-Based Vertical Profiles of Divergence)
+To create the single case valuesjust run:
+```python 
+import plot_moisture_budget_results
+figure_to_create="fig14_campaign_divergence_overviews"
+plot_moisture_budget_results.main(figure_to_create=figure_to_create)
+```
+### Instationarity
+This section includes three figures and deals with the instationarity and how this changes our understanding of ARs from airborne perspective.  
