@@ -117,3 +117,13 @@ plot_moisture_budget_results.main(figure_to_create=figure_to_create)
 ```
 ### Instationarity
 This section includes three figures and deals with the instationarity and how this changes our understanding of ARs from airborne perspective.  
+#### Figure 15 (Instantan In- and Outflow)
+To create the multiplot you have two choices:
+```python 
+import instantan
+figure_to_create="fig15_in_outflow_instantan"
+instantan.main(figure_to_create=figure_to_create)
+```
+or alternatively, you run the notebook ```AR_Stationarity.ipynb``` 
+
+
