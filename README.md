@@ -101,7 +101,7 @@ This shows the frontal sector based AR cross-sections for in- and outflow corrid
 It is created by running the notebook **AR_sector_multiplot_in-outflow.ipynb**  
 This notebook basically runs multiplot_inflow_outflow_IVT sectors from ```python class IVT_Variability_Plotter```.
 #### Figure 13 (Case Sector-Based Vertical Profiles of Divergence)
-To create the single case valuesjust run:
+To create the single case values just run:
 ```python 
 import plot_moisture_budget_results
 figure_to_create="Fig13_single_case_sector_profiles"
@@ -109,7 +109,7 @@ plot_moisture_budget_results.main(figure_to_create=figure_to_create)
 ```
 Inside the plot routine defines ```save_for_manuscript=True```
 #### Figure 14 (Case Sector-Based Vertical Profiles of Divergence)
-To create the single case valuesjust run:
+To create the single case values just run:
 ```python 
 import plot_moisture_budget_results
 figure_to_create="fig14_campaign_divergence_overviews"
@@ -117,8 +117,16 @@ plot_moisture_budget_results.main(figure_to_create=figure_to_create)
 ```
 ### Instationarity
 This section includes three figures and deals with the instationarity and how this changes our understanding of ARs from airborne perspective.  
+In order to create the instantan moisture transport divergence components you have to run (similar to **IVT divergence**):
+```python 
+import run_moisture_budget_closure_regression_method
+# set instantan as True
+run.moisture_budget_closure_regression_method.main(instantan=True)
+```
+This script itself calls ```Moisture_Convergence.calc_moisture_convergence_from_regression_method```
+
 #### Figure 15 (Instantan In- and Outflow)
-To create the multiplot you have two choices:
+To create the multiplot of in- and outflow comparison (IVT) you have two choices:
 ```python 
 import instantan
 figure_to_create="fig15_in_outflow_instantan"
@@ -126,4 +134,21 @@ instantan.main(figure_to_create=figure_to_create)
 ```
 or alternatively, you run the notebook ```AR_Stationarity.ipynb``` 
 
-
+#### Figure 16 (CONV Non Instantan - Instantan)
+To create the multiplot with comparing non-instantan minus instantan as a vertical profile just run:
+```python 
+import instantan
+figure_to_create="fig16_conv_error"
+instantan.main(figure_to_create=figure_to_create)
+# this itself calls
+instantan.cls.plot_div_tern_instantan_comparison("CONV",save_as_manuscript=False) # if last is set True figure is stored for manuscript
+```
+#### Figure 17 (ADV Non Instantan - Instantan
+Very similar to Fig 16, same plot style with slight adaptations:
+```python 
+import instantan
+figure_to_create="fig17_adv_error"
+instantan.main(figure_to_create=figure_to_create)
+# this itself calls
+instantan.cls.plot_div_tern_instantan_comparison("ADV",save_as_manuscript=False) # if last is set True figure is stored for manuscript
+```
