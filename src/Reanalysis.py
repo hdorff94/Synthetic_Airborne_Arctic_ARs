@@ -11,7 +11,7 @@ import sys
 import numpy as np
 import pandas as pd
 import xarray as xr
-
+sys.path.insert(1,os.getcwd()+"/../config/")
 import data_config
 
 import metpy.calc as mpcalc
@@ -1063,9 +1063,9 @@ class CARRA_Downloader(CARRA):
 ==============================================================================
 """
 def main(campaign="NAWDEX"):
-    central_path=os.getcwd()
-    era_path=os.getcwd()+"/"+campaign+"/data/ERA-5/"
-    carra_path=os.getcwd()+"/"+campaign+"/data/CARRA/"
+    central_path=os.getcwd()+"/../../../Work/GIT_Repository/"
+    era_path=central_path+"/"+campaign+"/data/ERA-5/"
+    carra_path=central_path+"/"+campaign+"/data/CARRA/"
     
     era_is_desired=True
     carra_is_desired=False
@@ -1148,8 +1148,8 @@ def main(campaign="NAWDEX"):
     elif campaign=="HALO_AC3":
         synthetic_campaign=False
         analysing_campaign=True
-        flights=["RF01"]#["RF06"]#,"RF06"]
-        dates=["20220311"]#["20220316"]#,"20220316"]
+        flights=["RF16"]#["RF06"]#,"RF06"]
+        dates=["20220410"]#["20220316"]#,"20220316"]
     else:
         raise Exception("The given campaign is not specified in the Downloader")
     
@@ -1234,7 +1234,7 @@ def main(campaign="NAWDEX"):
     #%% Download_Handler
     # HMP Profile data
     if era_is_desired:
-        era5_downloader.download_handler(do_total_columns=True,do_levels=False,
+        era5_downloader.download_handler(do_total_columns=True,do_levels=True,
                                          do_daily_average_single_levels=False)
     if carra_is_desired:
         carra_downloader.download_handler(do_total_columns=True,do_levels=True,
