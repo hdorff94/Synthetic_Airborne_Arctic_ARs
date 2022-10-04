@@ -634,7 +634,22 @@ class Atmospheric_Rivers():
                                     "end":"2021-03-26 11:11"}
                 ARs["RF04"]["AR4"]={"start":"2021-03-26 11:55",
                                     "end":"2021-03-26 12:22"}
-            
+
+        elif campaign=="HALO_AC3":
+            ARs={}
+            ARs["RF02"]={}
+            ARs["RF03"]={}
+            ARs["RF04"]={}
+            ARs["RF05"]={}
+            ARs["RF06"]={}
+            ARs["RF07"]={}
+            ARs["RF16"]={}
+            ARs["RF02"]["AR1"]={"start":"2022-03-12 10:25",
+                                "end":"2022-03-12 12:10"}
+            ARs["RF02"]["AR2"]={"start":"2022-03-12 11:28",
+                                "end":"2022-03-13 13:32"}
+            ARs["RF03"]["AR1"]={"start":"2022-03-13 10:00", # temporary
+                                "end":"2022-03-13 11:00"}   # temporary
         return ARs
     
     def locate_AR_cross_section_sectors(HALO_Dict,Hydrometeors,analysed_flight):

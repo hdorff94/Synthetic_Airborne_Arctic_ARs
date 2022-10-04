@@ -56,6 +56,7 @@ def main(config_file_path=os.getcwd(),
          merge_all_legs=False,
          pick_legs=["inflow","internal","outflow"],
          do_instantaneous=False):
+    # real campaigns
     if campaign=="NAWDEX":
         years={"RF01":"2016","RF02":"2016","RF03":"2016","RF04":"2016",
                "RF05":"2016","RF06":"2016","RF07":"2016","RF08":"2016",
@@ -66,7 +67,14 @@ def main(config_file_path=os.getcwd(),
         days={"RF01":"17","RF02":"21","RF03":"23","RF04":"26","RF05":"27",
            "RF06":"06","RF07":"09","RF08":"09","RF09":"10","RF10":"13",
            "RF11":"14","RF12":"15"}
-    
+    elif campaign=="HALO_AC3":
+        years={"RF02":"2022","RF03":"2022","RF04":"2022","RF05":"2022",
+               "RF06":"2022"}
+        months={"RF02":"03","RF03":"03","RF04":"03","RF05":"03",
+               "RF06":"03"}
+        days={"RF02":"12","RF03":"13","RF04":"14","RF05":"15",
+               "RF06":"16"}
+    # synthetic campaigns
     elif campaign=="NA_February_Run":
         flights=["SRF01","SRF02","SRF03","SRF04","SRF05","SRF06","SRF07"]
         days={"SRF01":"30","SRF02":"24","SRF03":"26",
@@ -109,15 +117,17 @@ def main(config_file_path=os.getcwd(),
     
     analysing_campaign=True
     
-    # Load config file
-    config_file=data_config.load_config_file(config_file_path,
-                                             "data_config_file")
-    
+    airborne_data_importer_path=config_file_path+\
+                                "hamp_processing_py/"+\
+                                    "hamp_processing_python/"
     
     print("Analyse given flight: ",flight[0])
-    
+    config_file=data_config.load_config_file(config_file_path,
+                                             "data_config_file")
+
     
     date=years[flight[0]]+months[flight[0]]+days[flight[0]]
+    
     plot_cfad=True
     if synthetic_campaign:
         plot_cfad=False
@@ -199,7 +209,70 @@ def main(config_file_path=os.getcwd(),
             halo_df["Minutesofday"]=halo_df["Hour"]*60+halo_df["Minutes"]
             halo_df.index=pd.DatetimeIndex(halo_df.index)
             cmpgn_cls=nawdex
-        
+    #%% -----------------------------------------------------------------------
+        elif campaign=="HALO_AC3":
+            ac3=flightcampaign.HALO_AC3(is_flight_campaign=True,
+                    major_path=config_file["Data_Paths"]["campaign_path"],
+                    aircraft="HALO",instruments=["radar","dropsondes","sonde"])
+            cmpgn_cls=ac3
+            if not synthetic_flight:
+                working_path=os.getcwd()+"/../../../Work/"
+                airborne_data_importer_path=working_path+"/GIT_Repository/"+\
+                                "hamp_processing_py/"+\
+                                    "hamp_processing_python/"
+                measurement_processing_path=os.getcwd()+\
+                "/../../hamp_processing_python/src/"
+                sys.path.insert(1,measurement_processing_path)
+                import campaign_time
+                import config_handler
+                import measurement_instruments_ql as Instruments
+                
+                cfg=config_handler.Configuration(
+                    major_path=airborne_data_importer_path)
+                
+                processing_cfg_name="unified_grid_cfg"    
+                cfg.add_entries_to_config_object(processing_cfg_name,
+                            {"t1":date,"t2":date,
+                             "date":date,"flight_date_used":date})
+    
+                processing_config_file=cfg.load_config_file(
+                                            processing_cfg_name)
+    
+                processing_config_file["Input"]["data_path"]=\
+                    processing_config_file["Input"]["campaign_path"]+\
+                        "Flight_Data/"
+                processing_config_file["Input"]["device_data_path"]=\
+                    processing_config_file["Input"]["data_path"]+campaign+"/"
+                
+                prcs_cfg_dict=dict(processing_config_file["Input"])    
+                prcs_cfg_dict["date"]=date
+                Campaign_Time_cls=campaign_time.Campaign_Time(
+                    campaign,date)
+                prcs_cfg_dict["Flight_Dates_used"] =\
+                    Campaign_Time_cls.specify_dates_to_use(prcs_cfg_dict)
+    
+                HALO_cls=Instruments.HALO_Devices(prcs_cfg_dict)
+                Bahamas_cls=Instruments.BAHAMAS(HALO_cls)
+                Bahamas_cls.open_bahamas_data(
+                                            raw_or_processed="processed")
+                bahamas_ds=Bahamas_cls.bahamas_ds[["alt","lat",
+                                                   "lon","speed_gnd"]]
+                bahamas_ds=bahamas_ds.rename_vars({"lat":"latitude",
+                                                  "lon":"longitude",
+                                                  "speed_gnd":"groundspeed"})
+                halo_df=bahamas_ds.to_dataframe()
+            else:
+                import flight_track_creator
+                Flight_Tracker=flight_track_creator.Flighttracker(
+                                            ac3,flight[0],ar_of_day,
+                                            track_type=track_type,
+                                            shifted_lat=synthetic_icon_lat,
+                                            shifted_lon=synthetic_icon_lon,
+                                            load_save_instantan=do_instantaneous)
+                # so far no synthetic flight track is defined for HALO-AC3.
+                # hence, stop script here.
+                sys.exit()
+    #%% -----------------------------------------------------------------------
     else:
          # Flight Campaign is Synthetic
          if campaign=="NA_February_Run":
@@ -245,14 +318,14 @@ def main(config_file_path=os.getcwd(),
              aircraft_dict=Flight_Tracker.make_dict_from_aircraft_df()
              
                     
-         halo_df["Hour"]=pd.DatetimeIndex(halo_df.index).hour
+    halo_df["Hour"]=pd.DatetimeIndex(halo_df.index).hour
                             #pd.DatetimeIndex(halo_df.index).hour[0]
-         halo_df["Minutes"]=pd.DatetimeIndex(halo_df.index).minute
-         halo_df["Minutesofday"]=halo_df["Hour"]*60+halo_df["Minutes"]
-         halo_df["Minutesofday"]=halo_df["Minutesofday"]#-\
+    halo_df["Minutes"]=pd.DatetimeIndex(halo_df.index).minute
+    halo_df["Minutesofday"]=halo_df["Hour"]*60+halo_df["Minutes"]
+    halo_df["Minutesofday"]=halo_df["Minutesofday"]#-\
                          #halo_df["Minutesofday"].iloc[0]
-         if "distance" in halo_df.columns:
-             del halo_df["distance"]
+    if "distance" in halo_df.columns:
+        del halo_df["distance"]
     #Define the file names of hydrometeor data and paths
     flight_name=flight[0]
     if do_instantaneous:
@@ -316,12 +389,34 @@ def main(config_file_path=os.getcwd(),
    
     #%% HALO Aircraft Data    
     if not synthetic_flight:
-        # Load HAMP radar
-        radar=cmpgn_cls.load_hamp_data(campaign,flight,instrument="radar",
+        if campaign=="NAWDEX":
+            # Load HAMP radar
+            radar=cmpgn_cls.load_hamp_data(campaign,flight,instrument="radar",
                                 flag_data=True,bahamas_desired=True) 
-        # Load HAMP Microwave Radiometer
-        mwr=cmpgn_cls.load_hamp_data(campaign,flight,instrument="radiometer")
-    
+            # Load HAMP Microwave Radiometer
+            mwr=cmpgn_cls.load_hamp_data(campaign,flight,instrument="radiometer")
+        elif campaign=="HALO_AC3":
+            HAMP_cls=Instruments.HAMP(HALO_cls)
+            HAMP_cls.open_processed_hamp_data(open_calibrated=False,
+                            newest_version=True)
+            mwr=HAMP_cls.processed_hamp_ds
+            mwr=mwr.rename({"TB":"T_b"})
+            RADAR_cls=Instruments.RADAR(HALO_cls)
+            RADAR_cls.open_processed_radar_data(
+                                  reflectivity_is_calibrated=False)
+            
+            radar_ds=RADAR_cls.processed_radar_ds
+            radar={}
+            radar["Reflectivity"]=pd.DataFrame(data=np.array(radar_ds["dBZg"].values[:]),
+                               index=pd.DatetimeIndex(
+                                   np.array(radar_ds.time[:])),
+                               columns=np.array(radar_ds["height"][:]))
+            radar["LDR"]=pd.DataFrame(data=np.array(radar_ds["LDRg"].values[:]),
+                            index=pd.DatetimeIndex(
+                            np.array(radar_ds.time[:])),
+                            columns=np.array(radar_ds["height"][:]))
+            radar["Position"]=halo_df.copy()
+            del radar_ds
         # Cut dataset to AR core cross-section
         if ar_of_day:
             #radar
@@ -337,20 +432,26 @@ def main(config_file_path=os.getcwd(),
         
             # Update halo_df in ERA5_on_HALO class with cutted dataset
             ERA5_on_HALO.update_halo_df(halo_df,change_last_index=True)
-            CARRA_on_HALO.update_halo_df(halo_df,change_last_index=True)
-            radar["Position"].to_csv(path_or_buf=cmpgn_cls.data_path+\
-                             "BAHAMAS/HALO_Aircraft_"+flight[0]+".csv")
+            if carra_is_desired:
+                CARRA_on_HALO.update_halo_df(halo_df,change_last_index=True)
+            if cmpgn_cls.name=="HALO_AC3":
+                pos_path=hydrometeor_lvls_path+"/../BAHAMAS/"
+            else:
+                pos_path=cmpgn_cls.campaign_data_path
+            radar["Position"].to_csv(path_or_buf=pos_path+\
+                             "HALO_Aircraft_"+flight[0]+".csv")
         
         # Load Dropsonde datasets
     
         if not flight[0]=="RF08":
-            Dropsondes,Upsampled_Dropsondes=cmpgn_cls.load_ar_processed_dropsondes(
+            try:
+                Dropsondes,Upsampled_Dropsondes=cmpgn_cls.load_ar_processed_dropsondes(
                                                     ERA5_on_HALO,date,
                                                     radar,halo_df,flight,
                                                     with_upsampling=True,
                                                     ar_of_day=ar_of_day)
-        else:
-            Dropsondes={}
+            except:
+                Dropsondes={}
     else:
         Dropsondes={}
         radar={}
@@ -360,18 +461,19 @@ def main(config_file_path=os.getcwd(),
     lat_changed=False
     
     #%% Gridded data (Simulations and Reanalysis)
-    icon_major_path=cmpgn_cls.campaign_path+"/data/ICON_LEM_2KM/"
-    hydrometeor_icon_path=cmpgn_cls.campaign_path+"/data/ICON_LEM_2KM/"
-    if synthetic_icon:
-        if not synthetic_icon_lat==None:
-            hydrometeor_icon_path=hydrometeor_icon_path+"Latitude_"+\
-                str(synthetic_icon_lat)+"/"
-            lat_changed=True   
-    if not os.path.exists(hydrometeor_icon_path):
-        os.mkdir(hydrometeor_icon_path)
-        
-    icon_resolution=2000 # units m
     if icon_is_desired:
+        icon_major_path=cmpgn_cls.campaign_path+"/data/ICON_LEM_2KM/"
+        hydrometeor_icon_path=cmpgn_cls.campaign_path+"/data/ICON_LEM_2KM/"
+        if synthetic_icon:
+            if not synthetic_icon_lat==None:
+                hydrometeor_icon_path=hydrometeor_icon_path+"Latitude_"+\
+                    str(synthetic_icon_lat)+"/"
+                lat_changed=True   
+        if not os.path.exists(hydrometeor_icon_path):
+            os.mkdir(hydrometeor_icon_path)
+        
+        icon_resolution=2000 # units m
+    
         icon_var_list=ICON.lookup_ICON_AR_period_data(flight,ar_of_day,
                                                  icon_resolution,
                                                  hydrometeor_icon_path,
@@ -835,7 +937,7 @@ def main(config_file_path=os.getcwd(),
         if "aircraft_dict" in locals().keys():
             return halo_era5,radar,aircraft_dict
         else:
-            return halo_era5,radar
+            return halo_era5,radar,{}
     else:
         halo_grid_hmc=halo_era5_hmc.copy()
         halo_grid_hmc["name"]="ERA5"

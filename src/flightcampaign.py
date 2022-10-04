@@ -2197,6 +2197,9 @@ class HALO_AC3(Campaign):
         
         #self.flights=self.flights.keys()
         self.year="2022"
+        months=[*self.flight_month.keys()]
+        flight_years=zip(months,[self.year] * len(months))
+        self.years=dict(flight_years)
         self.campaign_path=self.major_path+"/"+self.name
         if not os.path.exists(self.campaign_path):
             os.makedirs(self.campaign_path)

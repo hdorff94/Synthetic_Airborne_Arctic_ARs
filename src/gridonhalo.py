@@ -554,12 +554,13 @@ class ERA_on_HALO(ERA5):
             
     #%% Others
     def cut_halo_to_AR_crossing(self,AR_of_day,flight,initial_halo,
-                                initial_df,campaign="NAWDEX",device="radar",
+                                initial_df,device="radar",
                                 invert_flight=False):
-            
+        
             # Create copies to assure that initial dataset is not touched and 
             # remain complete
-            if not initial_df==None:
+            if isinstance(initial_df,dict) or \
+                isinstance(initial_df,xr.Dataset):
                 df=initial_df.copy()
             else:
                 df=None
@@ -567,15 +568,15 @@ class ERA_on_HALO(ERA5):
             
             # Load AR class to access campaign AR cross-section look-up table
             #if "AR" not in sys.modules:
-            import AR
+            import atmospheric_rivers as AR
             AR_class=AR.Atmospheric_Rivers
-            if campaign=="NAWDEX":
-                ARs=AR_class.look_up_AR_cross_sections(self.campaign)
+            ARs=AR_class.look_up_AR_cross_sections(self.campaign)
+            if self.campaign=="NAWDEX":
                 ARs_NAWDEX=ARs.copy()
                 if "ARs_NAWDEX" in locals():
                     #merge both dictionairies
                     ARs=ARs | ARs_NAWDEX
-                
+            #if campaign=="HALO_AC3" :   
             cut_start   = ARs[flight][AR_of_day]["start"]
             cut_end     = ARs[flight][AR_of_day]["end"]
             #if not halo in locals():
@@ -584,8 +585,8 @@ class ERA_on_HALO(ERA5):
             #                                campaign,flight,AR_of_day,
             #                                track_type="internal",
             #                                shifted_lat=0,shifted_lon=0)
-           # 
-           #     halo_df,campaign_path=Flight_Tracker.run_flight_track_creator()
+            # 
+            #     halo_df,campaign_path=Flight_Tracker.run_flight_track_creator()
          
             if isinstance(halo,pd.DataFrame):
                 halo=halo.loc[cut_start:cut_end]

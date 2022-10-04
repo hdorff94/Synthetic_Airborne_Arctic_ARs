@@ -12,7 +12,7 @@ import sys
 def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
                                                 "SRF03","SRF04",
                                                 "SRF05","SRF06"],
-         do_daily_plots=True,calc_hmp=True,calc_hmc=True,
+         ar_of_days=["AR_internal"],do_daily_plots=True,calc_hmp=True,calc_hmc=True,
          era_is_desired=True,carra_is_desired=False,icon_is_desired=False,
          do_instantaneous=False):
     #%% Predefining all paths to take scripts and data from and where to store
@@ -73,20 +73,24 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
             aircraft="HALO",interested_flights=flights,
             instruments=["radar","radiometer","sonde"])
         cmpgn_cls=na_run               
+    elif campaign=="HALO_AC3":
+        cpgn_cls_name="HALO_AC3"
+        ac3_run=flightcampaign.HALO_AC3(is_flight_campaign=True,
+            major_path=config_file["Data_Paths"]["campaign_path"],
+            aircraft="HALO",interested_flights=flights,
+            instruments=["radar","radiometer","sonde"])
+        cmpgn_cls=ac3_run
     HMCs={}
     HMPs={}
     HALO_dict_dict={}
-    #AR_radar=pd.DataFrame()
     i=0
     for flight in flights:
         
         HMCs[flight]={}
         HMPs[flight]={}
     
-        for ar_of_day in ["AR_internal"]:
+        for ar_of_day in [ar_of_days]:
             if not flight.startswith("S"):
-                cpgn_cls_name="NAWDEX"
-                #ar_of_day="AR3"
                 synthetic_campaign=False
             else:
                 if cpgn_cls_name=="NAWDEX":
@@ -110,10 +114,8 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
                             synthetic_campaign=synthetic_campaign,
                             synthetic_flight=synthetic_flight,
                             do_instantaneous=do_instantaneous)
-                #except:
-                #    pass
+                
             if calc_hmc:
-                #try:
                     HMCs[flight][ar_of_day],ar_rf_radar,HALO_dict_dict[flight]=\
                         run_grid_data_on_halo.main(
                             config_file_path=airborne_data_importer_path,        
@@ -128,9 +130,7 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
                             synthetic_campaign=synthetic_campaign,
                             synthetic_flight=synthetic_flight,
                             do_instantaneous=do_instantaneous)
-                #except
-                #    pass
-        
+                
             #if 'Reflectivity' in ar_rf_radar.keys():
             #    if i==0:
             #        AR_radar=ar_rf_radar["Reflectivity"]
@@ -155,32 +155,40 @@ if __name__=="__main__":
     # too much. 
     
     # Relevant specifications for running , those are default values
-    calc_hmp=False
-    calc_hmc=True
+    calc_hmp=True
+    calc_hmc=False
     do_plotting=False
-    flights_to_analyse={#"SRF02":"20180224",#,#,
+    synthetic_campaign=False
+    ar_of_day="AR1"
+    campaign_name="HALO_AC3"
+    #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
+    
+    if synthetic_campaign:
+        flights_to_analyse={#"SRF02":"20180224",#,#,
                         #"SRF04":"20190319",#}#,#,
                         #"SRF07":"20200416",#}#,#,#}#,#}#,
                         #"SRF08":"20200419"#,}
         #Second Synthetic Study
         
-        "SRF02":"20110317",
+        #"SRF02":"20110317",
         #"SRF03":"20110423",#,
             #"SRF06":"20140325",#,                    
                         #"SRF07":"20150307"}#,
         
-        "SRF08":"20150314",#,
+        #"SRF08":"20150314",#,
         #"SRF09":"20160311",#,
         #"SRF12":"20180225"
-        }        
-    campaign_name="Second_Synthetic_Study"#"North_Atlantic_Run"#"Second_Synthetic_Study"#"North_Atlantic_Run"##
+        }
+    else:
+        flights_to_analyse={"RF02":"20220312"}        
     use_era=True
-    use_carra=True
+    use_carra=False
     use_icon=False
     flights=[*flights_to_analyse.keys()]
-    do_instantaneous=True
+    do_instantaneous=False
 
     Hydrometeors,HALO_Dict,cmpgn_cls=main(campaign=campaign_name,flights=flights,
+                                          ar_of_days=ar_of_day,
                                           era_is_desired=use_era, 
                                           icon_is_desired=use_icon,
                                           carra_is_desired=use_carra,
