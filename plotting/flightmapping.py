@@ -1084,6 +1084,7 @@ class FlightMaps(flight_campaign):
     def plot_flight_map_AR_crossing(self,era_on_halo_cls,cut_radar,
                                     Dropsondes,campaign_cls,
                                     opt_plot_path=os.getcwd(),
+                                    halo_data=pd.DataFrame(),
                                     invert_flight=False):
         """
         
@@ -1137,16 +1138,23 @@ class FlightMaps(flight_campaign):
                                        "IVT":np.linspace(50,600,61)}
         met_var_dict["units"]       = {"IWV":"(kg/$\mathrm{m}^2$)",
                                        "IVT":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)"}
-        
-        if campaign_cls.is_flight_campaign:
-            AR=AR.Atmospheric_Rivers("ERA")
-            flight_date=campaign_cls.years[flight_str]+"-"+\
+        flight_date=campaign_cls.years[flight_str]+"-"+\
                             campaign_cls.flight_month[flight_str]
-            flight_date=flight_date+"-"+\
+        flight_date=flight_date+"-"+\
                         campaign_cls.flight_day[flight_str]
-            AR_era_ds=AR.open_AR_catalogue(after_2019=int(flight_date[0:4])>2019)
             
-            AR_era_data=AR.specify_AR_data(AR_era_ds,flight_date)
+        if campaign_cls.is_flight_campaign:
+            if int(flight_date[0:4])>2020:
+                use_era5_catalogue=True
+            else:
+                use_era5_catalogue=False
+            AR=AR.Atmospheric_Rivers("ERA",use_era5=use_era5_catalogue)
+            
+            AR_era_ds=AR.open_AR_catalogue(
+                    after_2019=int(flight_date[0:4])>2019)
+            
+            AR_era_data=AR.specify_AR_data(AR_era_ds,
+                                               flight_date)
 
         
         plot_path=opt_plot_path
@@ -1171,8 +1179,23 @@ class FlightMaps(flight_campaign):
         #Aircraft Position
         if not self.synthetic_campaign:
             if campaign_cls.is_flight_campaign:
-                halo_dict=campaign_cls.get_aircraft_position([flight_str],
+                halo_dict={}
+                if not campaign_cls.name=="HALO_AC3":
+                    halo_dict=campaign_cls.get_aircraft_position([flight_str],
                                                          campaign_cls.name)
+                else:
+                    halo_dict[flight_str]=halo_data
+                    
+                    sondes_lon=[[*Dropsondes["reference_lon"].values()][sonde].data[0] \
+                        for sonde in range(Dropsondes["IWV"].shape[0])]
+                    
+                    sondes_lat=[[*Dropsondes["reference_lat"].values()][sonde].data[0]\
+                        for sonde in range(Dropsondes["IWV"].shape[0])]
+                    Dropsondes["Lat"]=pd.Series(data=np.array(sondes_lat),
+                                                index=Dropsondes["IWV"].index)
+                    Dropsondes["Lon"]=pd.Series(data=np.array(sondes_lon),
+                                                index=Dropsondes["IWV"].index)
+
             #print(halo_dict)
             else:
                 # Load Halo Dataset
@@ -1464,46 +1487,55 @@ class FlightMaps(flight_campaign):
             
         
         if not campaign_cls.is_synthetic_campaign:
-            if last_hour<6:
-                AR_C=ax1.contourf(AR_era_ds.lon,AR_era_ds.lat,
+            if not use_era5_catalogue:
+                if last_hour<6:
+                    AR_C=ax1.contourf(AR_era_ds.lon,AR_era_ds.lat,
                         AR_era_ds.shape[0,AR_era_data["model_runs"].start,0,:,:],
                         hatches=['//'],cmap='bone_r',alpha=0.1,
                         transform=ccrs.PlateCarree())
-                ax2.contourf(AR_era_ds.lon,AR_era_ds.lat,
+                    ax2.contourf(AR_era_ds.lon,AR_era_ds.lat,
                     AR_era_ds.shape[0,AR_era_data["model_runs"].start,0,:,:],
                     hatches=['//'],cmap='bone_r',alpha=0.1,
                     transform=ccrs.PlateCarree())
         
-            elif 6<=last_hour<12:
-                AR_C=ax1.contourf(AR_era_ds.lon,AR_era_ds.lat,
+                elif 6<=last_hour<12:
+                    AR_C=ax1.contourf(AR_era_ds.lon,AR_era_ds.lat,
                         AR_era_ds.shape[0,AR_era_data["model_runs"].start+1,0,:,:],
                         hatches=[ '//'],cmap='bone_r',alpha=0.1,
                         transform=ccrs.PlateCarree())
-                ax2.contourf(AR_era_ds.lon,AR_era_ds.lat,
+                    ax2.contourf(AR_era_ds.lon,AR_era_ds.lat,
                     AR_era_ds.shape[0,AR_era_data["model_runs"].start+1,0,:,:],
                     hatches=[ '//'],cmap='bone_r',alpha=0.1,
                     transform=ccrs.PlateCarree())
         
             
-            elif 12<=last_hour<18:
-                AR_C=ax1.contourf(AR_era_ds.lon,AR_era_ds.lat,
+                elif 12<=last_hour<18:
+                    AR_C=ax1.contourf(AR_era_ds.lon,AR_era_ds.lat,
                         AR_era_ds.shape[0,AR_era_data["model_runs"].start+2,0,:,:],
                         hatches=['//'],cmap='bone_r',alpha=0.1,
                         transform=ccrs.PlateCarree())
-                ax2.contourf(AR_era_ds.lon,AR_era_ds.lat,
-                    AR_era_ds.shape[0,AR_era_data["model_runs"].start+2,0,:,:],
-                    hatches=['//'],cmap='bone_r',alpha=0.1,
-                    transform=ccrs.PlateCarree())
-            else:
-                AR_C=ax1.contourf(AR_era_ds.lon,AR_era_ds.lat,
+                    ax2.contourf(AR_era_ds.lon,AR_era_ds.lat,
+                                 AR_era_ds.shape[0,AR_era_data["model_runs"].start+2,0,:,:],
+                                 hatches=['//'],cmap='bone_r',alpha=0.1,
+                                 transform=ccrs.PlateCarree())
+                else:
+                    AR_C=ax1.contourf(AR_era_ds.lon,AR_era_ds.lat,
                         AR_era_ds.shape[0,AR_era_data["model_runs"].start+3,0,:,:],
                         hatches=['//'],cmap='bone_r',alpha=0.1,
                         transform=ccrs.PlateCarree())    
-                ax2.contourf(AR_era_ds.lon,AR_era_ds.lat,
-                    AR_era_ds.shape[0,AR_era_data["model_runs"].start+3,0,:,:],
-                    hatches=['//'],cmap='bone_r',alpha=0.1,
-                    transform=ccrs.PlateCarree())
-            AR_C.set_label="AR (Guan & Waliser, 2019)"
+                    ax2.contourf(AR_era_ds.lon,AR_era_ds.lat,
+                        AR_era_ds.shape[0,AR_era_data["model_runs"].start+3,0,:,:],
+                        hatches=['//'],cmap='bone_r',alpha=0.1,
+                        transform=ccrs.PlateCarree())
+                    AR_C.set_label="AR (Guan & Waliser, 2019)"
+            else:
+                pass
+                #    hatches=plt.contourf(AR_era_ds.lon,AR_era_ds.lat,
+                #        AR_era_ds.shape[0,AR_era_data["model_runs"].start+last_hour,0,:,:],
+                #        hatches=["//"],cmap="bone_r",
+                #        alpha=0.2,transform=ccrs.PlateCarree())
+                #    for c,collection in enumerate(hatches.collections):
+                #            collection.set_edgecolor("k")
             
         
                 
@@ -1519,19 +1551,25 @@ class FlightMaps(flight_campaign):
         # just a series, if only one sonde has been released
         
         if not Dropsondes=={}:
-            if isinstance(Dropsondes["Lat"],pd.DataFrame):
-                dropsonde_releases=pd.DataFrame(\
+            if not campaign_cls.name=="HALO_AC3":
+                if isinstance(Dropsondes["Lat"],pd.DataFrame):
+                    dropsonde_releases=pd.DataFrame(\
                             index=pd.DatetimeIndex(Dropsondes["LTS"].index))
-                dropsonde_releases["Lat"]=Dropsondes["Lat"].loc[:,"6000.0"].values
-                dropsonde_releases["Lon"]=Dropsondes["Lon"].loc[:,"6000.0"].values
+                    dropsonde_releases["Lat"]=Dropsondes["Lat"].loc[:,"6000.0"].values
+                    dropsonde_releases["Lon"]=Dropsondes["Lon"].loc[:,"6000.0"].values
         
+                else:
+                    index_var=Dropsondes["Time"].loc["6000.0"]
+                    dropsonde_releases=pd.Series()
+                    dropsonde_releases["Lat"]=np.array(Dropsondes["Lat"].loc["6000.0"])
+                    dropsonde_releases["Lon"]=np.array(Dropsondes["Lon"].loc["6000.0"])
+                    dropsonde_releases["Time"]=index_var
             else:
-                index_var=Dropsondes["Time"].loc["6000.0"]
-                dropsonde_releases=pd.Series()
-                dropsonde_releases["Lat"]=np.array(Dropsondes["Lat"].loc["6000.0"])
-                dropsonde_releases["Lon"]=np.array(Dropsondes["Lon"].loc["6000.0"])
-                dropsonde_releases["Time"]=index_var
-        
+                dropsonde_releases=pd.DataFrame(data=np.array(
+                                                        [Dropsondes["Lat"].values,
+                                                         Dropsondes["Lon"].values]).T,
+                                                columns=["Lat","Lon"],
+                                                index=Dropsondes["Lat"].index)
             if not self.flight=="RF08":
                 relevant_dropsondes=dropsonde_releases.loc[\
                                         cut_radar["Reflectivity"].index[0]:\
@@ -3898,8 +3936,8 @@ def main():
     config_file_exists=False
     #campaign_name="NAWDEX"
     campaign_name="HALO_AC3"#Second_Synthetic_Study"#"HALO_AC3"#"NA_February_Run"    
-    flights=["RF03"]#["SRF07"]#["RF07"]#["SRF06"]
-    met_variable="IVT"
+    flights=["RF07"]#["SRF07"]#["RF07"]#["SRF06"]
+    met_variable="IWV"
     ar_of_day="SAR_internal"
     ###Switcher in order to specify maps plots to create
     should_plot_iop_map=False

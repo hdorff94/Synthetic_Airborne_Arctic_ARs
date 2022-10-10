@@ -1032,7 +1032,8 @@ class ICON_HALO_Plotting(ICON):
         
         if with_ICON:
             # ICON IVT
-            icon_data_path=self.cmpgn.campaign_data_path+"ICON_LEM_2KM/"    
+            icon_data_path=self.plot_path+\
+                "/../../../../data/"+"ICON_LEM_2KM/"+self.flight+"/"    
             # ICON IVT
             #if synthetic_icon_lat == 0:
             #    icon_data_path=icon_major_path
@@ -1080,16 +1081,18 @@ class ICON_HALO_Plotting(ICON):
         if with_dropsondes:
             if not self.synthetic_campaign:
                 if not self.flight=="RF08":
-                    dropsondes["IVT"]=dropsondes["IVT"].loc[\
+                    try:
+                        dropsondes["IVT"]=dropsondes["IVT"].loc[\
                                     halo_era5.index[0]:halo_era5.index[-1]]
-                    # RF08 has only one or no (?) dropsonde 
-                    # which makes the plotting more complicated
-                    ax1.plot(dropsondes["IVT"].index.time,
-                         np.array(dropsondes["IVT"]),
-                         linestyle='',markersize=15,marker='v',
-                         color="orange",markeredgecolor="black",
-                         label="Dropsondes")
-                
+                        # RF08 has only one or no (?) dropsonde 
+                        # which makes the plotting more complicated
+                        ax1.plot(dropsondes["IVT"].index.time,
+                                 np.array(dropsondes["IVT"]),
+                                 linestyle='',markersize=15,marker='v',
+                                 color="orange",markeredgecolor="black",
+                                 label="Dropsondes")
+                    except:
+                        pass
         ax1.set_ylim([lower_lim,upper_lim])
         ax1.legend(loc="upper center",ncol=3)
         ax1.set_xlabel('')

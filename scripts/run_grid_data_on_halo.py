@@ -69,11 +69,11 @@ def main(config_file_path=os.getcwd(),
            "RF11":"14","RF12":"15"}
     elif campaign=="HALO_AC3":
         years={"RF02":"2022","RF03":"2022","RF04":"2022","RF05":"2022",
-               "RF06":"2022"}
+               "RF06":"2022","RF07":"2022","RF08":"2022","RF16":"2022"}
         months={"RF02":"03","RF03":"03","RF04":"03","RF05":"03",
-               "RF06":"03"}
+               "RF06":"03","RF07":"03","RF08":"03","RF16":"04"}
         days={"RF02":"12","RF03":"13","RF04":"14","RF05":"15",
-               "RF06":"16"}
+               "RF06":"16","RF07":"20","RF08":"21","RF16":"10"}
     # synthetic campaigns
     elif campaign=="NA_February_Run":
         flights=["SRF01","SRF02","SRF03","SRF04","SRF05","SRF06","SRF07"]
@@ -443,15 +443,19 @@ def main(config_file_path=os.getcwd(),
         
         # Load Dropsonde datasets
     
-        if not flight[0]=="RF08":
-            try:
+#        if not flight[0]=="RF08":
+        if not campaign=="HALO_AC3":#try:
                 Dropsondes,Upsampled_Dropsondes=cmpgn_cls.load_ar_processed_dropsondes(
                                                     ERA5_on_HALO,date,
                                                     radar,halo_df,flight,
                                                     with_upsampling=True,
                                                     ar_of_day=ar_of_day)
-            except:
-                Dropsondes={}
+        else:
+                Sondes_cls=Instruments.Dropsondes(HALO_cls)
+                Sondes_cls.calc_integral_variables(integral_var_list=["IWV","IVT"])
+                Dropsondes=Sondes_cls.sonde_dict
+
+                #Dropsondes={}
     else:
         Dropsondes={}
         radar={}
@@ -474,7 +478,7 @@ def main(config_file_path=os.getcwd(),
         
         icon_resolution=2000 # units m
     
-        icon_var_list=ICON.lookup_ICON_AR_period_data(flight,ar_of_day,
+        icon_var_list=ICON.lookup_ICON_AR_period_data(campaign,flight,ar_of_day,
                                                  icon_resolution,
                                                  hydrometeor_icon_path,
                                                  synthetic=synthetic_flight)
@@ -488,7 +492,8 @@ def main(config_file_path=os.getcwd(),
                             interpolated_hmc_file=None,ar_of_day=ar_of_day,
                             synthetic_icon=synthetic_icon,
                             synthetic_flight=synthetic_flight)
-    
+        if campaign=="HALO_AC3":
+                hydrometeor_icon_path=hydrometeor_icon_path+flight[0]+"/"
         ICON_on_HALO.update_ICON_hydrometeor_data_path(hydrometeor_icon_path)
     
     else:
@@ -557,7 +562,7 @@ def main(config_file_path=os.getcwd(),
             pass
        else:
            #Get vertical profiles of moisture/ hydrometeors
-           halo_icon_hmc=ICON_on_HALO.load_hwc(with_hydrometeors=True)
+           halo_icon_hmc=ICON_on_HALO.load_hwc(with_hydrometeors=False)
        #----------------------------------------------------------------------#    
        # Retrieval
        if flight==["RF10"]:
@@ -676,6 +681,11 @@ def main(config_file_path=os.getcwd(),
                                           Dropsondes,last_index,date,
                                           with_ICON=False,
                                           with_CARRA=carra_is_desired)
+            ICON_HALO_Plotting.plot_IVT_icon_era5_sondes(halo_era5,
+                                          Dropsondes,last_index,date,
+                                          with_ICON=True,
+                                          with_CARRA=carra_is_desired)
+            #sys.exit()
             ###################################################################            
             # Map the AR flight intersection
             last_hour=pd.DatetimeIndex(halo_df.index).hour[-1]#
@@ -689,12 +699,13 @@ def main(config_file_path=os.getcwd(),
                 except:
                     pass
                 # Moisture and Moisture Budget
-            AR_flight_section_mapping(ERA5_on_HALO,radar,Dropsondes,cmpgn_cls)
-            Flightmap.plot_AR_moisture_components_map(ERA5_on_HALO,radar,
+            AR_flight_section_mapping(ERA5_on_HALO,radar,Dropsondes,cmpgn_cls,
+                                      halo_data=halo_df)
+            if not cmpgn_cls.name=="HALO_AC3":
+                Flightmap.plot_AR_moisture_components_map(ERA5_on_HALO,radar,
                                                   Dropsondes,cmpgn_cls)
-            
-            if not flight[0].endswith("instantan"):
-                Flightmap.plot_moisture_budget(ERA5_on_HALO,radar,
+                if not flight[0].endswith("instantan"):
+                    Flightmap.plot_moisture_budget(ERA5_on_HALO,radar,
                                        Dropsondes,cmpgn_cls)
             
             
@@ -703,16 +714,16 @@ def main(config_file_path=os.getcwd(),
                 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                 
                 # Map the AR flight intersection
-                try:
-                    with plt.style.context(styles(style_name)):
-                        print("Plots created with Typhon")
-                        ICON_HALO_Plotting.plot_IVT_icon_era5_sondes(halo_era5,
-                                          Dropsondes,last_index,date,
-                                          with_ICON=True,
-                                          with_dropsondes=True,
-                                          synthetic_icon_lat=synthetic_icon_lat)
-                except:
-                    pass
+                #try:
+                    #with plt.style.context(styles(style_name)):
+                    #    print("Plots created with Typhon")
+                    #    ICON_HALO_Plotting.plot_IVT_icon_era5_sondes(halo_era5,
+                    #                      Dropsondes,last_index,date,
+                    #                      with_ICON=True,
+                    #                      with_dropsondes=True,
+                    #                      with_CARRA)
+                #except:
+                #    pass
                 try:    
                     ICON_HALO_Plotting.plot_hmp_icon_era5_sondes(radar,
                                         halo_icon_hmp,halo_era5,Dropsondes,
@@ -949,7 +960,7 @@ def main(config_file_path=os.getcwd(),
         if "aircraft_dict" in locals().keys():
             return halo_grid_hmc,radar,aircraft_dict        
         else:
-            return halo_grid_hmc,radar
+            return halo_grid_hmc,radar,{}
             
 if __name__=="__main__":
     main(campaign="NA_February_Run",

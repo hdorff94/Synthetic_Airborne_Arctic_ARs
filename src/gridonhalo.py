@@ -1391,7 +1391,7 @@ class ICON_on_HALO(ICON):
         self.HMPs=HMPs
         self.HMCs=HMCs
         self.synthetic_flight=synthetic_flight
-        
+        self.campaign_name=cmpgn_cls.name
     def update_ICON_hydrometeor_data_path(self,hydro_path):
         self.hydrometeor_icon_path=hydro_path
     #%% Hydrometeorpaths    
@@ -1517,7 +1517,7 @@ class ICON_on_HALO(ICON):
                               self.interpolated_hmp_file):
             print("ICON HMP data for cross-section ",
                   self.ar_of_day," is not yet calculated.")
-            self.load_and_upsample_icon("Hydrometeor")
+            self.load_and_upsample_icon("Hydrometeor",extra_path=self.hydrometeor_icon_path)
             if self.synthetic_icon:
                 if self.synthetic_icon_lat is not None:
                     if not lat_changed:
@@ -1542,8 +1542,12 @@ class ICON_on_HALO(ICON):
                   " is already calculated and will be opened")
             self.halo_icon_hmp=pd.read_csv(self.hydrometeor_icon_path+\
                                            self.interpolated_hmp_file)
-            self.halo_icon_hmp.index=pd.DatetimeIndex(
+            try:
+                self.halo_icon_hmp.index=pd.DatetimeIndex(
                                             self.halo_icon_hmp["Unnamed: 0"])
+            except:
+                self.halo_icon_hmp.index=pd.DatetimeIndex(
+                                            self.halo_icon_hmp["time"])
         return self.halo_icon_hmp
     
     #%% Hydrometeorcontents (HMCs)
@@ -1607,9 +1611,10 @@ class ICON_on_HALO(ICON):
             if not (upsample_time is None):
                 print("Interpolate ICON in time to ",upsample_time)
                 icon_q=icon_q.resample(time=upsample_time).interpolate("linear")
-            icon_initial_hour=self.icon_var_list[0]
-        
-            icon_q=icon_initial_hour.adapt_icon_time_index(icon_q,
+            if not self.campaign_name=="HALO_AC3":
+                icon_initial_hour=self.icon_var_list[0]
+            
+                icon_q=icon_initial_hour.adapt_icon_time_index(icon_q,
                                                        self.date,
                                                        self.flight)
         print("Interpolate the ICON ",var," onto the Flight Track")
@@ -1647,14 +1652,14 @@ class ICON_on_HALO(ICON):
         temp_clat=np.rad2deg(pd.Series(icon_q.clat))
                         
         cutted_clat=temp_clat[temp_clat.between(
-                                        self.halo_df["latitude"].min()-2,
-                                        self.halo_df["latitude"].max()+2)]
+                                        self.halo_df["latitude"].min()-1,
+                                        self.halo_df["latitude"].max()+1)]
         temp_clon=np.rad2deg(pd.Series(icon_q.clon))
         temp_clon=temp_clon.loc[cutted_clat.index]
                         
         cutted_clon=temp_clon[temp_clon.between(
-                                        self.halo_df["longitude"].min()-2,
-                                        self.halo_df["longitude"].max()+2)]
+                                        self.halo_df["longitude"].min()-1,
+                                        self.halo_df["longitude"].max()+1)]
                         
         icon_q=icon_q.isel(ncells=cutted_clon.index)
                         
@@ -1670,7 +1675,7 @@ class ICON_on_HALO(ICON):
         if not var=="Z_Height":
             icon_q.data=icon_q.data.compute()
         print(var,"computed")
-        
+        #sys.exit()        
         for i in range(iterative_length):
             if not var=="Z_Height":
                 closest_min=abs(icon_simulations_minute_of_day-\
@@ -1682,8 +1687,8 @@ class ICON_on_HALO(ICON):
                     icon_grid_values=icon_q[0,:,:]
                 else:
                     icon_grid_values=icon_q[:,:]
-            lon=np.array(np.rad2deg(icon_grid_values.clon[:]))
-            lat=np.array(np.rad2deg(icon_grid_values.clat[:]))
+            lon=np.rad2deg(icon_grid_values.clon[:])
+            lat=np.rad2deg(icon_grid_values.clat[:])
             
             #Old distance
             deg_dist=pd.Series(np.sqrt((lon-halo_icon["Halo_Lon"].iloc[i])**2+\
@@ -1739,7 +1744,7 @@ class ICON_on_HALO(ICON):
         return q_interp_point
     
     def load_hwc(self,with_hydrometeors=False):
-            interp_icon_q_file="Liquid_Content_interpolated_profile.csv"
+            interp_icon_q_file="Specific_Humidity_interpolated_profile.csv"
             
             if self.ar_of_day is not None:
                 interp_icon_q_file=self.flight+"_"+self.ar_of_day+\
@@ -1748,21 +1753,21 @@ class ICON_on_HALO(ICON):
                 interp_icon_q_file="Synthetic_"+interp_icon_q_file
             
             if not with_hydrometeors:
-                variables=[#"Pressure",]
-                       "Specific_Humidity"]#,
-                       #"U_Wind"]
-                       #"V_Wind",
-                       #"Z_Height"]
-                halo_icon_keys=[#"pres",]
-                                "qv"]#,
-                                #"u",]
-                                #"v",
-                                #"Z_Height"]
-                dataset_var=[#"pres",]#,
-                             "qv"]#,
-                             #"u"]
-                             #"v",
-                             #"z_mc"]
+                variables=["Pressure",
+                       "Specific_Humidity",
+                       "U_Wind",
+                       "V_Wind",
+                       "Z_Height"]
+                halo_icon_keys=["pres",
+                                "qv",
+                                "u",
+                                "v",
+                                "Z_Height"]
+                dataset_var=["pres",
+                             "qv"#,
+                             "u"
+                             "v",
+                             "z_mc"]
             else:
                 variables=["Ice_Content","Snow_Content",
                            "Liquid_Content",
@@ -1779,11 +1784,6 @@ class ICON_on_HALO(ICON):
                              "qc","qr"]
                 #,"pres","qv","u","v","z_mc"]
                 
-            #variables=["Specific_Humidity"]
-            #halo_icon_keys=["q"]#"u","v","Z_Height"]
-            
-            #variables=["U_Wind","V_Wind","Z_Height"]
-            #halo_icon_keys=["u","v","Z_Height"]
             
             #Preallocate
             self.halo_icon_hmc={}
@@ -1798,10 +1798,17 @@ class ICON_on_HALO(ICON):
                 for var in variables:
                     print(var)
                     hour=0
-                    icon_q_files=var+"_ICON_"+self.flight+"_*UTC.nc"
+                    if not self.campaign_name=="HALO_AC3":
+                        icon_q_files=var+"_ICON_"+self.flight+"_*UTC.nc"
+                    else:
+                        icon_q_files=var+"_"+self.flight+"_"+\
+                            self.ar_of_day+"_*UTC.nc"
                     if not var=="Z_Height":
                         icon_ds=xr.open_mfdataset(self.hydrometeor_icon_path+\
-                                              icon_q_files, concat_dim="time")
+                                              icon_q_files, combine="nested",
+                                              concat_dim="time")
+                        icon_ds=icon_ds.drop_duplicates(dim="time")
+                        icon_ds=icon_ds.astype(np.float32)
                     else:
                         import glob
                         z_files_list=glob.glob(self.hydrometeor_icon_path+\
@@ -1859,8 +1866,11 @@ class ICON_on_HALO(ICON):
                     #        print("Changed Latitude of HALO Aircraft",
                     #              "for Synthetic Observations")
                     #        self.lat_changed=True
+                    upsample_resolution=None
+                    if self.campaign_name=="HALO_AC3":
+                        upsample_resolution="30min"
                     interp_q_icon = self.interpolate_icon_3D_data(icon_ds,var,
-                                            upsample_time=None,
+                                            upsample_time=upsample_resolution,
                                             geo_interpolation_type="triangle",
                                             save_interpolation_df=True)
                     icon_var=halo_icon_keys[k]
@@ -1915,17 +1925,22 @@ class ICON_on_HALO(ICON):
                 # IVT    
                 self.interp_icon_ivt_file=self.flight+"_"+self.ar_of_day+"_"+\
                                         "ICON_Interpolated_IVT.csv"
-                if self.synthetic_flight:
-                    self.interp_icon_ivt_file="Synthetic_"+self.interp_icon_ivt_file
-                if not os.path.isfile(self.hydrometeor_icon_path+\
+            if self.synthetic_flight:
+                self.interp_icon_ivt_file="Synthetic_"+self.interp_icon_ivt_file
+            if not os.path.isfile(self.hydrometeor_icon_path+\
                                       self.interp_icon_ivt_file):
-                    self.icon_ivt = self.calc_interp_IVT()
-                else:
-                    self.icon_ivt=pd.read_csv(self.hydrometeor_icon_path+\
+                self.icon_ivt = self.calc_interp_IVT()
+            else:
+                self.icon_ivt=pd.read_csv(self.hydrometeor_icon_path+\
                                               self.interp_icon_ivt_file)
+                try:
                     self.icon_ivt.index=pd.DatetimeIndex(
                                             self.icon_ivt["Unnamed: 0"])
                     del self.icon_ivt["Unnamed: 0"]
+                except:
+                    self.icon_ivt.index=pd.DatetimeIndex(
+                                            self.icon_ivt["time"])
+                    del self.icon_ivt["time"]
             self.halo_icon_hmc["IVT"]=self.icon_ivt
             return self.halo_icon_hmc     
     
@@ -1962,7 +1977,10 @@ class ICON_on_HALO(ICON):
             qv=q_loc*v_loc
             qu=qu.dropna()
             qv=qv.dropna()
-            pres_index=self.halo_icon_hmc["p"].iloc[ts,:]
+            try:
+                pres_index=self.halo_icon_hmc["p"].iloc[ts,:]
+            except:
+                pres_index=self.halo_icon_hmc["pres"].iloc[ts,:]
             pres_index=pres_index.loc[q_loc.index]
             qu.index=pres_index
             qv.index=pres_index

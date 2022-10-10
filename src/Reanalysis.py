@@ -1148,8 +1148,8 @@ def main(campaign="NAWDEX"):
     elif campaign=="HALO_AC3":
         synthetic_campaign=False
         analysing_campaign=True
-        flights=["RF16"]#["RF06"]#,"RF06"]
-        dates=["20220410"]#["20220316"]#,"20220316"]
+        flights=["RF08"]#["RF06"]#,"RF06"]
+        dates=["20220321"]#["20220316"]#,"20220316"]
     else:
         raise Exception("The given campaign is not specified in the Downloader")
     
