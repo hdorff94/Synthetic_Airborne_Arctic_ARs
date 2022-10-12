@@ -405,7 +405,22 @@ class ICON_NWP():
                                     icon_path=hydrometeor_icon_path)
                         
                     icon_var_list=[icon14,icon15,icon16]
-                    
+                if flight[0]=="RF08":
+                    start_hour="09"
+                    icon09=ICON_NWP(start_hour,resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                    icon10=ICON_NWP("10",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        
+                    icon11=ICON_NWP("11",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                    icon_var_list=[icon09,icon10,icon11]
                 if flight[0]=="RF16":
                     if ar_of_day=="AR1":
                         start_hour="10"

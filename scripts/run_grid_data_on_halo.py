@@ -808,22 +808,25 @@ def main(config_file_path=os.getcwd(),
                 except:
                     print("No dropsonde plot created")
                 if track_type=="internal":
-                    ERA_HALO_Plotting.internal_leg_representativeness(cmpgn_cls,
+                    try:
+                        ERA_HALO_Plotting.internal_leg_representativeness(cmpgn_cls,
                                                                       ERA5_on_HALO,
                                                                       flight[0],
                                                                       halo_df,
                                                                       halo_era5_hmc)
-                    #if icon_is_desired:
-                        #try:
-                        #    ICON_HALO_Plotting.mean_internal_leg_representativeness(
-                        #                cmpgn_cls,ICON,ICON_on_HALO,
-                        #                flight[0],halo_df,halo_icon_hmc)
-                        #except:
-                        #    pass
-                        #try:    
-                        #    Flightmap.plot_ar_section_internal_leg_ICON(cmpgn_cls)
-                        #except:
-                        #    pass
+                    except:
+                        pass
+                    if icon_is_desired:
+                        try:
+                            ICON_HALO_Plotting.mean_internal_leg_representativeness(
+                                        cmpgn_cls,ICON,ICON_on_HALO,
+                                        flight[0],halo_df,halo_icon_hmc)
+                        except:
+                            pass
+                        try:    
+                            Flightmap.plot_ar_section_internal_leg_ICON(cmpgn_cls)
+                        except:
+                            pass
                         #try:
                         #    ICON_HALO_Plotting.internal_leg_representativeness(
                         #                                cmpgn_cls,ICON,ICON_on_HALO,

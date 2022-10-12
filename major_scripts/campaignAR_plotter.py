@@ -155,9 +155,9 @@ if __name__=="__main__":
     # too much. 
     
     # Relevant specifications for running , those are default values
-    calc_hmp=True
-    calc_hmc=False
-    do_plotting=True
+    calc_hmp=False
+    calc_hmc=True
+    do_plotting=False
     synthetic_campaign=False
     ar_of_day="AR1"
     campaign_name="HALO_AC3"
@@ -180,8 +180,8 @@ if __name__=="__main__":
         #"SRF12":"20180225"
         }
     else:
-        flights_to_analyse={"RF05":"20220315"}        
-    use_era=True
+        flights_to_analyse={"RF08":"20220321"}        
+    use_era=False
     use_carra=False
     use_icon=True
     flights=[*flights_to_analyse.keys()]

@@ -103,6 +103,10 @@ def main(figure_to_create="fig13"):
                  do_instantan=do_instantan,sonde_no=sonde_no)
     Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,config_file,
                  grid_name=grid_name,do_instantan=do_instantan,sonde_no=sonde_no)
+    Inst_Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,
+                                                config_file,grid_name=grid_name,
+                                                do_instantan=True,sonde_no=sonde_no)
+    
     if figure_to_create.startswith("fig13"):
         Sectors,Ideal_Sectors,cmpgn_cls=\
             Moisture_CONV.load_moisture_convergence_single_case()
@@ -116,10 +120,35 @@ def main(figure_to_create="fig13"):
             Budget_plots.moisture_convergence_cases_overview(Campaign_Budgets,
                                                         Campaign_Ideal_Budgets,
                                 save_as_manuscript_figure=save_for_manuscript)
+    elif figure_to_create.startswith("fig18"):
+        Campaign_Budgets,Campaign_Ideal_Budgets=\
+            Moisture_CONV.get_overall_budgets()
+        Inst_Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,
+                                    flight+"_instantan",config_file,
+                                    flight_dates=flight_dates,
+                                    grid_name=grid_name,do_instantan=True)
+        Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets()
+       
+        if do_plotting:
+            Inst_Budget_plots.moisture_convergence_cases_overview(
+                            Campaign_Budgets=Campaign_Budgets,
+                            Campaign_Ideal_Budgets=Campaign_Ideal_Budgets,
+                            Campaign_Inst_Budgets={},
+                            Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
+                            instantan_comparison=True,
+                            save_as_manuscript_figure=True)
+            Inst_Budget_plots.sonde_divergence_error_bar()            
+#        Flight_Moisture_CONV=Moist_Convergence(
+#                        cmpgn_cls,flight,self.cfg_file,
+#                        grid_name=self.grid_name,do_instantan=False)    
+#            Flight_Sectors,Flight_Ideal_Sectors,cmpgn_cls=\
+#                    Flight_Moisture_CONV.load_moisture_convergence_single_case()
+            
 if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig13_single_case_sector_profiles"
-    figure_to_create="fig14_campaign_divergence_overviews"
+    #figure_to_create="fig14_campaign_divergence_overviews"
+    figure_to_create="fig18_campaign_divergence_overview_instantan_comparison"
     main(figure_to_create=figure_to_create)
 
 """

@@ -1306,54 +1306,133 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             
     ###########################################################################
     #%%
+    def allocate_budgets(self,Campaign_Budgets={},
+                         Campaign_Ideal_Budgets={},
+                         Campaign_Inst_Budgets={},
+                         Campaign_Inst_Ideal_Budgets={}):
+        
+        if Campaign_Budgets!={}:
+            self.Campaign_Budgets=Campaign_Budgets
+        if Campaign_Ideal_Budgets!={}:
+            self.Campaign_Ideal_Budgets=Campaign_Ideal_Budgets
+        if Campaign_Inst_Budgets!={}:
+            self.Campaign_Inst_Budgets=Campaign_Inst_Budgets
+        if Campaign_Inst_Ideal_Budgets!={}:
+            self.Campaign_Inst_Ideal_Budgets=Campaign_Inst_Ideal_Budgets
+    
     # Summarizing plots of campaign
-    def moisture_convergence_cases_overview(self,Campaign_Budgets,
-                                            Campaign_Ideal_Budgets,
-                                            save_as_manuscript_figure=False):
-        warm_budgets=Campaign_Budgets["warm_sector"]
-        core_budgets=Campaign_Budgets["core"]
-        cold_budgets=Campaign_Budgets["cold_sector"]
+    def calc_budgets_in_mm_h(self):
+        if hasattr(self,"Campaign_Budgets"):
+            warm_budgets=self.Campaign_Budgets["warm_sector"]
+            core_budgets=self.Campaign_Budgets["core"]
+            cold_budgets=self.Campaign_Budgets["cold_sector"]
+            
+            self.budget_regions=pd.DataFrame()
+            #    index=self.Campaign_Budgets["core"]["ADV"].index)
+            self.budget_regions["Warm\nADV"]=warm_budgets["ADV"].values/\
+                                                1000*3600
+            self.budget_regions["Warm\nCONV"]=warm_budgets["CONV"].values/\
+                                                1000*3600
+            self.budget_regions["Core\nADV"]=core_budgets["ADV"].values/\
+                                                1000*3600
+            self.budget_regions["Core\nCONV"]=core_budgets["CONV"].values/\
+                                                1000*3600
+            self.budget_regions["Cold\nADV"]=cold_budgets["ADV"].values/\
+                                                1000*3600
+            self.budget_regions["Cold\nCONV"]=cold_budgets["CONV"].values/\
+                                                1000*3600
         
-        warm_ideal_budgets=Campaign_Ideal_Budgets["warm_sector"]
-        core_ideal_budgets=Campaign_Ideal_Budgets["core"]
-        cold_ideal_budgets=Campaign_Ideal_Budgets["cold_sector"]
+        if hasattr(self,"Campaign_Ideal_Budgets"):
+            warm_ideal_budgets=self.Campaign_Ideal_Budgets["warm_sector"]
+            core_ideal_budgets=self.Campaign_Ideal_Budgets["core"]
+            cold_ideal_budgets=self.Campaign_Ideal_Budgets["cold_sector"]
+            
+            self.budget_ideal_regions=pd.DataFrame()
+            #    index=self.Campaign_Ideal_Budgets["core"]["ADV"].index)
+            self.budget_ideal_regions["Warm\nADV"]=warm_ideal_budgets["ADV"].values/\
+                                                        1000*3600
+            self.budget_ideal_regions["Warm\nCONV"]=warm_ideal_budgets["CONV"].values/\
+                                                        1000*3600
+            self.budget_ideal_regions["Core\nADV"]=core_ideal_budgets["ADV"].values/\
+                                                        1000*3600
+            self.budget_ideal_regions["Core\nCONV"]=core_ideal_budgets["CONV"].values/\
+                                                        1000*3600
+            self.budget_ideal_regions["Cold\nADV"]=cold_ideal_budgets["ADV"].values/\
+                                                        1000*3600
+            self.budget_ideal_regions["Cold\nCONV"]=cold_ideal_budgets["CONV"].values/\
+                                                        1000*3600
+        if hasattr(self,"Campaign_Inst_Budgets"):
+            warm_inst_budgets=self.Campaign_Inst_Budgets["warm_sector"]
+            core_inst_budgets=self.Campaign_Inst_Budgets["core"]
+            cold_inst_budgets=self.Campaign_Inst_Budgets["cold_sector"]
+            
+            self.budget_inst_regions=pd.DataFrame()
+                #index=self.Campaign_Inst_Budgets["core"]["ADV"].index)
+            self.budget_inst_regions["Warm\nADV"]=warm_inst_budgets["ADV"].values/\
+                                                        1000*3600
+            self.budget_inst_regions["Warm\nCONV"]=warm_inst_budgets["CONV"].values/\
+                                                        1000*3600
+            self.budget_inst_regions["Core\nADV"]=core_inst_budgets["ADV"].values/\
+                                                        1000*3600
+            self.budget_inst_regions["Core\nCONV"]=core_inst_budgets["CONV"].values/\
+                                                        1000*3600
+            self.budget_inst_regions["Cold\nADV"]=cold_inst_budgets["ADV"].values/\
+                                                        1000*3600
+            self.budget_inst_regions["Cold\nCONV"]=cold_inst_budgets["CONV"].values/\
+                                                        1000*3600
         
+        if hasattr(self,"Campaign_Inst_Ideal_Budgets"):
+            warm_inst_ideal_budgets=self.Campaign_Inst_Ideal_Budgets["warm_sector"]
+            core_inst_ideal_budgets=self.Campaign_Inst_Ideal_Budgets["core"]
+            cold_inst_ideal_budgets=self.Campaign_Inst_Ideal_Budgets["cold_sector"]
+            
+            self.budget_inst_ideal_regions=pd.DataFrame()
+                    #index=self.Campaign_Inst_Ideal_Budgets["core"]["ADV"].index)
+            self.budget_inst_ideal_regions["Warm\nADV"]=warm_inst_ideal_budgets["ADV"].values/\
+                                                        1000*3600
+            self.budget_inst_ideal_regions["Warm\nCONV"]=warm_inst_ideal_budgets["CONV"].values/\
+                                                        1000*3600
+            self.budget_inst_ideal_regions["Core\nADV"]=core_inst_ideal_budgets["ADV"].values/\
+                                                        1000*3600
+            self.budget_inst_ideal_regions["Core\nCONV"]=core_inst_ideal_budgets["CONV"].values/\
+                                                        1000*3600
+            self.budget_inst_ideal_regions["Cold\nADV"]=cold_inst_ideal_budgets["ADV"].values/\
+                                                        1000*3600
+            self.budget_inst_ideal_regions["Cold\nCONV"]=cold_inst_ideal_budgets["CONV"].values/\
+                                                        1000*3600
+        
+            
+    def moisture_convergence_cases_overview(self,Campaign_Budgets={},
+                                            Campaign_Ideal_Budgets={},
+                                            Campaign_Inst_Budgets={},
+                                            Campaign_Inst_Ideal_Budgets={},
+                                            save_as_manuscript_figure=False,
+                                            instantan_comparison=False):
+        
+        # Allocate variables and calc budget contributions in mm/h
+        self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
+                              Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets)
+        self.calc_budgets_in_mm_h()
         #Start plotting
         budget_boxplot=plt.figure(figsize=(12,9), dpi= 300)
         matplotlib.rcParams.update({'font.size': 24})
             
-        budget_regions=pd.DataFrame()
-        budget_regions["Warm\nADV"]=warm_budgets["ADV"]/1000*3600
-        budget_regions["Warm\nCONV"]=warm_budgets["CONV"].values/1000*3600
-        budget_regions["Core\nADV"]=core_budgets["ADV"]/1000*3600
-        budget_regions["Core\nCONV"]=core_budgets["CONV"].values/1000*3600
-        budget_regions["Cold\nADV"]=cold_budgets["ADV"]/1000*3600
-        budget_regions["Cold\nCONV"]=cold_budgets["CONV"].values/1000*3600
-        
-        budget_ideal_regions=pd.DataFrame()
-        budget_ideal_regions["Warm\nADV"]=warm_ideal_budgets["ADV"]/1000*3600
-        budget_ideal_regions["Warm\nCONV"]=warm_ideal_budgets["CONV"].values/1000*3600
-        budget_ideal_regions["Core\nADV"]=core_ideal_budgets["ADV"]/1000*3600
-        budget_ideal_regions["Core\nCONV"]=core_ideal_budgets["CONV"].values/1000*3600
-        budget_ideal_regions["Cold\nADV"]=cold_ideal_budgets["ADV"]/1000*3600
-        budget_ideal_regions["Cold\nCONV"]=cold_ideal_budgets["CONV"].values/1000*3600
-        
-        #colors= {"Warm\nADV":"darkorange","Warm\nCONV":"lightorange",
-        # "Core\nADV":"lightgreen","Core\nCONV":"darkgreen",
-        # "Cold\nADV":"lightblue","Cold\nCONV":"darkblue"}
-         
-        #colors_taken           = [colors[sector] for sector in colors.keys()]
-
         color_palette=["darkorange","orange","lightgreen",
                    "green","lightblue","blue"]                    
 
         ax1=budget_boxplot.add_subplot(111)
         ax1.axhline(0,color="grey",ls="--",lw=2,zorder=1)
     
+        budget_regions=self.budget_regions
+        if not instantan_comparison:
+            budget_ideal_regions=self.budget_ideal_regions
+        else:
+            budget_ideal_regions=self.budget_inst_ideal_regions
+            
         if self.grid_name=="CARRA":
             budget_ideal_regions=-1*budget_ideal_regions
             budget_regions=-1*budget_regions
-    
+            
         sns.boxplot(data=budget_ideal_regions,notch=False,
                        zorder=0,linewidth=3.5,palette=color_palette)
         
@@ -1366,7 +1445,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.xaxis.set_tick_params(width=2,length=10)
         ax1.yaxis.set_tick_params(width=2,length=10)
                         #ax1.xaxis.spines(width=3)
-        ax1.set_ylabel("Water Vapour Budget ($\mathrm{mmh}^{-1}$)")
+        ax1.set_ylabel("Contribution to \nWater Vapour Budget ($\mathrm{mmh}^{-1}$)")
         sns.boxplot(data=budget_regions,width=0.4,linewidth=3.0,
             notch=False,color="k",palette=["lightgrey"],zorder=1)
     
@@ -1381,8 +1460,50 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         else:
             plot_path=self.plot_path+\
                 "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
-            fig_name="Fig14_"+fig_name
+            if not instantan_comparison:
+                fig_name="Fig14_"+fig_name
+            else:
+                fig_name="Fig18_"+fig_name
         budget_boxplot.savefig(plot_path+fig_name,
                        dpi=300,bbox_inches="tight")
         print("Figure saved as:",plot_path+fig_name)
-    
+        
+    def sonde_divergence_error_bar(self,save_as_manuscript_figure=False):
+            
+        budget_inst_ideal_regions=-1*self.budget_inst_ideal_regions
+        budget_ideal_regions=-1*self.budget_ideal_regions
+        budget_regions=-1*self.budget_regions
+        
+        sector_divergence_inst_errors=budget_regions-budget_inst_ideal_regions
+        sector_divergence_errors=budget_regions-budget_ideal_regions
+        mean_sector_divergence_inst_errors=sector_divergence_inst_errors.mean()
+        mean_sector_divergence_errors=sector_divergence_errors.mean()
+        abs_std_sector_divergence_inst_errors=abs(sector_divergence_inst_errors).std()
+        abs_std_sector_divergence_errors=abs(sector_divergence_errors).std()
+        
+        abs_mean_sector_divergence_inst_error=\
+            abs(sector_divergence_inst_errors).mean()
+        abs_mean_sector_divergence_errors=\
+            abs(sector_divergence_errors).mean()
+        
+        ##### Mean Error between sondes and 
+        error_fig=plt.figure(figsize=(12,9))
+        ax1=error_fig.add_subplot(111)
+        #ax1.bar(np.arange(sector_divergence_errors.shape[0])+1,
+        #            sector_divergence_errors)
+        ax1.bar(np.arange(abs_mean_sector_divergence_errors.shape[0]),
+                abs_mean_sector_divergence_errors,color="lightgrey")
+        ax1.bar(np.arange(abs_mean_sector_divergence_errors.shape[0]),
+                abs_mean_sector_divergence_inst_error-\
+                    abs_mean_sector_divergence_errors,
+                bottom=abs_mean_sector_divergence_errors,
+                color="darkgray")
+        ax1.bar(np.arange(abs_mean_sector_divergence_errors.shape[0]),
+                abs_mean_sector_divergence_inst_error,
+                fill=False, edgecolor="k",lw=2)
+        #yerr=abs_std_sector_divergence_errors,color="lightgrey")
+        ax1.set_xticks(np.arange(mean_sector_divergence_errors.shape[0]))
+        ax1.set_xticklabels(mean_sector_divergence_errors.index,fontsize=10)
+        sns.despine(offset=10)
+        
+        

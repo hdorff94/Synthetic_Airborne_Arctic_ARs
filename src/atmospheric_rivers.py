@@ -665,8 +665,8 @@ class Atmospheric_Rivers():
                                 "end":"2022-03-16 14:30"}
             ARs["RF07"]["AR1"]={"start":"2022-03-20 15:22",
                                 "end":"2022-03-20 16:24"}
-            ARs["RF08"]["AR1"]={"start":"2022-03-21 09:15",
-                                "end":"2022-03-21 10:15"}
+            ARs["RF08"]["AR1"]={"start":"2022-03-21 09:20",
+                                "end":"2022-03-21 10:25"}
         return ARs
     
     def locate_AR_cross_section_sectors(HALO_Dict,Hydrometeors,analysed_flight):
