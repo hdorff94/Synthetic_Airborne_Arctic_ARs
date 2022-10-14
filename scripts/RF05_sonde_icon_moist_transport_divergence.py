@@ -153,8 +153,7 @@ Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,flight,config_file,
  
 
 
-#%% warm sector
-
+#%% warm sector Sondes
 warm_relevant_times=[relevant_times[warm_time] \
                      for warm_time in relevant_warm_sector_sondes]
 warm_sondes_lat=[sonde_data["reference_lat"][time].data[0] \
@@ -233,15 +232,75 @@ warm_div_scalar_mass=warm_div_scalar_wind.loc[intersect_index]*\
 warm_adv_q_calc=warm_div_q_calc.loc[intersect_index]*\
             warm_div_vars["wind"].loc[intersect_index].mean(axis=1).values*1000
 
+#%% Warm sector ICON-2km
+from ICON import ICON_NWP as ICON
+
+import gridonhalo as Grid_on_HALO
+ar_of_day="AR1"
+cmpgn_cls.campaign_path=major_path+campaign+"/"
+icon_major_path=cmpgn_cls.campaign_path+"/data/ICON_LEM_2KM/"
+hydrometeor_icon_path=cmpgn_cls.campaign_path+"/data/ICON_LEM_2KM/"
+icon_resolution=2000 # units m
+icon_var_list=ICON.lookup_ICON_AR_period_data(campaign,[flight],ar_of_day,
+                                                 icon_resolution,
+                                                 hydrometeor_icon_path,
+                                                 synthetic=False)
+
+halo_df=aircraft_df.copy()
+halo_df=halo_df.rename(columns={"lat":"latitude",
+                                "lon":"longitude"})
+ICON_on_HALO=Grid_on_HALO.ICON_on_HALO(
+                            cmpgn_cls,icon_var_list,halo_df,[flight],date,
+                            interpolated_hmp_file=None,
+                            interpolated_hmc_file=None,ar_of_day=ar_of_day,
+                            synthetic_icon=False,
+                            synthetic_flight=False)
+if campaign=="HALO_AC3":
+    hydrometeor_icon_path=hydrometeor_icon_path+flight+"/"
+ICON_on_HALO.hydrometeor_icon_path=hydrometeor_icon_path        
+halo_icon_hmc=ICON_on_HALO.load_hwc(with_hydrometeors=False)
+sonde_icon_hmc={}
+for key in halo_icon_hmc.keys():
+    sonde_icon_hmc[key]=halo_icon_hmc[key].loc[warm_relevant_times]       
+sonde_icon_hmc["wind"]=np.sqrt(sonde_icon_hmc["u"]**2+sonde_icon_hmc["v"]**2)
+sonde_icon_hmc["transport"]=sonde_icon_hmc["wind"]*sonde_icon_hmc["q"]
+
+warm_icon_mean_qv,warm_icon_dx_qv,warm_icon_dy_qv=\
+        Moisture_CONV.run_haloac3_icon_sonde_regression(sondes_pos_all,
+                                                    sonde_icon_hmc,
+                                                    "transport")
+warm_icon_mean_q,warm_icon_dx_q_calc,warm_icon_dy_q_calc=\
+    Moisture_CONV.run_haloac3_icon_sonde_regression(sondes_pos_all,
+                                                sonde_icon_hmc,"q")
+            
+warm_icon_mean_scalar_wind,warm_icon_dx_scalar_wind,warm_icon_dy_scalar_wind=\
+    Moisture_CONV.run_haloac3_icon_sonde_regression(sondes_pos_all,
+                                                sonde_icon_hmc,
+                                                "wind")
+
+warm_icon_div_qv=(warm_icon_dx_qv+warm_icon_dy_qv)*1000
+warm_icon_div_scalar_wind = (warm_icon_dx_scalar_wind+warm_icon_dy_scalar_wind)
+warm_icon_div_q_calc      = (warm_icon_dx_q_calc+warm_icon_dy_q_calc)
+#div_mass=div_wind*domain_values["q"].mean(axis=0).values*1000
+intersect_icon_index=warm_icon_div_qv.index.intersection(warm_icon_div_scalar_wind.index)
+intersect_icon_index=intersect_icon_index.intersection(warm_icon_div_q_calc.index)
+warm_icon_div_scalar_mass=warm_icon_div_scalar_wind*\
+                sonde_icon_hmc["q"].iloc[:,1:].mean(axis=0).values*1000
+warm_icon_adv_q_calc=warm_icon_div_q_calc*\
+            sonde_icon_hmc["wind"].iloc[:,1:].mean(axis=0).values*1000
+z_height=sonde_icon_hmc["Z_Height"].iloc[:,1:].mean(axis=0)
 #%% Plotting            
 divergence_plot=plt.figure(figsize=(16,9))
 ax1=divergence_plot.add_subplot(121)
 ax2=divergence_plot.add_subplot(122)
 ax1.plot(warm_div_scalar_mass.values,warm_div_scalar_mass.index.values/1000,
-         color="darkorange",lw=3,label="warm sector")
-ax1.set_xlim([-3e-4,3e-4])
-ax1.set_xticks([-3e-4,-1.5e-4,0,1.5e-4,3e-4])
-ax1.set_xticklabels(["-3e-4","-1.5e-4","0","1.5e-4","3e-4"])
+         color="darkorange",lw=3,label="Dropsondes")
+ax1.plot(warm_icon_div_scalar_mass.values,z_height.values/1000,color="red",marker="s",
+         markersize=4,lw=2,ls="--",label="ICON-2km")
+
+ax1.set_xlim([-2.5e-4,2.5e-4])
+ax1.set_xticks([-2.5e-4,-1e-4,0,1e-4,2.5e-4])
+ax1.set_xticklabels(["-2.5e-4","-1e-4","0","1e-4","2.5e-4"])
 ax1.set_xlabel("Mass Divergence ($\mathrm{gkg}^{-1}\mathrm{s}^{-1}$)")
 ax1.set_ylabel("Height (km)")
 ax1.axvline(x=0,ls="--",lw=3,color="grey")
@@ -256,13 +315,16 @@ ax1.xaxis.set_tick_params(width=2,length=6)
 ax1.legend(loc="upper right",fontsize=22,bbox_to_anchor=[1.15,1.0])
 ax2.plot(warm_adv_q_calc.values,warm_adv_q_calc.index.values/1000,
          color="darkorange",lw=3)
+ax2.plot(warm_icon_adv_q_calc.values,z_height.values/1000,
+         color="red",marker="s",markersize=4,lw=2)
+
 #ax2.plot(cold_adv_q_calc.values,cold_adv_q_calc.index.values/1000,
 #         color="purple",lw=3)
 
 ax2.set_ylim([0,10])
-ax2.set_xlim([-3e-4,3e-4])
-ax2.set_xticks([-3e-4,-1.5e-4,0,1.5e-4,3e-4])
-ax2.set_xticklabels(["-3e-4","-1.5e-4","0","1.5e-4","3e-4"])
+ax2.set_xlim([-2.5e-4,2.5e-4])
+ax2.set_xticks([-2.5e-4,-1e-4,0,1e-4,2.5e-4])
+ax2.set_xticklabels(["-2.5e-4","-1e-4","0","1e-4","2.5e-4"])
 ax2.axvline(x=0,ls="--",lw=3,color="grey")
 ax2.set_xlabel("Moisture Advection ($\mathrm{gkg}^{-1}\mathrm{s}^{-1}$)")
 for axis in ['bottom','left']:
@@ -275,10 +337,11 @@ ax2.xaxis.set_tick_params(width=2,length=6)
 
 sns.despine(offset=10)
 plt.subplots_adjust(wspace=0.3)
-fig_name=flight+"_Sector_IVT_convergence.png"
-#divergence_plot.savefig(plot_path+fig_name,
-#                        dpi=300,bbox_inches="tight")
-#print("Figure saved as:",plot_path+fig_name)
+fig_name=flight+"_ICON_Sector_IVT_convergence.png"
+plot_path=os.getcwd()+"/"
+divergence_plot.savefig(plot_path+fig_name,
+                        dpi=300,bbox_inches="tight")
+print("Figure saved as:",plot_path+fig_name)
 #sys.exit()
 # Plot the divergence results
 #Budget_plots.plot_single_flight_and_sector_regression_divergence(

@@ -148,7 +148,8 @@ if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig13_single_case_sector_profiles"
     #figure_to_create="fig14_campaign_divergence_overviews"
-    figure_to_create="fig18_campaign_divergence_overview_instantan_comparison"
+    #figure_to_create="fig18_campaign_divergence_overview_instantan_comparison"
+    figure_to_create="fig14_campaign_divergence_overviews"
     main(figure_to_create=figure_to_create)
 
 """

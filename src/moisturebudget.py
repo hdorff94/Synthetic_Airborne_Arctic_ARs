@@ -755,6 +755,40 @@ class Moisture_Convergence(Moisture_Budgets):
         print("domain ready for regression")
         return domain 
     @staticmethod
+    def run_haloac3_icon_sonde_regression(geo_domain,domain_values,parameter):
+        # similar to run_regression but with inverted values
+        # for pressure values
+        from sklearn import linear_model
+
+        regr = linear_model.LinearRegression()
+        ## Gridded Sonde values can contain nans, drop them
+        nonnan_values=domain_values[parameter].dropna(axis=1,how='any').T
+        mean_parameter = pd.Series(data=np.nan,
+                        index=nonnan_values.index.astype(float)) 
+        dx_parameter = pd.Series(data=np.nan,
+                        index=nonnan_values.index.astype(float)) 
+        dy_parameter = pd.Series(data=np.nan,
+                        index=nonnan_values.index.astype(float)) 
+        
+        # number of sondes available for regression
+        #Ns = pd.Series(data=np.nan,index=domain_values[parameter].index.astype(float)) 
+
+        for k in range(mean_parameter.shape[0]):
+            #Ns[k] = id_[:, k].sum()
+            X_dx = geo_domain["dx"].values
+            X_dy = geo_domain["dy"].values
+            
+            X = list(zip(X_dx, X_dy))
+            
+            Y_parameter = nonnan_values.iloc[k,:].values
+            regr.fit(X, Y_parameter)
+
+            mean_parameter.iloc[k] = regr.intercept_
+            dx_parameter.iloc[k], dy_parameter.iloc[k] = regr.coef_
+
+        
+        return mean_parameter, dx_parameter, dy_parameter
+    @staticmethod
     def run_haloac3_sondes_regression(geo_domain,domain_values,parameter):
         # similar to run_regression but with inverted values
         # for pressure values
@@ -1326,20 +1360,20 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             warm_budgets=self.Campaign_Budgets["warm_sector"]
             core_budgets=self.Campaign_Budgets["core"]
             cold_budgets=self.Campaign_Budgets["cold_sector"]
-            
+            gravit_norm=1/9.82
             self.budget_regions=pd.DataFrame()
             #    index=self.Campaign_Budgets["core"]["ADV"].index)
-            self.budget_regions["Warm\nADV"]=warm_budgets["ADV"].values/\
+            self.budget_regions["Warm\nADV"]=gravit_norm*warm_budgets["ADV"].values/\
                                                 1000*3600
-            self.budget_regions["Warm\nCONV"]=warm_budgets["CONV"].values/\
+            self.budget_regions["Warm\nCONV"]=gravit_norm*warm_budgets["CONV"].values/\
                                                 1000*3600
-            self.budget_regions["Core\nADV"]=core_budgets["ADV"].values/\
+            self.budget_regions["Core\nADV"]=gravit_norm*core_budgets["ADV"].values/\
                                                 1000*3600
-            self.budget_regions["Core\nCONV"]=core_budgets["CONV"].values/\
+            self.budget_regions["Core\nCONV"]=gravit_norm*core_budgets["CONV"].values/\
                                                 1000*3600
-            self.budget_regions["Cold\nADV"]=cold_budgets["ADV"].values/\
+            self.budget_regions["Cold\nADV"]=gravit_norm*cold_budgets["ADV"].values/\
                                                 1000*3600
-            self.budget_regions["Cold\nCONV"]=cold_budgets["CONV"].values/\
+            self.budget_regions["Cold\nCONV"]=gravit_norm*cold_budgets["CONV"].values/\
                                                 1000*3600
         
         if hasattr(self,"Campaign_Ideal_Budgets"):
@@ -1349,17 +1383,17 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             
             self.budget_ideal_regions=pd.DataFrame()
             #    index=self.Campaign_Ideal_Budgets["core"]["ADV"].index)
-            self.budget_ideal_regions["Warm\nADV"]=warm_ideal_budgets["ADV"].values/\
+            self.budget_ideal_regions["Warm\nADV"]=gravit_norm*warm_ideal_budgets["ADV"].values/\
                                                         1000*3600
-            self.budget_ideal_regions["Warm\nCONV"]=warm_ideal_budgets["CONV"].values/\
+            self.budget_ideal_regions["Warm\nCONV"]=gravit_norm*warm_ideal_budgets["CONV"].values/\
                                                         1000*3600
-            self.budget_ideal_regions["Core\nADV"]=core_ideal_budgets["ADV"].values/\
+            self.budget_ideal_regions["Core\nADV"]=gravit_norm*core_ideal_budgets["ADV"].values/\
                                                         1000*3600
-            self.budget_ideal_regions["Core\nCONV"]=core_ideal_budgets["CONV"].values/\
+            self.budget_ideal_regions["Core\nCONV"]=gravit_norm*core_ideal_budgets["CONV"].values/\
                                                         1000*3600
-            self.budget_ideal_regions["Cold\nADV"]=cold_ideal_budgets["ADV"].values/\
+            self.budget_ideal_regions["Cold\nADV"]=gravit_norm*cold_ideal_budgets["ADV"].values/\
                                                         1000*3600
-            self.budget_ideal_regions["Cold\nCONV"]=cold_ideal_budgets["CONV"].values/\
+            self.budget_ideal_regions["Cold\nCONV"]=gravit_norm*cold_ideal_budgets["CONV"].values/\
                                                         1000*3600
         if hasattr(self,"Campaign_Inst_Budgets"):
             warm_inst_budgets=self.Campaign_Inst_Budgets["warm_sector"]
@@ -1368,17 +1402,17 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             
             self.budget_inst_regions=pd.DataFrame()
                 #index=self.Campaign_Inst_Budgets["core"]["ADV"].index)
-            self.budget_inst_regions["Warm\nADV"]=warm_inst_budgets["ADV"].values/\
+            self.budget_inst_regions["Warm\nADV"]=gravit_norm*warm_inst_budgets["ADV"].values/\
                                                         1000*3600
-            self.budget_inst_regions["Warm\nCONV"]=warm_inst_budgets["CONV"].values/\
+            self.budget_inst_regions["Warm\nCONV"]=gravit_norm*warm_inst_budgets["CONV"].values/\
                                                         1000*3600
-            self.budget_inst_regions["Core\nADV"]=core_inst_budgets["ADV"].values/\
+            self.budget_inst_regions["Core\nADV"]=gravit_norm*core_inst_budgets["ADV"].values/\
                                                         1000*3600
-            self.budget_inst_regions["Core\nCONV"]=core_inst_budgets["CONV"].values/\
+            self.budget_inst_regions["Core\nCONV"]=gravit_norm*core_inst_budgets["CONV"].values/\
                                                         1000*3600
-            self.budget_inst_regions["Cold\nADV"]=cold_inst_budgets["ADV"].values/\
+            self.budget_inst_regions["Cold\nADV"]=gravit_norm*cold_inst_budgets["ADV"].values/\
                                                         1000*3600
-            self.budget_inst_regions["Cold\nCONV"]=cold_inst_budgets["CONV"].values/\
+            self.budget_inst_regions["Cold\nCONV"]=gravit_norm*cold_inst_budgets["CONV"].values/\
                                                         1000*3600
         
         if hasattr(self,"Campaign_Inst_Ideal_Budgets"):
@@ -1388,17 +1422,23 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             
             self.budget_inst_ideal_regions=pd.DataFrame()
                     #index=self.Campaign_Inst_Ideal_Budgets["core"]["ADV"].index)
-            self.budget_inst_ideal_regions["Warm\nADV"]=warm_inst_ideal_budgets["ADV"].values/\
+            self.budget_inst_ideal_regions["Warm\nADV"]=gravit_norm*\
+                                        warm_inst_ideal_budgets["ADV"].values/\
                                                         1000*3600
-            self.budget_inst_ideal_regions["Warm\nCONV"]=warm_inst_ideal_budgets["CONV"].values/\
+            self.budget_inst_ideal_regions["Warm\nCONV"]=gravit_norm*\
+                                        warm_inst_ideal_budgets["CONV"].values/\
                                                         1000*3600
-            self.budget_inst_ideal_regions["Core\nADV"]=core_inst_ideal_budgets["ADV"].values/\
+            self.budget_inst_ideal_regions["Core\nADV"]=gravit_norm*\
+                core_inst_ideal_budgets["ADV"].values/\
                                                         1000*3600
-            self.budget_inst_ideal_regions["Core\nCONV"]=core_inst_ideal_budgets["CONV"].values/\
+            self.budget_inst_ideal_regions["Core\nCONV"]=gravit_norm*\
+                core_inst_ideal_budgets["CONV"].values/\
                                                         1000*3600
-            self.budget_inst_ideal_regions["Cold\nADV"]=cold_inst_ideal_budgets["ADV"].values/\
+            self.budget_inst_ideal_regions["Cold\nADV"]=gravit_norm*\
+                cold_inst_ideal_budgets["ADV"].values/\
                                                         1000*3600
-            self.budget_inst_ideal_regions["Cold\nCONV"]=cold_inst_ideal_budgets["CONV"].values/\
+            self.budget_inst_ideal_regions["Cold\nCONV"]=gravit_norm*\
+                        cold_inst_ideal_budgets["CONV"].values/\
                                                         1000*3600
         
             
@@ -1433,7 +1473,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             budget_ideal_regions=-1*budget_ideal_regions
             budget_regions=-1*budget_regions
             
-        sns.boxplot(data=budget_ideal_regions,notch=False,
+        sns.boxplot(data=24*budget_ideal_regions,notch=False,
                        zorder=0,linewidth=3.5,palette=color_palette)
         
         for patch in ax1.artists:
@@ -1445,12 +1485,12 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.xaxis.set_tick_params(width=2,length=10)
         ax1.yaxis.set_tick_params(width=2,length=10)
                         #ax1.xaxis.spines(width=3)
-        ax1.set_ylabel("Contribution to \nWater Vapour Budget ($\mathrm{mmh}^{-1}$)")
-        sns.boxplot(data=budget_regions,width=0.4,linewidth=3.0,
+        ax1.set_ylabel("Contribution to \nWater Vapour Budget ($\mathrm{mmd}^{-1}$)")
+        sns.boxplot(data=24*budget_regions,width=0.4,linewidth=3.0,
             notch=False,color="k",palette=["lightgrey"],zorder=1)
     
         sns.despine(offset=10)
-        ax1.set_ylim([-5,5])
+        ax1.set_ylim([-8,8])
         if not self.do_instantan:
             fig_name=self.grid_name+"_Water_Vapour_Budget.png"
         else:
