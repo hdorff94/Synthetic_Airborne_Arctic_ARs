@@ -1510,14 +1510,17 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         
     def sonde_divergence_error_bar(self,save_as_manuscript_figure=False):
             
-        budget_inst_ideal_regions=-1*self.budget_inst_ideal_regions
-        budget_ideal_regions=-1*self.budget_ideal_regions
-        budget_regions=-1*self.budget_regions
+        budget_inst_ideal_regions=24*self.budget_inst_ideal_regions
+        budget_ideal_regions=24*self.budget_ideal_regions
+        budget_regions=24*self.budget_regions
         
         sector_divergence_inst_errors=budget_regions-budget_inst_ideal_regions
         sector_divergence_errors=budget_regions-budget_ideal_regions
         mean_sector_divergence_inst_errors=sector_divergence_inst_errors.mean()
         mean_sector_divergence_errors=sector_divergence_errors.mean()
+        std_sector_divergence_inst_errors=sector_divergence_inst_errors.std()
+        std_sector_divergence_errors=sector_divergence_errors.std()
+        
         abs_std_sector_divergence_inst_errors=abs(sector_divergence_inst_errors).std()
         abs_std_sector_divergence_errors=abs(sector_divergence_errors).std()
         
@@ -1532,18 +1535,52 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         #ax1.bar(np.arange(sector_divergence_errors.shape[0])+1,
         #            sector_divergence_errors)
         ax1.bar(np.arange(abs_mean_sector_divergence_errors.shape[0]),
-                abs_mean_sector_divergence_errors,color="lightgrey")
+                abs_mean_sector_divergence_errors,color="lightgrey",alpha=0.6)
         ax1.bar(np.arange(abs_mean_sector_divergence_errors.shape[0]),
                 abs_mean_sector_divergence_inst_error-\
                     abs_mean_sector_divergence_errors,
                 bottom=abs_mean_sector_divergence_errors,
-                color="darkgray")
+                color="darkgray",alpha=0.6)
         ax1.bar(np.arange(abs_mean_sector_divergence_errors.shape[0]),
                 abs_mean_sector_divergence_inst_error,
-                fill=False, edgecolor="k",lw=2)
+                fill=False, edgecolor="k",lw=2,alpha=0.6)
+        
+        # Frequency error
+        eb1=ax1.errorbar(np.arange(abs_mean_sector_divergence_errors.shape[0])-0.1,
+                     mean_sector_divergence_errors,fmt="v",markersize=20,
+                     markeredgecolor="k",ecolor="k",
+                     yerr=std_sector_divergence_errors,
+                     color="lightgrey",zorder=2)
+        eb1[-1][0].set_linestyle("--")
+        
+        # Instationarity error
+        eb2=ax1.errorbar(np.arange(abs_mean_sector_divergence_errors.shape[0])+0.1,
+                     mean_sector_divergence_inst_errors,fmt="s",markersize=30,
+                     markeredgecolor="k",ecolor="k",
+                     yerr=std_sector_divergence_inst_errors,
+                     color="darkgrey",zorder=2)
+        eb2[-1][0].set_linestyle("-")
+        eb2[-1][0].set_linewidth(2)
+        ax1.axhline(y=0,color="brown",ls="--",lw=2)
         #yerr=abs_std_sector_divergence_errors,color="lightgrey")
         ax1.set_xticks(np.arange(mean_sector_divergence_errors.shape[0]))
         ax1.set_xticklabels(mean_sector_divergence_errors.index,fontsize=10)
-        sns.despine(offset=10)
+        ax1.set_ylabel("Error in $\mathrm{mmh}^{-1} $")
+        # Axis linewidth
+        for axis in ["left","bottom"]:
+            ax1.spines[axis].set_linewidth(3.0)
+        ax1.xaxis.set_tick_params(width=2,length=10)
+        ax1.yaxis.set_tick_params(width=2,length=10)
         
+        sns.despine(offset=10)
+        fig_name="Error_Bars_Inst_Real_and_Sondes_DIV.png"
+        if not save_as_manuscript_figure:
+            plot_path=self.plot_path
+        else:
+            plot_path=self.plot_path+\
+                "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
+        fig_name="Fig18_"+fig_name
+        error_fig.savefig(plot_path+fig_name,dpi=300,bbox_inches="tight")
+        print("Figure saved as:", plot_path+fig_name)
+        return None
         

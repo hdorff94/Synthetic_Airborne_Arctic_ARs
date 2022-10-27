@@ -157,9 +157,9 @@ if __name__=="__main__":
     # Relevant specifications for running , those are default values
     calc_hmp=False
     calc_hmc=True
-    do_plotting=False
+    do_plotting=True
     synthetic_campaign=False
-    ar_of_day="AR1"
+    ar_of_day="AR2"
     campaign_name="HALO_AC3"
     #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
     
@@ -180,10 +180,10 @@ if __name__=="__main__":
         #"SRF12":"20180225"
         }
     else:
-        flights_to_analyse={"RF08":"20220321"}        
-    use_era=False
+        flights_to_analyse={"RF06":"20220316"}        
+    use_era=True
     use_carra=False
-    use_icon=True
+    use_icon=False
     flights=[*flights_to_analyse.keys()]
     do_instantaneous=False
 

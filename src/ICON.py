@@ -368,25 +368,46 @@ class ICON_NWP():
                         
                     icon_var_list=[icon10,icon11,icon12,icon13]
                 if flight[0]=="RF06":
-                    start_hour="10"
-                    icon10=ICON_NWP(start_hour,resolution,
+                    if ar_of_day=="AR1":
+                        start_hour="10"
+                        icon10=ICON_NWP(start_hour,resolution,
                                     for_flight_campaign=True,
                                     campaign=campaign,research_flights=None,
                                     icon_path=hydrometeor_icon_path)
-                    icon11=ICON_NWP("11",resolution,
+                        icon11=ICON_NWP("11",resolution,
                                     for_flight_campaign=True,
                                     campaign=campaign,research_flights=None,
                                     icon_path=hydrometeor_icon_path)
                         
-                    icon12=ICON_NWP("12",resolution,
+                        icon12=ICON_NWP("12",resolution,
                                     for_flight_campaign=True,
                                     campaign=campaign,research_flights=None,
                                     icon_path=hydrometeor_icon_path)
-                    icon13=ICON_NWP("12",resolution,
+                        icon13=ICON_NWP("13",resolution,
                                     for_flight_campaign=True,
                                     campaign=campaign,research_flights=None,
                                     icon_path=hydrometeor_icon_path)
-                    icon_var_list=[icon10,icon11,icon12,icon13]
+                        icon_var_list=[icon10,icon11,icon12,icon13]
+                    if ar_of_day=="AR2":
+                        start_hour="11"
+                        icon11=ICON_NWP(start_hour,resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon12=ICON_NWP("12",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        
+                        icon13=ICON_NWP("13",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon14=ICON_NWP("14",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon_var_list=[icon11,icon12,icon13,icon14]
                     
                 if flight[0]=="RF07":
                     start_hour="14"
