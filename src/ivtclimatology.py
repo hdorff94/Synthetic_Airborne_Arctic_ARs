@@ -29,9 +29,14 @@ def season_selection(season=""):
         season_function=is_mar_or_apr
     return season_function
 def get_centered_halo_lat(campaign_name,flight):
+    #if not "glob" in sys.modules:
+    import glob
     base_data_path=os.getcwd()+"/../../../Work/GIT_Repository/"
-    print(base_data_path)
-    sys.exit()
+    rf_path=base_data_path+campaign_name+"/data/"+"/aircraft_position/"
+    flight_track_file=glob.glob(rf_path+flight+"*")[0]
+    flight_track_df=pd.read_csv(flight_track_file)
+    centered_lat=flight_track_df["latitude"].mean()
+    return centered_lat
     
 #def process_ERA5_seasonal_AR_clim()
 def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
@@ -91,7 +96,7 @@ def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
     values_list=[]
     performance=Performance.performance()
     # Loop over timesteps
-    for t in range(10):#season_AR_era_ds.time.shape[0]):
+    for t in range(season_AR_era_ds.time.shape[0]):
         #Add land mask to ignore ARs that are purely over land
         AR_id_field=pd.DataFrame(np.array(season_AR_era_ds["kidmap"][0,t,0,:,:])*\
                              np.invert(np.array(
@@ -527,23 +532,23 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
                                      AR_campaign_df["clat"][i],
                                      color=flight_colors[legend_key],
                                      marker=marker_type,s=80,edgecolor="k",
-                                     label=legend_label[i])
+                                     label=legend_label[i]+" (AR"+str(i+1)+")")
             if add_centered_halo_lat:
-                campaign_name=flight_dates[legend_label][0]
-                flight=flight_dates[legend_label][1]
-                get_centered_halo_lat(campaign_name, flight)
-                centered_halo_lat=75+i
+                campaign_name=flight_dates[legend_label[i]][0]
+                flight=flight_dates[legend_label[i]][1]
+                centered_halo_lat=get_centered_halo_lat(campaign_name, flight)
+                #centered_halo_lat=75+i
             snsplot.ax_joint.axhline(centered_halo_lat,xmin=0.,
                                      xmax=0.02,lw=2,
                                      color="k")
-            snsplot.ax_joint.text(120,centered_halo_lat,s="AR"+str(i+1),
-                                  fontsize=12)
+            snsplot.ax_joint.text(120,centered_halo_lat-0.3,s="AR"+str(i+1),
+                                  fontsize=10)
     snsplot.ax_joint.set_xlabel("$\overline{IVT}$"+\
                                     " ($\mathrm{kgm}^{-1}\mathrm{s}^{-1})$")
     snsplot.ax_joint.set_ylabel("AR Centre Latitude in $^{\circ}$N")
     snsplot.ax_joint.set_ylim([lower_lat,upper_lat])
     snsplot.ax_joint.set_xlim([100,500])
-    snsplot.ax_joint.legend(loc="best",fontsize=10)
+    snsplot.ax_joint.legend(loc="best",fontsize=12)
     sns.despine(offset=2)
     output_path=cmpgn_cls.plot_path
     
