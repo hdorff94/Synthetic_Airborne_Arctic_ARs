@@ -8,6 +8,7 @@ import math
 import numpy as np
 import os
 import pandas as pd 
+import sys
 
 import geopy
 from   geopy.distance import geodesic
@@ -177,7 +178,7 @@ class Flighttracker():
                         self.flight_track_cfg["start_lon"]=54.5
                         self.flight_track_cfg["bearing"]=282
                     elif self.flight=="SRF08":
-                        self.flight_track_cfg["start_lat"]=73.75
+                        self.flight_track_cfg["start_lat"]=73.25
                         self.flight_track_cfg["start_lon"]=11
                         self.flight_track_cfg["bearing"]=295
                     
@@ -273,11 +274,11 @@ class Flighttracker():
                    self.flight_track_cfg["end_date"]=date+" 14:20"
                 
                 if self.flight=="SRF08":
-                   self.flight_track_cfg["bearing"]=285
-                   self.flight_track_cfg["start_lat"]=72.75
-                   self.flight_track_cfg["start_lon"]=6
-                   self.flight_track_cfg["start_date"]=date+" 16:55"
-                   self.flight_track_cfg["end_date"]=date+" 17:55"
+                   self.flight_track_cfg["bearing"]=282
+                   self.flight_track_cfg["start_lat"]=71.75
+                   self.flight_track_cfg["start_lon"]=4.2
+                   self.flight_track_cfg["start_date"]=date+" 16:22"
+                   self.flight_track_cfg["end_date"]=date+" 17:20"
                 if self.flight=="SRF09":
                    self.flight_track_cfg["bearing"]=270
                    self.flight_track_cfg["start_lat"]=80.75
@@ -312,9 +313,9 @@ class Flighttracker():
                 if self.flight=="SRF03":
                     self.flight_track_cfg["end_date"]=date+" 16:52"
                 if self.flight=="SRF08":
-                    self.flight_track_cfg["end_date"]=date+" 17:45"
-                    shifted_halo["latitude"]=shifted_halo["latitude"]+0.2
-                    shifted_halo["longitude"]=shifted_halo["longitude"]+3
+                    self.flight_track_cfg["end_date"]=date+" 17:15"
+                    shifted_halo["latitude"]=shifted_halo["latitude"]+0.35#6
+                    shifted_halo["longitude"]=shifted_halo["longitude"]+4.0
                 if self.flight=="SRF09":
                     shifted_halo["longitude"]=shifted_halo["longitude"]+5.5
                     shifted_halo["latitude"]=shifted_halo["latitude"]-0.5
@@ -678,7 +679,9 @@ class Flighttracker():
 
 def main(campaign="NA_February_Run",flight="SRF04",ar_of_day="SAR_internal",
          shifted_lat=0,shifted_lon=-12):
-
+    config_path=os.getcwd()+"/../config/"
+    sys.path.insert(1,config_path)
+    
     import flightcampaign as Flight_Campaign
     import data_config
     config_file=data_config.load_config_file(os.getcwd(),"data_config_file")

@@ -13,7 +13,7 @@ import pandas as pd
 import xarray as xr
 
 import matplotlib.pyplot as plt
-
+sys.path.insert(1,os.getcwd()+"/../config/")
 import flightcampaign
 import data_config
 
@@ -28,6 +28,11 @@ def season_selection(season=""):
     elif season=="spring":
         season_function=is_mar_or_apr
     return season_function
+def get_centered_halo_lat(campaign_name,flight):
+    base_data_path=os.getcwd()+"/../../../Work/GIT_Repository/"
+    print(base_data_path)
+    sys.exit()
+    
 #def process_ERA5_seasonal_AR_clim()
 def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
                                     season="spring",
@@ -86,7 +91,7 @@ def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
     values_list=[]
     performance=Performance.performance()
     # Loop over timesteps
-    for t in range(season_AR_era_ds.time.shape[0]):
+    for t in range(10):#season_AR_era_ds.time.shape[0]):
         #Add land mask to ignore ARs that are purely over land
         AR_id_field=pd.DataFrame(np.array(season_AR_era_ds["kidmap"][0,t,0,:,:])*\
                              np.invert(np.array(
@@ -250,7 +255,7 @@ def plot_single_season_characteristics(season="autumn",take_both_campaigns="True
             
     plot_AR_statistics=True
     
-    import AR
+    import atmospheric_rivers as AR
     AR=AR.Atmospheric_Rivers("ERA")
     AR_era_ds=AR.open_AR_catalogue()
     AR_unique_df=pd.DataFrame()
@@ -439,7 +444,8 @@ def plot_combined_AR_characteristics(spring_AR_df,autumn_AR_df):
         print("Statistics saved as:",output_path+"Seasonal_AR_statistics.png")
 
 def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
-                                       lower_lat=55,upper_lat=90):
+                                       lower_lat=55,upper_lat=90,
+                                       add_centered_halo_lat=True):
     """
     
 
@@ -474,27 +480,36 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
     #flight_colors={"RF10":"salmon","SRF02":"purple","SRF03":"darkgreen",
     #               "SRF04":"lightpink","SRF05":"orange","SRF06":"skyblue",
     #               "SRF07":"navy","SRF08":"teal"}   
-    
-    flight_colors={"2016-10-13":"salmon",
+    flight_dates={"2016-10-13":["NAWDEX","RF10"],
+                  "2011-03-17":["Second_Synthetic_Study","SRF02"],
+                  "2011-04-23":["Second_Synthetic_Study","SRF03"],
+                  "2015-03-14":["Second_Synthetic_Study","SRF08"],
+                  "2016-03-11":["Second_Synthetic_Study","SRF09"],
+                  "2018-02-24":["NA_February_Run","SRF02"],
+                  "2018-02-25":["Second_Synthetic_Study","SRF12"],
+                  "2019-03-19":["NA_February_Run","SRF04"],
+                  "2020-04-16":["NA_February_Run","SRF07"],
+                  "2020-04-19":["NA_February_Run","SRF08"]}
+    flight_colors={"2016-10-13":"aquamarine",
                    "2011-03-17":"purple",
                    "2011-04-23":"brown",
-                   "2015-03-14":"darkred",
+                   "2015-03-14":"gold",
                    "2016-03-11":"lightpink",
-                   "2018-02-24":"skyblue",
+                   "2018-02-24":"coral",
                    "2018-02-25":"navy",
-                   "2019-03-19":"teal",
+                   "2019-03-19":"mediumseagreen",
                    "2020-04-16":"darkgreen",
-                   "2020-04-19":"green"}        
+                   "2020-04-19":"grey"}        
     # Plotting
     snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",
-                          s=5,alpha=0.5,color="mediumseagreen",
+                          s=5,alpha=0.5,color="teal",#"mediumseagreen",
                           space=1.2,height=8)
     
     #snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",hue="season",
     #                      s=3,alpha=0.3,space=1.2,height=8)
     #    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=3)
         
-    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=3,color="green")
+    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=3,color="teal")#"green")
     #AR_campaign_df
     # get legend entries depending on available indices and flights
     legend_label=[str(AR_campaign_df.index[i]) \
@@ -513,7 +528,16 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
                                      color=flight_colors[legend_key],
                                      marker=marker_type,s=80,edgecolor="k",
                                      label=legend_label[i])
-        
+            if add_centered_halo_lat:
+                campaign_name=flight_dates[legend_label][0]
+                flight=flight_dates[legend_label][1]
+                get_centered_halo_lat(campaign_name, flight)
+                centered_halo_lat=75+i
+            snsplot.ax_joint.axhline(centered_halo_lat,xmin=0.,
+                                     xmax=0.02,lw=2,
+                                     color="k")
+            snsplot.ax_joint.text(120,centered_halo_lat,s="AR"+str(i+1),
+                                  fontsize=12)
     snsplot.ax_joint.set_xlabel("$\overline{IVT}$"+\
                                     " ($\mathrm{kgm}^{-1}\mathrm{s}^{-1})$")
     snsplot.ax_joint.set_ylabel("AR Centre Latitude in $^{\circ}$N")

@@ -1745,6 +1745,7 @@ class ICON_on_HALO(ICON):
     
     def load_hwc(self,with_hydrometeors=False):
             interp_icon_q_file="Specific_Humidity_interpolated_profile.csv"
+            #interp_icon_q_file="V_Wind_interpolated_profile.csv"
             
             if self.ar_of_day is not None:
                 interp_icon_q_file=self.flight+"_"+self.ar_of_day+\

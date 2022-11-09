@@ -158,9 +158,9 @@ if __name__=="__main__":
     calc_hmp=False
     calc_hmc=True
     do_plotting=True
-    synthetic_campaign=False
-    ar_of_day="AR2"
-    campaign_name="HALO_AC3"
+    synthetic_campaign=True
+    ar_of_day="AR_internal"#"AR_entire"
+    campaign_name="Second_Synthetic_Study"##"HALO_AC3"
     #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
     
     if synthetic_campaign:
@@ -175,14 +175,20 @@ if __name__=="__main__":
             #"SRF06":"20140325",#,                    
                         #"SRF07":"20150307"}#,
         
-        #"SRF08":"20150314",#,
+        "SRF08":"20150314",#,
         #"SRF09":"20160311",#,
         #"SRF12":"20180225"
         }
     else:
-        flights_to_analyse={"RF06":"20220316"}        
+        flights_to_analyse={#"RF02":"20220312",
+                            #"RF03":"20220313",
+                            #"RF04":"20220314",
+                            #"RF05":"20220315",
+                           # "RF06":"20220316",
+                            #"RF07":"20220320"
+                            }        
     use_era=True
-    use_carra=False
+    use_carra=True
     use_icon=False
     flights=[*flights_to_analyse.keys()]
     do_instantaneous=False

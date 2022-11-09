@@ -100,10 +100,10 @@ def main(save_in_manuscript_path=False):
     met_var_dict={}
     met_var_dict["ERA_name"]    = {"IWV":"tcwv","IVT":"IVT",
                                    "IVT_u":"IVT_u","IVT_v":"IVT_v"}
-    met_var_dict["colormap"]    = {"IWV":"density","IVT":"speed",
+    met_var_dict["colormap"]    = {"IWV":"density","IVT":"ocean_r",
                                    "IVT_v":"speed","IVT_u":"speed"}
     met_var_dict["levels"]      = {"IWV":np.linspace(10,25,101),
-                                   "IVT":np.linspace(50,600,101),
+                                   "IVT":np.linspace(50,500,101),
                                    "IVT_v":np.linspace(0,500,101),
                                    "IVT_u":np.linspace(0,500,101)}
     met_var_dict["units"]       = {"IWV":"(kg$\mathrm{m}^{-2}$)",
@@ -128,9 +128,14 @@ def main(save_in_manuscript_path=False):
                  "20180225":10,
                  "20200419":8
                  }
+    ar_label={"20110317":"AR1","20160311":"AR4",
+              "20190319":"AR7","20110423":"AR2",
+              "20180224":"AR5","20200416":"AR8",
+              "20150314":"AR3","20180225":"AR6",
+              "20200419":"AR9"}
     meteo_var="IVT"
-    pressure_color="royalblue"
-    sea_ice_colors=["mediumslateblue", "indigo"]
+    pressure_color="purple"##"royalblue"
+    sea_ice_colors=["gold","saddlebrown"]#["mediumslateblue", "indigo"]
     
     for col in range(col_no):
         for row in range(row_no):
@@ -188,18 +193,24 @@ def main(save_in_manuscript_path=False):
            axs[row,col].coastlines(resolution="50m")
            axs[row,col].set_extent([-20,25,60,90])
            #axs[row,col].gridlines()
+           # Date and Timestep
            axs[row,col].text(-12, 62, str(flight_date)+" "+str(era_index)+" UTC",
                              fontsize=15,transform=ccrs.PlateCarree(),
                              color="darkblue",bbox=dict(
                                  facecolor='lightgrey',edgecolor="black"))
+           
            axs[row,col].plot(halo_df["longitude"],
                              halo_df["latitude"],
                              color="white",lw=4,
                              transform=ccrs.PlateCarree())
            axs[row,col].plot(halo_df["longitude"],
                              halo_df["latitude"],
-                             color="blue",lw=2,
+                             color="indianred",lw=2,
                              transform=ccrs.PlateCarree())
+           # AR label (AR1)
+           axs[row,col].text(-60,82,ar_label[flight_date],transform=ccrs.PlateCarree(),
+                             color="k",bbox=dict(facecolor="lightgrey",
+                                                 edgecolor="black"),zorder=10)
            
            step=20
            quiver_lon=np.array(era_ds["longitude"][::step])
@@ -221,9 +232,9 @@ def main(save_in_manuscript_path=False):
     # Add a colorbar axis at the bottom of the graph
     cbar_ax = fig.add_axes([0.905, 0.225, 0.02, 0.6])
     cbar=fig.colorbar(C1, cax=cbar_ax,extend="max")
-    cbar_ax.text(1.3,0.32,meteo_var+" "+met_var_dict["units"][meteo_var],
+    cbar_ax.text(1.3,0.5,meteo_var+" "+met_var_dict["units"][meteo_var],
                  rotation=90,fontsize=22,transform=cbar_ax.transAxes)
-    cbar.set_ticks([50,200,400,600])
+    cbar.set_ticks([50,250,500])
     if not save_in_manuscript_path:
         fig_path=paths_dict["airborne_plotting_module_path"]
     else:

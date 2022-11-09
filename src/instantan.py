@@ -505,9 +505,10 @@ class Instationarity(GridHalo.ERA_on_HALO,GridHalo.CARRA_on_HALO):
                 plot_ax.text(x=0.5e-4,y=250,s=rf_date,
                          color="gray",fontsize=16)
             else:
-                plot_ax.set_xlim([-2e-4,2e-4])
-                plot_ax.set_xticks([-2e-4,-1e-4,0,1e-4,2e-4])
-                plot_ax.set_xticklabels(["-2e-4","-1e-4","0","1e-4","2e-4"])
+                plot_ax.set_xlim([-1.5e-4,1.5e-4])
+                plot_ax.set_xticks([-1.5e-4,-0.75e-4,0,0.75e-4,1.5e-4])
+                plot_ax.set_xticklabels(["-1.5e-4","-0.75e-4",
+                                         "0","0.75e-4","1.5e-4"])
                 
                 plot_ax.text(x=0.5e-4,y=250,s=rf_date,
                          color="gray",fontsize=16)
@@ -570,4 +571,4 @@ def main(figure_to_create="fig15_in_outflow_instantan"):
     return None
 
 if __name__=="__main__":
-    main(figure_to_create="fig16_conv_error")
+    main(figure_to_create="fig17_adv_error")

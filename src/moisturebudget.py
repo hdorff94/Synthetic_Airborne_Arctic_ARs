@@ -1550,28 +1550,28 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                      mean_sector_divergence_errors,fmt="v",markersize=20,
                      markeredgecolor="k",ecolor="k",
                      yerr=std_sector_divergence_errors,
-                     color="lightgrey",zorder=2)
+                     color="lightgrey",zorder=2,label="Pure Sonde Err")
         eb1[-1][0].set_linestyle("--")
         
         # Instationarity error
         eb2=ax1.errorbar(np.arange(abs_mean_sector_divergence_errors.shape[0])+0.1,
-                     mean_sector_divergence_inst_errors,fmt="s",markersize=30,
+                     mean_sector_divergence_inst_errors,fmt="d",markersize=25,
                      markeredgecolor="k",ecolor="k",
                      yerr=std_sector_divergence_inst_errors,
-                     color="darkgrey",zorder=2)
+                     color="darkgrey",zorder=2,label="Sonde Instationarity Err")
         eb2[-1][0].set_linestyle("-")
         eb2[-1][0].set_linewidth(2)
         ax1.axhline(y=0,color="brown",ls="--",lw=2)
         #yerr=abs_std_sector_divergence_errors,color="lightgrey")
         ax1.set_xticks(np.arange(mean_sector_divergence_errors.shape[0]))
         ax1.set_xticklabels(mean_sector_divergence_errors.index,fontsize=10)
-        ax1.set_ylabel("Error in $\mathrm{mmh}^{-1} $")
+        ax1.set_ylabel("IVT Convergence Error ($\mathrm{mmd}^{-1}$)")
         # Axis linewidth
         for axis in ["left","bottom"]:
             ax1.spines[axis].set_linewidth(3.0)
         ax1.xaxis.set_tick_params(width=2,length=10)
         ax1.yaxis.set_tick_params(width=2,length=10)
-        
+        ax1.legend(loc="lower left",fontsize=20)
         sns.despine(offset=10)
         fig_name="Error_Bars_Inst_Real_and_Sondes_DIV.png"
         if not save_as_manuscript_figure:

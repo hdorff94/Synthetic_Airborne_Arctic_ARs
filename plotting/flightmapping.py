@@ -229,7 +229,7 @@ class FlightMaps(flight_campaign):
         """
         import matplotlib
         import cartopy.crs as ccrs
-        
+        #from cmcrameri import cm
         #from era5_on_halo_backup import ERA5
         from reanalysis import ERA5
         
@@ -242,11 +242,11 @@ class FlightMaps(flight_campaign):
         met_var_dict={}
         met_var_dict["ERA_name"]    = {"IWV":"tcwv","IVT":"IVT",
                                        "IVT_u":"IVT_u","IVT_v":"IVT_v"}
-        met_var_dict["colormap"]    = {"IWV":"density","IVT":"speed",
+        met_var_dict["colormap"]    = {"IWV":"density","IVT":"ocean_r",
                                        "IVT_v":"speed",
                                        "IVT_u":"speed"}
         met_var_dict["levels"]      = {"IWV":np.linspace(10,25,101),
-                                       "IVT":np.linspace(50,600,101),
+                                       "IVT":np.linspace(50,500,101),
                                        "IVT_v":np.linspace(0,500,101),
                                        "IVT_u":np.linspace(0,500,101)}
         met_var_dict["units"]       = {"IWV":"(kg$\mathrm{m}^{-2}$)",
@@ -361,8 +361,9 @@ class FlightMaps(flight_campaign):
                     raise Exception("Other flights are not yet provided")
             elif campaign_cls.name=="HALO_AC3":
                 if (flight=="RF01") or (flight=="RF02") or (flight=="RF03") or \
-                   (flight=="RF04") or (flight=="RF05") or \
-                   (flight=="RF06") or (flight == "RF07"):
+                   (flight=="RF04") or (flight=="RF05") or\
+                   (flight=="RF06") or (flight=="RF07") or\
+                   (flight=="RF08") or (flight=="RF16"):
                    ax.set_extent([-40,30,55,90]) 
             elif campaign_cls.name=="NA_February_Run":
                 ax.set_extent([-30,5,40,90])
@@ -388,13 +389,16 @@ class FlightMaps(flight_campaign):
             if meteo_var=="IWV":
                 cb.set_ticks([10,15,20,25,30])
             elif meteo_var=="IVT":
-                cb.set_ticks([50,100,200,300,400,500,600])
+                cb.set_ticks([50,100,200,300,400,500])
             else:
                 pass
             # Mean surface level pressure
             if meteo_var.startswith("IVT"):
-                pressure_color="royalblue"
-                sea_ice_colors=["mediumslateblue", "indigo"]
+                #pressure_color="royalblue"
+                #sea_ice_colors=["mediumslateblue", "indigo"]
+                pressure_color="purple"##"royalblue"
+                sea_ice_colors=["darkorange","saddlebrown"]#["mediumslateblue", "indigo"]
+   
             else:
                 pressure_color="green"
                 sea_ice_colors=["peru","sienna"]
@@ -444,9 +448,9 @@ class FlightMaps(flight_campaign):
                         hatches=plt.contourf(AR_era_ds.lon,AR_era_ds.lat,
                                  AR_era_ds.shape[0,AR_era_data["model_runs"].start,
                                                  0,:,:],
-                                 hatches=['//'],colors='none',cmap="bone_r",
+                                 hatches=['//'],cmap="bone_r",
                                  alpha=0.8,transform=ccrs.PlateCarree())
-                        for i,collection in enumerate(hatches.collections):
+                        for c,collection in enumerate(hatches.collections):
                             collection.set_edgecolor("green")
                     elif 6<=i<12:
                         plt.contourf(AR_era_ds.lon,AR_era_ds.lat,
@@ -467,7 +471,7 @@ class FlightMaps(flight_campaign):
                                  hatches=['//'],cmap='bone_r',
                                  alpha=0.1,
                                  transform=ccrs.PlateCarree())
-                        for i,collection in enumerate(hatches.collections):
+                        for c,collection in enumerate(hatches.collections):
                             collection.set_edgecolor("k")
                    
                 else:
@@ -492,7 +496,7 @@ class FlightMaps(flight_campaign):
                                 s=30,marker='x',color="red",
                                 transform=ccrs.PlateCarree())
                  
-                 elif i>pd.DatetimeIndex(halo_df.index).hour[-1]:
+                 elif i>pd.DatetimeIndex(halo_df.index).hour[-1]+1:
                      ax.scatter(halo_df["longitude"].iloc[-1],
                                  halo_df["latitude"].iloc[-1],
                                 s=30,marker='x',color="red",
@@ -3935,9 +3939,9 @@ def main():
     name="data_config_file"
     config_file_exists=False
     #campaign_name="NAWDEX"
-    campaign_name="HALO_AC3"#Second_Synthetic_Study"#"HALO_AC3"#"NA_February_Run"    
-    flights=["RF07"]#["SRF07"]#["RF07"]#["SRF06"]
-    met_variable="IWV"
+    campaign_name="Second_Synthetic_Study"##"HALO_AC3"#"NA_February_Run"    
+    flights=["SRF08"]#["SRF07"]#["RF07"]#["SRF06"]
+    met_variable="IVT"
     ar_of_day="SAR_internal"
     ###Switcher in order to specify maps plots to create
     should_plot_iop_map=False
@@ -4049,9 +4053,13 @@ def main():
         #    station_coords=campaign_cloudnet.get_cloudnet_station_coordinates(
         #                                        cmpgn_cls.campaign_path)
         station_coords={}
+        use_era5_ARs=False
+        if cmpgn_cls.name=="HALO_AC3":
+            use_era5_ARs=True
         flight_maps.plot_flight_map_era(cmpgn_cls,station_coords,flights[0],
                                         met_variable,show_AR_detection=True,
-                                        show_supersites=False,use_era5_ARs=True)
+                                        show_supersites=False,
+                                        use_era5_ARs=use_era5_ARs)
     
 
 if __name__=="__main__":

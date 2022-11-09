@@ -137,7 +137,8 @@ def main(figure_to_create="fig13"):
                             Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
                             instantan_comparison=True,
                             save_as_manuscript_figure=True)
-            Inst_Budget_plots.sonde_divergence_error_bar()            
+            Inst_Budget_plots.sonde_divergence_error_bar(
+                save_as_manuscript_figure=True)            
 #        Flight_Moisture_CONV=Moist_Convergence(
 #                        cmpgn_cls,flight,self.cfg_file,
 #                        grid_name=self.grid_name,do_instantan=False)    
