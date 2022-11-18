@@ -143,6 +143,7 @@ def main(config_file_path=os.getcwd(),
     #-------------------------------------------------------------------------#
     if flight[0]=="RF12":
         do_orographic_masking=True
+    print("Analyse AR:",ar_of_day)
     if synthetic_flight:
         ar_of_day="S"+ar_of_day
         if synthetic_icon_lat!=0:

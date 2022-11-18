@@ -90,6 +90,9 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
         HMPs[flight]={}
     
         for ar_of_day in [ar_of_days]:
+            ar_of_day=ar_of_day[0]
+            print(ar_of_day)
+            #sys.exit()
             if not flight.startswith("S"):
                 synthetic_campaign=False
             else:
@@ -159,7 +162,7 @@ if __name__=="__main__":
     calc_hmc=True
     do_plotting=True
     synthetic_campaign=True
-    ar_of_day="AR_internal"#"AR_entire"
+    ar_of_day="AR_entire"#"#internal"#"AR_entire"
     campaign_name="Second_Synthetic_Study"##"HALO_AC3"
     #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
     
@@ -191,7 +194,7 @@ if __name__=="__main__":
     use_carra=True
     use_icon=False
     flights=[*flights_to_analyse.keys()]
-    do_instantaneous=False
+    do_instantaneous=True
 
     Hydrometeors,HALO_Dict,cmpgn_cls=main(campaign=campaign_name,flights=flights,
                                           ar_of_days=ar_of_day,

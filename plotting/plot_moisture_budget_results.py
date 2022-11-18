@@ -51,7 +51,7 @@ def main(figure_to_create="fig13"):
     #####################################################################
     #%% Specifications
     # Major configurations
-    campaign="North_Atlantic_Run"#"Second_Synthetic_Study"#"North_Atlantic_Run"#"Second_Synthetic_Study"# 
+    campaign="Second_Synthetic_Study"#"North_Atlantic_Run"#"Second_Synthetic_Study"# 
 
     init_flight="SRF08"
     grid_name="CARRA"#"CARRA"#"ERA5"
@@ -148,8 +148,8 @@ def main(figure_to_create="fig13"):
 if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig13_single_case_sector_profiles"
-    #figure_to_create="fig14_campaign_divergence_overviews"
-    figure_to_create="fig18_campaign_divergence_overview_instantan_comparison"
+    figure_to_create="fig14_campaign_divergence_overviews"
+    #figure_to_create="fig18_campaign_divergence_overview_instantan_comparison"
     main(figure_to_create=figure_to_create)
 
 """

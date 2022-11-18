@@ -1485,7 +1485,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.xaxis.set_tick_params(width=2,length=10)
         ax1.yaxis.set_tick_params(width=2,length=10)
                         #ax1.xaxis.spines(width=3)
-        ax1.set_ylabel("Contribution to \nWater Vapour Budget ($\mathrm{mmd}^{-1}$)")
+        ax1.set_ylabel("Contribution to \nMoisture Budget ($\mathrm{mmd}^{-1}$)")
         sns.boxplot(data=24*budget_regions,width=0.4,linewidth=3.0,
             notch=False,color="k",palette=["lightgrey"],zorder=1)
     
