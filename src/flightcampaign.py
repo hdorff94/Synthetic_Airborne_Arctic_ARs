@@ -148,7 +148,8 @@ class Campaign:
                   save_path+file_name+".csv")
     
     #%% Aircraft Data / Bahamas
-    def get_aircraft_position(self,flights_of_interest,all_flights=False):
+    def get_aircraft_position(self,flights_of_interest,all_flights=False,
+                              do_NAWDEX=False):
         """
         This function gets the lat/lon position of the aircraft via executing 
         load hamp data
@@ -163,7 +164,7 @@ class Campaign:
         """
         dict_position={}
         dict_halo={}  
-        if all_flights:
+        if do_NAWDEX:
             print("Get aircraft position data from ",self.campaign_name)
             dict_halo=self.load_hamp_data(self.name,
                                       flights_of_interest,instrument="Halo",
@@ -201,11 +202,22 @@ class Campaign:
                     pos_df.index=pos_df["Unnamed: 0"]
                     del pos_df["Unnamed: 0"]
         else:
-            pos_df=pd.read_csv(campaign_path+"data/"+"Aircraft_Position_"+\
-                               self.campaign_name+"_"+\
-                                   interested_flight+".csv")
-            pos_df.index=pos_df["Unnamed: 0"]
-            del pos_df["Unnamed: 0"]
+            pos_file=campaign_path+"data/"+"Aircraft_Position_"+\
+                        self.campaign_name+"_"+interested_flight+".csv"
+            if not os.path.exists(pos_file):
+                do_NAWDEX=False
+                if self.campaign_name=="NAWDEX":
+                    do_NAWDEX=True
+                pos_dict=self.get_aircraft_position([interested_flight],
+                                                    do_NAWDEX=do_NAWDEX)
+                if isinstance(pos_dict,dict):
+                    pos_df=pos_dict[interested_flight]
+            else:
+                pos_df=pd.read_csv(pos_file)
+            
+                pos_df.index=pos_df["Unnamed: 0"]
+            if "Unnamed: 0" in pos_df.columns:
+                del pos_df["Unnamed: 0"]
         pos_df.index=pd.DatetimeIndex(pos_df.index)
         return pos_df,campaign_path 
     

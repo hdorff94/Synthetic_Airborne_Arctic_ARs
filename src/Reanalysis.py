@@ -1068,8 +1068,8 @@ def main(campaign="NAWDEX"):
     carra_path=central_path+"/"+campaign+"/data/CARRA/"
     
     era_is_desired=True
-    carra_is_desired=False
-    carra_initial="15:00"
+    carra_is_desired=True
+    carra_initial="09:00"
     domain="east_domain"
         
     # Check campaign name to specify flights and, i.e. dates to download
@@ -1105,19 +1105,19 @@ def main(campaign="NAWDEX"):
     elif campaign.upper()=="NA_FEBRUARY_RUN":
         synthetic_campaign=True
         analysing_campaign=True
-        flights=["SRF02"]#,"RF02","RF03","RF04","RF05"]
+        flights=["SRF08"]#,"RF02","RF03","RF04","RF05"]
         # Siberian 
         # 20160423
         # 20180406? --> Yes but does not reach northward enough, block at coastline (Sca)
         # 20190329? --> No!!
         # 20160328? --> Somehow yes
         # NA Pathway 20160302, 20160312
-        dates=["20180224"]#["20200419"]#["20160328"]20180427,20160408#,"20180226",
+        dates=["20200419"]#["20200419"]#["20160328"]20180427,20160408#,"20180226",
         #North-Atlantic: "20190319","20190329""20190416","20190420"]
     elif campaign=="Second_Synthetic_Study":
         synthetic_campaign=True
         analysing_campaign=True
-        flights=["SRF02"]
+        flights=["SRF09"]
         # SRF01 2011-03-15
         # SRF02 2011-03-17
         # SRF03 2011-04-23
@@ -1138,8 +1138,22 @@ def main(campaign="NAWDEX"):
         # SRF12 2018-02-25
 
         # SRF13 2020-04-13
-        dates=["20110317"]       
+        dates=["20160311"]       
         #dates=["20110423"]
+    elif campaign=="PAMTRA_Retrieval":
+        synthetic_campaign=True
+        analysing_campaign=True
+        flights=["SRF08"]
+        # SRF01 1982-03-20
+        # SRF02 1990-04-09
+        # SRF03 1991-04-28
+        # SRF04 1995-03-06
+        # SRF05 1997-03-22
+        # SRF06 2005-04-18
+        # SRF07 2017-04-25    
+        # SRF08 2021-03-31
+        dates=["20210331"]       
+        
     elif campaign=="Weather_Course":
         synthetic_campaign=False
         analysing_campaign=False
@@ -1148,12 +1162,12 @@ def main(campaign="NAWDEX"):
     elif campaign=="HALO_AC3":
         synthetic_campaign=False
         analysing_campaign=True
-        flights=["RF08"]#["RF06"]#,"RF06"]
-        dates=["20220321"]#["20220316"]#,"20220316"]
+        flights=["RF03"]#["RF06"]#,"RF06"]
+        dates=["20220313"]#["20220316"]#,"20220316"]
     else:
         raise Exception("The given campaign is not specified in the Downloader")
-    
-    hours_time=['00:00','01:00','02:00',
+    if not campaign=="PAMTRA_Retrieval":
+        hours_time=['00:00','01:00','02:00',
                 '03:00','04:00','05:00',
                 '06:00', '07:00', '08:00',
                 '09:00', '10:00', '11:00',
@@ -1161,7 +1175,8 @@ def main(campaign="NAWDEX"):
                 '15:00', '16:00', '17:00',
                 '18:00', '19:00', '20:00',
                 '21:00', '22:00', '23:00']
-    
+    else:
+        hours_time=["12:00"]
     
     # load the config-file for further analysis
     config_file=data_config.load_config_file(os.getcwd(),"data_config_file")
@@ -1200,7 +1215,7 @@ def main(campaign="NAWDEX"):
             if config_file["Data_Paths"]["campaign"]=="HALO_AC3_Dry_Run":
                 research_area=[90, -75, 50,  80]
         elif (config_file["Data_Paths"]["campaign"]=="HALO_AC3"):
-            if flights[0]=="RF01" or flights[0]=="RF02" or \
+            if flights[0]=="RFminus1" or flights[0]=="RF01" or flights[0]=="RF02" or \
                 flights[0]=="RF03" or flights[0]=="RF04" or \
                     flights[0]=="RF05" or \
                         flights[0]=="RF07" or\
@@ -1208,6 +1223,8 @@ def main(campaign="NAWDEX"):
                 research_area=[90,-75,50,60]
             elif flights[0]=="RF06" or flights[0]=="RF16":
                 research_area=[90,-90,60,100]
+        elif (config_file["Data_Paths"]["campaign"]=="PAMTRA_Retrieval"):
+            research_area=[90,-30,65,50]
         era5_downloader=ERA5_Downloader(
                         dates, research_area,
                         for_flight_campaign=True,
@@ -1235,11 +1252,12 @@ def main(campaign="NAWDEX"):
     # HMP Profile data
     if era_is_desired:
         era5_downloader.download_handler(do_total_columns=True,do_levels=True,
-                                         do_daily_average_single_levels=False)
+                                         do_daily_average_single_levels=False,
+                                         do_temp_850hPa=True)
     if carra_is_desired:
-        carra_downloader.download_handler(do_total_columns=True,do_levels=True,
+        carra_downloader.download_handler(do_total_columns=True,do_levels=False,
                                           do_hydrometeors=False)
 if __name__=="__main__":
     #main(campaign="NA_February_Run")
     #main(campaign="NA_February_Run")
-    main(campaign="HALO_AC3")#"Second_Synthetic_Study")
+    main(campaign="NAWDEX")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")

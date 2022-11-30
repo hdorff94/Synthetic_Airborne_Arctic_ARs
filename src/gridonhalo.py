@@ -573,9 +573,9 @@ class ERA_on_HALO(ERA5):
             ARs=AR_class.look_up_AR_cross_sections(self.campaign)
             if self.campaign=="NAWDEX":
                 ARs_NAWDEX=ARs.copy()
-                if "ARs_NAWDEX" in locals():
+            #    if "ARs_NAWDEX" in locals():
                     #merge both dictionairies
-                    ARs=ARs | ARs_NAWDEX
+            #        ARs=ARs | ARs_NAWDEX
             #if campaign=="HALO_AC3" :   
             cut_start   = ARs[flight][AR_of_day]["start"]
             cut_end     = ARs[flight][AR_of_day]["end"]

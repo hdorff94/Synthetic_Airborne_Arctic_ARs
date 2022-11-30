@@ -160,10 +160,10 @@ if __name__=="__main__":
     # Relevant specifications for running , those are default values
     calc_hmp=False
     calc_hmc=True
-    do_plotting=True
-    synthetic_campaign=True
-    ar_of_day="AR_entire"#"#internal"#"AR_entire"
-    campaign_name="Second_Synthetic_Study"##"HALO_AC3"
+    do_plotting=False
+    synthetic_campaign=False
+    ar_of_day=["AR3"]#"AR_entire"#"#internal"#"AR_entire"
+    campaign_name="NAWDEX"#"Second_Synthetic_Study"##"HALO_AC3"
     #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
     
     if synthetic_campaign:
@@ -189,12 +189,12 @@ if __name__=="__main__":
                             #"RF05":"20220315",
                            # "RF06":"20220316",
                             #"RF07":"20220320"
-                            }        
+                            "RF10":"20161013"}        
     use_era=True
-    use_carra=True
+    use_carra=False
     use_icon=False
     flights=[*flights_to_analyse.keys()]
-    do_instantaneous=True
+    do_instantaneous=False
 
     Hydrometeors,HALO_Dict,cmpgn_cls=main(campaign=campaign_name,flights=flights,
                                           ar_of_days=ar_of_day,

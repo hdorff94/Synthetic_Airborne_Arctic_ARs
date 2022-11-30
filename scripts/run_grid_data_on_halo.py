@@ -179,10 +179,10 @@ def main(config_file_path=os.getcwd(),
             nawdex.specify_flights_of_interest(flight[0])
             nawdex.create_directory(directory_types=["data"])
             if flight[0]=="RF10" or flight[0]=="RF03":
-                icon_is_desired=True
+                icon_is_desired=False
             
             if not synthetic_flight:
-                halo_df,campaign_path=nawdex.load_aircraft_position("NAWDEX")
+                halo_df,campaign_path=nawdex.load_aircraft_position("RF10",)
             else:
                 import flight_track_creator
                 Flight_Tracker=flight_track_creator.Flighttracker(
@@ -583,7 +583,10 @@ def main(config_file_path=os.getcwd(),
     levels=np.linspace(0,50,50)
     
     #-------------- Plot Path Specifications ---------------------------------#
-    plot_path=cmpgn_cls.campaign_path+"/plots/"+flight[0]+"/"
+    major_plot_path=cmpgn_cls.campaign_path+"/plots/"
+    if not os.path.exists(major_plot_path):
+        os.mkdir(major_plot_path)
+    plot_path=major_plot_path+flight[0]+"/"
     if not os.path.exists(plot_path):
                         os.mkdir(plot_path)
 
