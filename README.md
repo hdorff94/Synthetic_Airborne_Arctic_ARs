@@ -135,20 +135,20 @@ instantan.main(figure_to_create=figure_to_create)
 or alternatively, you run the notebook ```AR_Stationarity.ipynb``` 
 
 #### Figure 16 (CONV Non Instantan - Instantan)
-To create the multiplot with comparing non-instantan minus instantan as a vertical profile just run:
-```python 
-import instantan
-figure_to_create="fig16_conv_error"
-instantan.main(figure_to_create=figure_to_create)
-# this itself calls
-instantan.cls.plot_div_tern_instantan_comparison("CONV",save_as_manuscript=False) # if last is set True figure is stored for manuscript
-```
+%To create the multiplot with comparing non-instantan minus instantan as a vertical profile just run:
+%```python 
+%import instantan
+%figure_to_create="fig16_conv_error"
+%instantan.main(figure_to_create=figure_to_create)
+%# this itself calls
+%instantan.cls.plot_div_tern_instantan_comparison("CONV",save_as_manuscript=False) # if last is set True figure is stored for manuscript
+%```
 #### Figure 17 (ADV Non Instantan - Instantan
-Very similar to Fig 16, same plot style with slight adaptations:
-```python 
-import instantan
-figure_to_create="fig17_adv_error"
-instantan.main(figure_to_create=figure_to_create)
-# this itself calls
-instantan.cls.plot_div_tern_instantan_comparison("ADV",save_as_manuscript=False) # if last is set True figure is stored for manuscript
-```
+%Very similar to Fig 16, same plot style with slight adaptations:
+%```python 
+%import instantan
+%figure_to_create="fig17_adv_error"
+%instantan.main(figure_to_create=figure_to_create)
+%# this itself calls
+%instantan.cls.plot_div_tern_instantan_comparison("ADV",save_as_manuscript=False) # if last is set True figure is stored for manuscript
+%```
