@@ -155,8 +155,9 @@ def prepare_data(paths_dict,config_file,flight_dates,reanalysis_to_use,
                            columns=["transport_mean","transport_25",
                                     "transport_75","wind_mean","wind_std",
                                     "wind_25","wind_75",
-                                    "q_mean","q_std","q_25","q_75"])
+                                    "q_mean","q_std","q_25","q_75","qv_corr"])
 
+            
             # Get the profile stats
             profile_stats["q_mean"]=halo_reanalysis_hmc["q"].mean(axis=0)
             profile_stats["q_std"]=halo_reanalysis_hmc["q"].std(axis=0)
@@ -175,7 +176,8 @@ def prepare_data(paths_dict,config_file,flight_dates,reanalysis_to_use,
                                                 0.25,axis=0)
             profile_stats["transport_75"]=halo_reanalysis_hmc["transport"].quantile(0.75,
                                                                           axis=0)
-            
+            profile_stats["qv_corr"]=halo_reanalysis_hmc["q"].corrwith(
+                                        halo_reanalysis_hmc["wind"],axis=0)
             pres_index=pd.Series(halo_reanalysis_hmc["q"].columns.astype(float)*100)
             g=9.81
             #iwv_temporary=-1/g*np.trapz(q_loc,axis=0,x=pres_index)
@@ -302,7 +304,7 @@ def create_fig11_q_v_flavor(paths_dict,config_file,flight_dates,
         axes[d].set_ylim([1000,200])
         axes[d].set_xlim([0,15])
         axes[d].semilogy()
-        #axes[d].set_yticks(np.log10([1000,850,700,500,300]))
+        axes[d].set_yticks(np.log10([1000,850,700,500,300]))
         axes[d].set_xticks([0,5,10,15])
         if d>=6:
             axes[d].set_xlabel("Moisture Transport (kg/s)",fontsize=16)
@@ -317,6 +319,186 @@ def create_fig11_q_v_flavor(paths_dict,config_file,flight_dates,
                 bbox_inches="tight")
     print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
 
+def create_pre_fig11_q_v_flavor(paths_dict,config_file,
+                                flight_dates,reanalysis_to_use):
+    
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    matplotlib.rcParams.update({"font.size":15})
+    g=9.82#campaigns=[*flight_dates.keys()]
+    merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
+        prepare_data(paths_dict,config_file,flight_dates,reanalysis_to_use)
+    
+    #Figure 11 of Manuscript
+    fig,axs=plt.subplots(3,3,figsize=(12,16),sharey=True,sharex=True)
+    axes=axs.flatten()
+    d=0
+    pres_index=moisture_transport_flights_dict[\
+                [*moisture_transport_flights_dict.keys()][-1]]["pres_index"]
+    for date in moisture_transport_flights_dict.keys():
+        relative_v_std=moisture_transport_flights_dict[date]["stats"]["wind_std"]/\
+                        moisture_transport_flights_dict[date]["stats"]["wind_mean"]
+        relative_q_std=moisture_transport_flights_dict[date]["stats"]["q_std"]/\
+                        moisture_transport_flights_dict[date]["stats"]["q_mean"]
+        
+        var_factor=moisture_transport_flights_dict[date]["stats"]["qv_corr"]*\
+                        relative_v_std*relative_q_std
+        axes[d].plot(var_factor,pres_index/100,color="black",lw=1,ls="--")
+        axes[d].text(-.2,220,s="$\overline{IVT}=$"+\
+                str(int(moisture_transport_flights_dict[date]["ivt_mean"]))+\
+                        "$\mathrm{kgm}^{-1}\mathrm{s}^{-1}$",fontsize=9,
+                        bbox=dict(facecolor='lightgrey', edgecolor='k',
+                                  boxstyle='round,pad=0.3'))
+        axes[d].scatter(var_factor,pres_index/100,
+                            s=moisture_transport_flights_dict[date]\
+                                ["stats"]["transport_mean"]/\
+                                    moisture_transport_flights_dict[date]\
+                                ["stats"]["transport_mean"].max()*100,color="k")
+        #axes[d].plot(relative_q_std,pres_index/100,color="blue",ls="--",lw=1)
+        #axes[d].scatter(relative_q_std,pres_index/100,
+        #                s=moisture_transport_flights_dict[date]\
+        #                    ["stats"]["q_mean"]/\
+        #                     moisture_transport_flights_dict[date]\
+        #                    ["stats"]["q_mean"].max()*100,color="blue")
+        #
+        # 
+        #axes[d].plot(relative_v_std,pres_index/100,color="magenta",ls="--",lw=1)
+        #axes[d].scatter(relative_v_std,pres_index/100,
+        #                s=moisture_transport_flights_dict[date]\
+        #                    ["stats"]["wind_mean"]/\
+        #                     moisture_transport_flights_dict[date]\
+        #                    ["stats"]["wind_mean"].max()*100,color="magenta")
+            
+        axes[d].text(-0.2,700,s=date,color="grey",fontsize=10)
+        axes[d].axvline(0,ls="--",color="grey",lw=3)
+        #axes[d].legend(loc="upper left")
+        #axes[d].set_yticklabels([])
+        axes[d].invert_yaxis()
+        axes[d].set_ylim([1000,200])
+        axes[d].set_xlim([-0.2,0.2])
+        axes[d].semilogy()
+        if d==7:
+            axes[d].set_xlabel("$corr(q,v) \cdot s_{v} \cdot s_{q}$")
+        #axes[d].set_yticks(np.log10([1000,850,700,500,300]))
+        axes[d].set_xticks([-0.2,-0.1,0,0.1,0.2])
+        for axis in ["left","bottom"]:
+                axes[d].spines[axis].set_linewidth(2)
+                axes[d].tick_params(length=6,width=2)#
+
+        #if d>=6:
+        #    axes[d].set_xlabel("Moisture Transport (kg/s)",fontsize=16)
+        #if d%3==0:
+        #    axes[d].set_ylabel("Pressure (hPa)",fontsize=16)
+        #axes[d].legend(loc="upper left",fontsize=10)                                                        
+        d+=1
+    
+    sns.despine(offset=10)
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+    
+    custom_lines = [#Line2D([0], [0], color="k", lw=1,ls="--",label="corr"),
+                #Line2D([0], [0], color="b", lw=1,ls="--",label="$s_{q}$"),
+                #Line2D([0], [0], color="magenta", lw=1,ls="--",label="$s_{v}$"),
+                Line2D([0],[0],marker="o",color="w",markeredgecolor="k",
+                       markerfacecolor="lightgrey",
+                       markersize=11,label="Max value")]
+
+    fig.legend(handles=custom_lines,loc="top",ncol=4,bbox_to_anchor=[0.5,0.93],
+               bbox_transform=fig.transFigure)
+    fig_name="Fig11pre_IVT_Q_V_Variability.pdf"
+    fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
+                bbox_inches="tight")
+    print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)
+    
+def create_updated_fig11_q_v_flavor(paths_dict,config_file,
+                                    flight_dates,reanalysis_to_use):
+    import matplotlib
+    
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    matplotlib.rcParams.update({"font.size":15})
+    g=9.82#campaigns=[*flight_dates.keys()]
+    merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
+        prepare_data(paths_dict,config_file,flight_dates,reanalysis_to_use)
+    
+    #Figure 11 of Manuscript
+    fig,axs=plt.subplots(3,3,figsize=(12,16),sharey=True,sharex=True)
+    axes=axs.flatten()
+    d=0
+    pres_index=moisture_transport_flights_dict[\
+                [*moisture_transport_flights_dict.keys()][-1]]["pres_index"]
+    for date in moisture_transport_flights_dict.keys():
+        relative_v_std=moisture_transport_flights_dict[date]["stats"]["wind_std"]/\
+                        moisture_transport_flights_dict[date]["stats"]["wind_mean"]
+        relative_q_std=moisture_transport_flights_dict[date]["stats"]["q_std"]/\
+                        moisture_transport_flights_dict[date]["stats"]["q_mean"]
+        axes[d].plot(moisture_transport_flights_dict[date]["stats"]["qv_corr"],
+            pres_index/100,color="black",lw=1,ls="--")
+        axes[d].text(-.99,220,s="$\overline{IVT}=$"+\
+                str(int(moisture_transport_flights_dict[date]["ivt_mean"]))+\
+                        "$\mathrm{kgm}^{-1}\mathrm{s}^{-1}$",fontsize=9,
+                        bbox=dict(facecolor='lightgrey', edgecolor='k',
+                                  boxstyle='round,pad=0.3'))
+        axes[d].scatter(moisture_transport_flights_dict[date]["stats"]["qv_corr"],
+            pres_index/100,s=moisture_transport_flights_dict[date]\
+                                ["stats"]["transport_mean"]/\
+                                    moisture_transport_flights_dict[date]\
+                                ["stats"]["transport_mean"].max()*100,color="k")
+        axes[d].plot(relative_q_std,pres_index/100,color="blue",ls="--",lw=1)
+        axes[d].scatter(relative_q_std,pres_index/100,
+                        s=moisture_transport_flights_dict[date]\
+                            ["stats"]["q_mean"]/\
+                             moisture_transport_flights_dict[date]\
+                            ["stats"]["q_mean"].max()*100,color="blue")
+        
+        
+        axes[d].plot(relative_v_std,pres_index/100,color="magenta",ls="--",lw=1)
+        axes[d].scatter(relative_v_std,pres_index/100,
+                        s=moisture_transport_flights_dict[date]\
+                            ["stats"]["wind_mean"]/\
+                             moisture_transport_flights_dict[date]\
+                            ["stats"]["wind_mean"].max()*100,color="magenta")
+            
+        axes[d].text(-0.9,700,s=date,color="grey",fontsize=10)
+        axes[d].axvline(0,ls="--",color="grey",lw=3)
+        #axes[d].legend(loc="upper left")
+        #axes[d].set_yticklabels([])
+        axes[d].invert_yaxis()
+        axes[d].set_ylim([1000,200])
+        axes[d].set_xlim([-1,1])
+        axes[d].semilogy()
+        #axes[d].set_yticks(np.log10([1000,850,700,500,300]))
+        axes[d].set_xticks([-1.0,-0.5,0,0.5,1.0])
+        for axis in ["left","bottom"]:
+                axes[d].spines[axis].set_linewidth(2)
+                axes[d].tick_params(length=6,width=2)#
+
+        #if d>=6:
+        #    axes[d].set_xlabel("Moisture Transport (kg/s)",fontsize=16)
+        #if d%3==0:
+        #    axes[d].set_ylabel("Pressure (hPa)",fontsize=16)
+        #axes[d].legend(loc="upper left",fontsize=10)                                                        
+        d+=1
+    
+    sns.despine(offset=10)
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+    
+    custom_lines = [Line2D([0], [0], color="k", lw=1,ls="--",label="corr"),
+                Line2D([0], [0], color="b", lw=1,ls="--",label="$s_{q}$"),
+                Line2D([0], [0], color="magenta", lw=1,ls="--",label="$s_{v}$"),
+                Line2D([0],[0],marker="o",color="w",markeredgecolor="k",
+                       markerfacecolor="lightgrey",
+                       markersize=12,label="Max value")]
+
+    fig.legend(handles=custom_lines,loc="top",ncol=4,bbox_to_anchor=[0.75,0.93],
+               bbox_transform=fig.transFigure)
+    fig_name="Fig11updated_IVT_Q_V_Variability.pdf"
+    fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
+                bbox_inches="tight")
+    print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
+    
 def plotter(figures_to_create,flight_dates,reanalysis_to_use):
     paths_dict,config_file=importer()
     
@@ -324,6 +506,8 @@ def plotter(figures_to_create,flight_dates,reanalysis_to_use):
     #import seaborn as sns
     plot_fct_dict={"fig10":[create_fig10_q_v_vertical_variability],
                    "fig11":[create_fig11_q_v_flavor],
+                   "updated_fig11":[create_pre_fig11_q_v_flavor,
+                                    create_updated_fig11_q_v_flavor],
                    "both":[create_fig10_q_v_vertical_variability,
                            create_fig11_q_v_flavor]}
     plot_fct_list=plot_fct_dict[figures_to_create]
@@ -331,7 +515,7 @@ def plotter(figures_to_create,flight_dates,reanalysis_to_use):
         fct(paths_dict,config_file,flight_dates,reanalysis_to_use)
          
 #%%
-def main(reanalysis_to_use="ERA-5",figures_to_create="fig10"):
+def main(reanalysis_to_use="ERA-5",figures_to_create="updated_fig11"):
     #plot_fct_kwargs={"fig10":[paths_dict,config_file,
     #                          flight_dates,reanalysis_to_use],
     #                 "fig11":[],

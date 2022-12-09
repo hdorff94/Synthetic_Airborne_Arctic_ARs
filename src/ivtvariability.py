@@ -1848,6 +1848,8 @@ class IVT_Variability_Plotter(IVT_variability):
             TIVT_inflow_core=Flights_TIVT_inflow[flight]["core"]
             TIVT_outflow_core=Flights_TIVT_outflow[flight]["core"]
             
+            TIVT_diff=TIVT_inflow_total-TIVT_outflow_total
+            
             if len(ax.shape)>=2:
                 if i<col_number:
                     horizontal_field=i
@@ -1899,6 +1901,14 @@ class IVT_Variability_Plotter(IVT_variability):
             plot_ax.plot(ar_outflow_cold_sector["IVT_max_distance"]/1000,
                  ar_outflow_cold_sector[ivt_var_arg],
                  lw=3,ls="-.",color="darkred")
+            if TIVT_diff>0: 
+                plot_ax.arrow(-400,500 ,0 ,70,facecolor="mediumseagreen",
+                              edgecolor="k",linewidth=3,linestyle="-",width=14)
+            else:
+                plot_ax.arrow(-400,620,0 ,-70,facecolor="tan",edgecolor="k",
+                              linewidth=3,width=14,linestyle="-")
+                
+            print("ARROW plotted")
             plot_ax.set_title(flight,fontsize=16,loc="left",y=0.9)
             plot_ax.set_xlim([-500,500])
             plot_ax.set_ylim([100,700])
@@ -1936,7 +1946,7 @@ class IVT_Variability_Plotter(IVT_variability):
             plt_path=plot_path
         f.savefig(plt_path+fig_name,
                     dpi=60,bbox_inches="tight")
-        print("Figure saved as:", cmpn_cls.plot_path+fig_name)
+        print("Figure saved as:", plt_path+fig_name)
         return None
     def plot_inflow_outflow_IVT_sectors(cmpgn_cls,AR_inflow_dict,AR_outflow_dict,
                                         TIVT_inflow_dict,TIVT_outflow_dict,
