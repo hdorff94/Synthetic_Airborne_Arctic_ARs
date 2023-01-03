@@ -42,7 +42,8 @@ def importer():
 
 def main(flight_dates,do_plotting=False,instantan=False,sector_sonde_no=3,
          calc_hmp=False,calc_hmc=True,use_era=True,use_carra=False,
-         use_icon=False,grid_name="ERA5",do_supplements=True):    
+         use_icon=False,grid_name="ERA5",do_supplements=True,
+         flight_locations=False):    
     paths_dict=importer()
     # Relevant created classes and modules
     import flightcampaign
@@ -103,7 +104,8 @@ def main(flight_dates,do_plotting=False,instantan=False,sector_sonde_no=3,
             do_plotting=do_plotting,
             calc_hmp=calc_hmp,calc_hmc=calc_hmc,
             use_era=use_era,use_carra=use_carra,
-            use_icon=use_icon,do_supplements=do_supplements)
+            use_icon=use_icon,do_supplements=do_supplements,
+            use_flight_sonde_locations=flight_locations)
     return None
 
 if __name__=="__main__":
@@ -124,4 +126,5 @@ if __name__=="__main__":
                }}
 
     
-    main(flight_dates,grid_name="CARRA",instantan=True,do_supplements=False)
+    main(flight_dates,grid_name="CARRA",instantan=True,do_supplements=False,
+         flight_locations=True)

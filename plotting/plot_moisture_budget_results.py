@@ -106,6 +106,7 @@ def main(figure_to_create="fig13"):
     Inst_Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,
                                                 config_file,grid_name=grid_name,
                                                 do_instantan=True,sonde_no=sonde_no)
+    on_flight_tracks=True
     
     if figure_to_create.startswith("fig13"):
         Sectors,Ideal_Sectors,cmpgn_cls=\
@@ -113,13 +114,159 @@ def main(figure_to_create="fig13"):
         if do_plotting:
             Budget_plots.plot_single_case(Sectors,Ideal_Sectors,
                                 save_as_manuscript_figure=save_for_manuscript)
-    elif figure_to_create.startswith("fig14"):
+    elif figure_to_create.startswith("fig14_"):
         Campaign_Budgets,Campaign_Ideal_Budgets=\
             Moisture_CONV.get_overall_budgets()
         if do_plotting:
             Budget_plots.moisture_convergence_cases_overview(Campaign_Budgets,
                                                         Campaign_Ideal_Budgets,
                                 save_as_manuscript_figure=save_for_manuscript)
+    
+    elif figure_to_create.startswith("fig14new"):
+        # Here we take the continuous representation
+        # so reset the sonde no
+        #Moisture_CONV.sonde_no="100"
+        # Instantan Budgets
+        Inst_Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,
+                                    flight+"_instantan",config_file,
+                                    flight_dates=flight_dates,
+                                    grid_name=grid_name,do_instantan=True)
+        #Inst_Moisture_CONV.sonde_no="100"
+        Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets(
+                                            use_flight_tracks=on_flight_tracks)
+        # Airborne Budgets
+        Campaign_Budgets,Campaign_Ideal_Budgets=\
+            Moisture_CONV.get_overall_budgets(use_flight_tracks=on_flight_tracks)
+        
+        #Inst_Budget_plots.moisture_convergence_cases_overview(
+        #                    Campaign_Budgets=Campaign_Budgets,
+        #                    Campaign_Ideal_Budgets=Campaign_Ideal_Budgets,
+        #                    Campaign_Inst_Budgets={},
+        #                    Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
+        #                    instantan_comparison=True,
+        #                    save_as_manuscript_figure=False)
+        Inst_Budget_plots.moisture_convergence_time_instantan_comparison(
+                Campaign_Budgets=Campaign_Budgets,
+                Campaign_Ideal_Budgets=Campaign_Ideal_Budgets,
+                Campaign_Inst_Budgets={},
+                Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
+                save_as_manuscript_figure=True,
+                use_flight_tracks=on_flight_tracks,
+                plot_mean_error=True)    
+    elif figure_to_create.startswith("fig_supplements"):
+        import interpdata_plotting
+        #---------------------------------------------------------------------#
+        #%% Vertical distribution of moisture & wind speed cross-section contour
+        calc_hmp=False
+        calc_hmc=True
+        do_plotting=False
+        synthetic_campaign=True
+        ar_of_day=["AR_internal"]
+        #campaign_name="Second_Synthetic_Study"##"HALO_AC3"
+        #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
+    
+        NA_flights_to_analyse={"SRF02":"20180224",#,#,
+                               "SRF04":"20190319",#}#,#,
+                               "SRF07":"20200416",#}#,#,#}#,#}#,
+                               "SRF08":"20200419"}
+        #Second Synthetic Study
+        SND_flights_to_analyse={"SRF02":"20110317",
+                                "SRF03":"20110423",#,
+                                "SRF08":"20150314",#,
+                                "SRF09":"20160311",#,
+                                "SRF12":"20180225"}
+        use_era=True
+        use_carra=True
+        use_icon=False
+        na_flights=[*NA_flights_to_analyse.keys()]
+        snd_flights=[*SND_flights_to_analyse.keys()]
+        
+        do_instantaneous=True
+        interpdata_plotting.ar_cross_sections_overview_flights_vertical_profile(
+            flight_dates,use_era,use_carra,use_icon,na_flights,snd_flights,
+            do_meshing=False)
+        
+        
+        #%%
+        """
+        #plt.plot(mean_absolute_relative_error.mean(axis=0))        
+        div_errors_dict=dict(sorted(div_errors_dict.items()))
+        plot_index=np.arange(0,len(div_errors_dict["20150314"].index))
+        for date in [*div_errors_dict.keys()]:
+            axes[p].scatter(plot_index,
+                            div_errors_dict[date]["flight"].values,
+                            marker="s",s=100,color="k")
+            axes[p].scatter(plot_index,
+                            div_errors_dict[date]["instantaneous"].values,
+                            marker="v",s=100,color="grey")
+            axes[p].text(x=0.1,y=0.9,s=date,transform=axes[p].transAxes)
+            axes[p].set_xticks(plot_index)
+            
+            axes[p].set_xticklabels("")
+            axes[p].set_ylim([-36,36])
+            axes2=axes[p].twinx()
+            axes2.scatter(plot_index,div_errors_dict[date]["flight"].values-\
+                          div_errors_dict[date]["instantaneous"].values,
+                          color="darkred", ls="--",marker="o",s=75)
+            axes2.set_ylim([-12,12])
+            
+            axes[p].set_yticks([-36,-24,-12,0,12,24,36])
+            axes2.set_yticks([-12,-8,-4,0,4,8,12])
+            axes[p].axhline(0,color="grey",ls="--",lw=2)
+            axes[p].set_yticklabels("")
+            axes2.set_yticklabels("")
+            if p%3==0:
+                axes[p].set_ylabel("Contribution to \nMoisture Budget ($\mathrm{mmd}^{-1}$)")
+                axes[p].set_yticklabels(["-36","-24","-12","0","12","24","36"])
+                
+            elif p%3==2:
+                axes2.set_yticklabels(["-12","-8","-4","0","4","8","12"])
+                axes2.set_ylabel("Error in \n Moisture Budget ($\mathrm{mmd}^{-1}$)")
+            if p>=6:
+                axes[p].set_xticklabels(div_errors_dict[date].index)
+            
+            axes[p].set_xlim([-0.5,5.5])
+            
+            #else:
+            #    axes2.set_yticks()
+            p+=1
+        
+        sns.despine(offset=10)             
+        supplement_path=self.cmpgn_cls.plot_path+\
+                "/../../../Synthetic_AR_Paper/Manuscript/Supplements/"
+        fig_name="Mean_div_errors_per_flight.png"
+        err_fig.savefig(supplement_path+fig_name,dpi=300,bbox_inches="tight")
+        print("Figure saved as: ", supplement_path+fig_name)
+        """
+        #---------------------------------------------------------------------#
+        # Instantan Budgets
+        Inst_Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,
+                                    flight+"_instantan",config_file,
+                                    flight_dates=flight_dates,
+                                    grid_name=grid_name,do_instantan=True)
+        
+        Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets(
+            use_flight_tracks=on_flight_tracks)
+        # Airborne Budgets
+        flight_Budgets,flight_Ideal_Budgets=Moisture_CONV.get_overall_budgets(
+            use_flight_tracks=on_flight_tracks)
+        
+        #######################################################################
+        # Sonde position comparison/verification
+        # read sonde positions
+        Inst_Budget_plots.compare_inst_sonde_pos(flight_dates,
+                                    Campaign_Budgets=flight_Budgets,
+                                    Campaign_Inst_Budgets=Inst_Budgets,
+                                    save_as_manuscript_figure=False,
+                                    use_flight_tracks=on_flight_tracks)
+        #######################################################################
+        # Flight-specific mean error in convergence frontal sector
+        #######################################################################
+        Inst_Budget_plots.mean_errors_per_flight(flight_dates,
+                                                 flight_Ideal_Budgets,
+                                                 Inst_Ideal_Budgets,
+                                                 save_as_manuscript_figure=False)
+        
     elif figure_to_create.startswith("fig18"):
         Campaign_Budgets,Campaign_Ideal_Budgets=\
             Moisture_CONV.get_overall_budgets()
@@ -143,13 +290,14 @@ def main(figure_to_create="fig13"):
 #                        cmpgn_cls,flight,self.cfg_file,
 #                        grid_name=self.grid_name,do_instantan=False)    
 #            Flight_Sectors,Flight_Ideal_Sectors,cmpgn_cls=\
-#                    Flight_Moisture_CONV.load_moisture_convergence_single_case()
-            
+#                    Flight_Moisture_CONV.load_moisture_convergence_single_case()            
 if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig13_single_case_sector_profiles"
-    figure_to_create="fig14_campaign_divergence_overviews"
+    #figure_to_create="fig14_campaign_divergence_overviews"
     #figure_to_create="fig18_campaign_divergence_overview_instantan_comparison"
+    #figure_to_create="fig14new_divergence_instantan_errorbars"
+    figure_to_create="fig_supplements_sonde_pos_comparison"
     main(figure_to_create=figure_to_create)
 
 """
@@ -291,6 +439,7 @@ if do_instantan:
         #f.savefig(plot_path+fig_name,
         #            dpi=60,bbox_inches="tight")
         #print("Figure saved as:", cmpn_cls.plot_path+fig_name)
-"""        
+        
 #Start plotting
 #Budget_Plots.moi
+"""

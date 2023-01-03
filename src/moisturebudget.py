@@ -224,7 +224,7 @@ class Moisture_Convergence(Moisture_Budgets):
         return Sectors,Ideal_Sectors, self.cmpgn_cls
     
     # get overall divergences
-    def get_overall_budgets(self):
+    def get_overall_budgets(self,use_flight_tracks=False):
         # For sondes
         Summary_Budgets={}
         Summary_Ideal_Budgets={}
@@ -265,14 +265,17 @@ class Moisture_Convergence(Moisture_Budgets):
                 budget_data_path=self.cmpgn_cls.major_path+campaign+"/data/budget/"
     
             for flight in self.flight_dates[campaign].keys():
+                name_arg=""
+                
                 if self.do_instantan:
                     flight=flight+"_instantan"
-                
+                    if use_flight_tracks:
+                        name_arg="_on_flight"
                 #Core
                 core_file=flight+"_AR_core_"+self.grid_name+\
-                "_regr_sonde_no_"+str(self.sonde_no)+".csv"
+                "_regr_sonde_no_"+str(self.sonde_no)+name_arg+".csv"
                 core_ideal_file=flight+"_AR_core_"+self.grid_name+\
-                "_regr_sonde_no_100.csv"
+                "_regr_sonde_no_100"+name_arg+".csv"
                 core=pd.read_csv(budget_data_path+core_file)
                 core_ideal=pd.read_csv(budget_data_path+core_ideal_file)
                 if not "level" in core.columns:
@@ -286,9 +289,9 @@ class Moisture_Convergence(Moisture_Budgets):
         
                 # Warm sector
                 warm_file=flight+"_AR_warm_sector_"+self.grid_name+\
-                    "_regr_sonde_no_"+str(self.sonde_no)+".csv"
+                    "_regr_sonde_no_"+str(self.sonde_no)+name_arg+".csv"
                 warm_ideal_file=flight+"_AR_warm_sector_"+self.grid_name+\
-                    "_regr_sonde_no_100"+".csv"
+                    "_regr_sonde_no_100"+name_arg+".csv"
                 warm=pd.read_csv(budget_data_path+warm_file)
                 warm_ideal=pd.read_csv(budget_data_path+warm_ideal_file)
                 if not "level" in warm.columns:
@@ -303,9 +306,9 @@ class Moisture_Convergence(Moisture_Budgets):
                 # Cold sector
                 if not flight.startswith("SRF12"):
                     cold_file=flight+"_AR_cold_sector_"+self.grid_name+\
-                        "_regr_sonde_no_"+str(self.sonde_no)+".csv"
+                        "_regr_sonde_no_"+str(self.sonde_no)+name_arg+".csv"
                     cold_ideal_file=flight+"_AR_cold_sector_"+self.grid_name+\
-                    "_regr_sonde_no_100.csv"
+                    "_regr_sonde_no_100"+name_arg+".csv"
                     cold=pd.read_csv(budget_data_path+cold_file)
                     cold_ideal=pd.read_csv(budget_data_path+cold_ideal_file)
                     if not "level" in cold.columns:
@@ -372,7 +375,8 @@ class Moisture_Convergence(Moisture_Budgets):
     def calc_moisture_convergence_from_regression_method(self,
             config_file_path="",do_plotting=False,
             calc_hmp=True,calc_hmc=False,use_era=True,use_carra=False,
-            use_icon=False,do_supplements=False):
+            use_icon=False,do_supplements=False,
+            use_flight_sonde_locations=False):
         
         import data_config
         import flightcampaign
@@ -412,7 +416,8 @@ class Moisture_Convergence(Moisture_Budgets):
             else:
                 raise Exception("Wrong campaign assigned.")
             flights=[*self.flight_dates[campaign].keys()]
-            Hydrometeors,HALO_Dict,cmpgn_cls=campaignAR_plotter.main(
+            default_Hydrometeors,default_HALO_Dict,cmpgn_cls=\
+                        campaignAR_plotter.main(
                                         campaign=campaign,flights=flights,
                                         era_is_desired=use_era, 
                                         icon_is_desired=use_icon,
@@ -421,7 +426,7 @@ class Moisture_Convergence(Moisture_Budgets):
                                         calc_hmp=True,calc_hmc=False,
                                         do_instantaneous=self.do_instantan)
 
-            HMCs,HALO_Dict,cmpgn_cls=campaignAR_plotter.main(
+            HMCs,default_HALO_Dict,cmpgn_cls=campaignAR_plotter.main(
                                         campaign=campaign,flights=flights,
                                         era_is_desired=use_era, 
                                         icon_is_desired=use_icon,
@@ -459,8 +464,20 @@ class Moisture_Convergence(Moisture_Budgets):
                 #working_path=os.getcwd()
                 grid_name=HMCs[analysed_flight]\
                                         ["AR_internal"]["name"]
-                
-                AR_inflow,AR_outflow=atmospheric_rivers.Atmospheric_Rivers.\
+                if not use_flight_sonde_locations:
+                    Hydrometeors=default_Hydrometeors
+                    HALO_Dict=default_HALO_Dict
+                else: 
+                    Hydrometeors,HALO_Dict,cmpgn_cls=\
+                        campaignAR_plotter.main(campaign=campaign,
+                            flights=flights,era_is_desired=use_era, 
+                            icon_is_desired=use_icon,
+                        carra_is_desired=use_carra,
+                        do_daily_plots=do_plotting,
+                        calc_hmp=True,calc_hmc=False,
+                        do_instantaneous=False)
+
+                AR_inflow, AR_outflow=atmospheric_rivers.Atmospheric_Rivers.\
                                                 locate_AR_cross_section_sectors(
                                                     HALO_Dict,Hydrometeors,
                                                     analysed_flight)
@@ -468,15 +485,13 @@ class Moisture_Convergence(Moisture_Budgets):
                                                     calc_TIVT_of_sectors(
                                                         AR_inflow,AR_outflow,
                                                         grid_name)
+                                   
                 for sector in ["cold_sector","core","warm_sector"]:
                     if flight.startswith("SRF12"):
                         if sector=="cold_sector":
                             continue
                     for number_of_sondes in [self.sonde_no,100]:    
                         print(flight)
-                        #flight_dates=["2016"]
-                        
-                
                         #%%
                         # Sonde number
                         sondes_selection={}
@@ -493,7 +508,22 @@ class Moisture_Convergence(Moisture_Budgets):
                         outflow_sondes_times=\
                                 AR_outflow["AR_outflow_"+sector].index[\
                                         sondes_selection["outflow_"+sector]]
-                
+                        if use_flight_sonde_locations:
+                            inst_HALO=default_HALO_Dict[analysed_flight].copy()
+                            new_inflow_sondes_times=[]
+                            new_outflow_sondes_times=[]
+                            for time in range(inflow_sondes_times.shape[0]):
+                                # Inflow
+                                inst_time_in=inst_HALO["inflow"][\
+                                    inst_HALO["inflow"]["old_index"]==\
+                                        str(inflow_sondes_times[time])].index.values[0]
+                                new_inflow_sondes_times.append(inst_time_in)
+                                # Outflow
+                                inst_time_out=inst_HALO["outflow"][\
+                                    inst_HALO["outflow"]["old_index"]==\
+                                        str(outflow_sondes_times[time])].index.values[0]
+                                new_outflow_sondes_times.append(inst_time_out)
+                        
                         sondes_pos_inflow=\
                                 AR_inflow["AR_inflow_"+sector][\
                                     ["Halo_Lat","Halo_Lon"]].loc[\
@@ -509,26 +539,33 @@ class Moisture_Convergence(Moisture_Budgets):
                             HMCs[analysed_flight]["AR_internal"]["q"]=\
                                     HMCs[analysed_flight]["AR_internal"]\
                                         ["specific_humidity"].copy()
+                        if not use_flight_sonde_locations:
+                            inflow_times  =   inflow_sondes_times
+                            outflow_times =   outflow_sondes_times
+                        else:
+                            inflow_times  =   new_inflow_sondes_times
+                            outflow_times =   new_outflow_sondes_times
+                            
                         q_inflow_sondes=\
                                 HMCs[analysed_flight]["AR_internal"]["q"].loc[\
-                                                        inflow_sondes_times]
+                                                        inflow_times]
                         q_outflow_sondes=\
                             HMCs[analysed_flight]["AR_internal"]["q"].loc[\
-                                                        outflow_sondes_times]
+                                                        outflow_times]
                 
                         u_inflow_sondes=\
                             HMCs[analysed_flight]["AR_internal"]["u"].loc[\
-                                                        inflow_sondes_times]
+                                                        inflow_times]
                         u_outflow_sondes=\
                             HMCs[analysed_flight]["AR_internal"]["u"].loc[\
-                                                        outflow_sondes_times]
+                                                        outflow_times]
                 
                         v_inflow_sondes=\
                             HMCs[analysed_flight]["AR_internal"]["v"].loc[\
-                                                        inflow_sondes_times]
+                                                        inflow_times]
                         v_outflow_sondes=\
                             HMCs[analysed_flight]["AR_internal"]["v"].loc[\
-                                                        outflow_sondes_times]
+                                                        outflow_times]
                 
                         wind_inflow_sondes=np.sqrt(u_inflow_sondes**2+\
                                            v_inflow_sondes**2)
@@ -713,14 +750,29 @@ class Moisture_Convergence(Moisture_Budgets):
                         budget_regression_profile_df["TRANSP"]=\
                             div_qv.values
                 
-                    
+                        # Save budget values
+                        name_arg=""
+                        if use_flight_sonde_locations:
+                            name_arg="_on_flight"+name_arg
                         budget_file_name=flight+"_AR_"+sector+"_"+\
-                                    grid_name+"_regr_sonde_no_"+\
-                                        str(number_of_sondes)+".csv"
+                                    grid_name+"_regr_sonde_no_"+str(number_of_sondes)+\
+                                        name_arg+".csv"
                         budget_regression_profile_df.to_csv(
                             path_or_buf=budget_data_path+budget_file_name)    
                         print("Convergence components saved as: ",
                               budget_data_path+budget_file_name)
+                        # Save sonde positions
+                        #if number_of_sondes<10:
+                        sonde_pos_fname=flight+"_Sonde_Location_"+sector+"_"+\
+                                        grid_name+"_regr_sonde_no_"+str(number_of_sondes)
+                        if use_flight_sonde_locations:
+                                sonde_pos_fname=sonde_pos_fname+"_on_flight"
+                                        
+                        sonde_pos_fname=sonde_pos_fname+".csv"
+                        sondes_pos_all.to_csv(path_or_buf=budget_data_path+\
+                                                 sonde_pos_fname)
+                        print("Sonde position saved as:",
+                              budget_data_path+sonde_pos_fname)
                 if do_supplements:
                     ax1_mean.invert_yaxis()
                     ax2_mean.invert_yaxis()
@@ -733,7 +785,6 @@ class Moisture_Convergence(Moisture_Budgets):
                     mean_profile_fig.savefig(budget_data_path+file_name)
                     print("Figure saved as:",budget_data_path+file_name)
             
-
     @staticmethod
     def get_xy_coords_for_domain(domain):
         x_coor=[]
@@ -890,6 +941,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         self.plot_path=self.cmpgn_cls.plot_path+"/budget/" # ----> to be filled
         self.grid_name=grid_name
         self.sonde_no=sonde_no
+        #self.flight_dates=flight_dates
     # Quick functions of variables       
     def plot_AR_TIVT_cumsum_quicklook(self,ar_inflow,ar_outflow):
         fig=plt.figure(figsize=(10,10))
@@ -1354,13 +1406,101 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         if Campaign_Inst_Ideal_Budgets!={}:
             self.Campaign_Inst_Ideal_Budgets=Campaign_Inst_Ideal_Budgets
     
+    def compare_inst_sonde_pos(self,flight_dates,Campaign_Budgets={},
+                               Campaign_Inst_Budgets={},
+                               save_as_manuscript_figure=False,
+                               use_flight_tracks=False):
+        import gridonhalo
+        major_data_path="C:/Users/u300737/Desktop/PhD_UHH_WIMI/Work/GIT_Repository/"
+        self.flight_dates=flight_dates
+        # Allocate variables and calc budget contributions in mm/h
+        #self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
+        #                      Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets)):
+        sonde_pos_fig,ax=plt.subplots(3,3,figsize=(18,12))
+        axes=ax.flatten()
+        p=0
+        sector_colors={"warm_sector":"orange","core":"green","cold_sector":"blue"}
+        inst_sector_colors={"warm_sector":"yellow","cold_sector":"lightblue"}
+        sector_distances=pd.DataFrame(data=np.nan,
+                                      index=range(9),
+                                      columns=["warm_sector","cold_sector"])
+                
+        for campaign in [*self.flight_dates.keys()]:
+            if campaign=="North_Atlantic_Run":    
+                campaign_data_path=major_data_path+"NA_February_Run/data/"
+            elif campaign=="Second_Synthetic_Study":
+                campaign_data_path=major_data_path+"Second_Synthetic_Study/data/"
+            sonde_pos_path=campaign_data_path+"budget/"
+            for flight in [*self.flight_dates[campaign].keys()]:
+                print(flight)
+                inst_flight=flight+"_instantan"
+                # load sonde positions
+                for s,sector in enumerate(["warm_sector","cold_sector"]):
+                    if flight=="SRF12":
+                        if sector=="cold_sector":
+                            continue
+                    file_end=".csv"
+                    pos_fname_arg=""
+                    if use_flight_tracks:
+                        pos_fname_arg="_on_flight"
+                    sonde_sector_fname=flight+"_Sonde_Location_"+sector+"_"+\
+                        self.grid_name+"_regr_sonde_no_3"+file_end                    
+                    inst_sonde_sector_fname=inst_flight+"_Sonde_Location_"+\
+                                            sector+"_"+self.grid_name+\
+                                                "_regr_sonde_no_3"+pos_fname_arg+\
+                                                    file_end
+                    flight_sector_sondes=pd.read_csv(sonde_pos_path+\
+                                                     sonde_sector_fname)
+                    inst_sector_sondes=pd.read_csv(sonde_pos_path+\
+                                                   inst_sonde_sector_fname)
+                    axes[p].scatter(flight_sector_sondes["Halo_Lon"],
+                                    flight_sector_sondes["Halo_Lat"],s=100,
+                                    color=sector_colors[sector],
+                                    edgecolor="k")#,edgewidth=2)
+                    axes[p].scatter(inst_sector_sondes["Halo_Lon"],
+                                    inst_sector_sondes["Halo_Lat"],
+                                    color=sector_colors[sector],
+                                    s=100,marker="v",edgecolor="grey")
+                    axes[p].text(x=0.05,y=0.9,
+                                 s=self.flight_dates[campaign][flight],
+                                 transform=axes[p].transAxes)
+                    distances=gridonhalo.vectorized_harvesine_distance(
+                                            flight_sector_sondes["Halo_Lat"],
+                                            flight_sector_sondes["Halo_Lon"],
+                                            inst_sector_sondes["Halo_Lat"],
+                                            inst_sector_sondes["Halo_Lon"])
+                    sector_distances[sector].iloc[p]=distances.mean()
+                sector_distances.rename(index={p:self.flight_dates[campaign]\
+                                                    [flight]},inplace=True)
+                p+=1
+        sector_distances.loc["mean"]=sector_distances.mean()
+        # save the data in the supplements folder of the manuscript
+        supplement_path=self.cmpgn_cls.plot_path+\
+                "/../../../Synthetic_AR_Paper/Manuscript/Supplements/"
+        
+        if not os.path.exists(supplement_path):
+            os.makedirs(supplement_path)
+        distances_fname="Sector_Inst_Sondes_distances"
+        if use_flight_tracks:
+            distances_fname+="_on_flight"
+        distances_fname+=file_end
+        sector_distances.to_csv(path_or_buf=supplement_path+\
+                                    distances_fname,index=True)
+        print("Sector differences saved as:",supplement_path+distances_fname)
+                
+            
+        # Allocate variables and calc budget contributions in mm/h
+        #self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
+        #                      Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets)
+                
+    
     # Summarizing plots of campaign
     def calc_budgets_in_mm_h(self):
+        gravit_norm=1/9.82
         if hasattr(self,"Campaign_Budgets"):
             warm_budgets=self.Campaign_Budgets["warm_sector"]
             core_budgets=self.Campaign_Budgets["core"]
             cold_budgets=self.Campaign_Budgets["cold_sector"]
-            gravit_norm=1/9.82
             self.budget_regions=pd.DataFrame()
             #    index=self.Campaign_Budgets["core"]["ADV"].index)
             self.budget_regions["Warm\nADV"]=gravit_norm*warm_budgets["ADV"].values/\
@@ -1441,7 +1581,116 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                         cold_inst_ideal_budgets["CONV"].values/\
                                                         1000*3600
         
+    def mean_errors_per_flight(self,flight_dates,
+                               flight_Ideal_Budgets,
+                               Inst_Ideal_Budgets,
+                               save_as_manuscript_figure=False):
+        #Campaign_Budgets={}
+        #Campaign_Ideal_Budgets=flight_Ideal_Budgets
+        #Campaign_Inst_Budgets={}
+        #Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets
+        # Allocate variables and calc budget contributions in mm/h
+        #self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
+        #                      Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets)
+        budget_ideal_regions      = flight_Ideal_Budgets#self.budget_ideal_regions
+        budget_inst_ideal_regions = Inst_Ideal_Budgets#self.budget_inst_ideal_regions
             
+        #if self.grid_name=="CARRA":
+        #    budget_ideal_regions=-24*budget_ideal_regions
+        #    budget_inst_ideal_regions=-24*budget_inst_ideal_regions
+            
+        #Start plotting
+        #budget_boxplot=plt.figure(figsize=(12,9), dpi= 300)
+        matplotlib.rcParams.update({'font.size': 12})
+        err_fig,ax=plt.subplots(figsize=(18,12),nrows=3,ncols=3)
+        axes=ax.flatten()
+        p=0
+        
+        div_errors=pd.DataFrame(data=np.nan,index=["Warm\nADV","Warm\nCONV",
+                                "Core\nADV","Core\nCONV","Cold\nADV","Cold\nCONV"],
+                                columns=["flight","instantaneous"])
+        div_errors_dict={}
+        relevant_long_index = budget_ideal_regions["core"]["ADV"].index
+        relevant_index      = [idx.split("_")[0] for idx in relevant_long_index]
+        mean_absolute_relative_error=pd.DataFrame(data=np.nan,
+                            index=relevant_index,
+                            columns=div_errors.index)
+
+        for campaign in [*flight_dates.keys()]:
+            for flight in [*flight_dates[campaign].keys()]:
+                if campaign.startswith("N"):
+                    index_start="NA"
+                else:
+                    index_start="Snd"
+                index_end=flight
+                index_inst_end=flight+"_instantan"
+                index=index_start+index_end
+                inst_index=index_start+index_inst_end
+                for term in div_errors.index:
+                    front_sector=term.split("\n")[0].lower()#
+                    if not front_sector=="core":
+                        front_sector+="_sector"
+                    term_comp=term.split("\n")[-1]
+                    div_errors["flight"].loc[term]=-24*budget_ideal_regions[\
+                                                front_sector][term_comp][\
+                                                index+"_sonde_100"+term_comp]
+                    div_errors["instantaneous"].loc[term]=-24*budget_inst_ideal_regions[\
+                                                        front_sector][term_comp][\
+                                            inst_index+"_sonde_100"+term_comp]
+                    mean_absolute_relative_error[term].loc[index_start+index_end]=\
+                        abs(abs(div_errors["flight"].loc[term]-\
+                             div_errors["instantaneous"].loc[term])/\
+                                div_errors["instantaneous"].loc[term])
+                
+                div_errors_dict[flight_dates[campaign][flight]]=div_errors.copy()
+                
+        #plt.plot(mean_absolute_relative_error.mean(axis=0))        
+        div_errors_dict=dict(sorted(div_errors_dict.items()))
+        plot_index=np.arange(0,len(div_errors_dict["20150314"].index))
+        for date in [*div_errors_dict.keys()]:
+            axes[p].scatter(plot_index,
+                            div_errors_dict[date]["flight"].values,
+                            marker="s",s=100,color="k")
+            axes[p].scatter(plot_index,
+                            div_errors_dict[date]["instantaneous"].values,
+                            marker="v",s=100,color="grey")
+            axes[p].text(x=0.1,y=0.9,s=date,transform=axes[p].transAxes)
+            axes[p].set_xticks(plot_index)
+            
+            axes[p].set_xticklabels("")
+            axes[p].set_ylim([-36,36])
+            axes2=axes[p].twinx()
+            axes2.scatter(plot_index,div_errors_dict[date]["flight"].values-\
+                          div_errors_dict[date]["instantaneous"].values,
+                          color="darkred", ls="--",marker="o",s=75)
+            axes2.set_ylim([-12,12])
+            
+            axes[p].set_yticks([-36,-24,-12,0,12,24,36])
+            axes2.set_yticks([-12,-8,-4,0,4,8,12])
+            axes[p].axhline(0,color="grey",ls="--",lw=2)
+            axes[p].set_yticklabels("")
+            axes2.set_yticklabels("")
+            if p%3==0:
+                axes[p].set_ylabel("Contribution to \nMoisture Budget ($\mathrm{mmd}^{-1}$)")
+                axes[p].set_yticklabels(["-36","-24","-12","0","12","24","36"])
+                
+            elif p%3==2:
+                axes2.set_yticklabels(["-12","-8","-4","0","4","8","12"])
+                axes2.set_ylabel("Error in \n Moisture Budget ($\mathrm{mmd}^{-1}$)")
+            if p>=6:
+                axes[p].set_xticklabels(div_errors_dict[date].index)
+            
+            axes[p].set_xlim([-0.5,5.5])
+            
+            #else:
+            #    axes2.set_yticks()
+            p+=1
+        sns.despine(offset=10)             
+        supplement_path=self.cmpgn_cls.plot_path+\
+                "/../../../Synthetic_AR_Paper/Manuscript/Supplements/"
+        fig_name="Mean_div_errors_per_flight.png"
+        err_fig.savefig(supplement_path+fig_name,dpi=300,bbox_inches="tight")
+        print("Figure saved as: ", supplement_path+fig_name)
     def moisture_convergence_cases_overview(self,Campaign_Budgets={},
                                             Campaign_Ideal_Budgets={},
                                             Campaign_Inst_Budgets={},
@@ -1507,6 +1756,124 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         budget_boxplot.savefig(plot_path+fig_name,
                        dpi=300,bbox_inches="tight")
         print("Figure saved as:",plot_path+fig_name)
+    
+    def moisture_convergence_time_instantan_comparison(
+        self,Campaign_Budgets={},Campaign_Ideal_Budgets={},
+        Campaign_Inst_Budgets={},Campaign_Inst_Ideal_Budgets={},
+        save_as_manuscript_figure=False,plot_mean_error=False,
+        use_flight_tracks=False):
+        #,instantan_comparison=False
+        #Campaign_Budgets=Campaign_Budgets,
+        #Campaign_Ideal_Budgets=Campaign_Ideal_Budgets,
+        #Campaign_Inst_Budgets={},
+        #Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
+        #instantan_comparison=True,
+        #save_as_manuscript_figure=False)
+        # Allocate variables and calc budget contributions in mm/h
+        self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
+                              Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets)
+        self.calc_budgets_in_mm_h()
+        #Start plotting
+        budget_boxplot=plt.figure(figsize=(12,9), dpi= 300)
+        matplotlib.rcParams.update({'font.size': 24})
+            
+        color_palette=["darkorange","orange","lightgreen",
+                   "green","lightblue","blue"]                    
+
+        ax1=budget_boxplot.add_subplot(111)
+        ax1.axhline(0,color="grey",ls="--",lw=2,zorder=1)
+    
+        budget_continuous_regions=self.budget_ideal_regions
+        #budget_ideal_regions=self.budget_ideal_regions
+        #else:
+        budget_ideal_regions=self.budget_inst_ideal_regions
+        if self.grid_name=="CARRA":
+            budget_ideal_regions=-1*budget_ideal_regions
+            budget_continuous_regions=-1*budget_continuous_regions
+        #sns.boxplot(data=24*budget_ideal_regions,notch=False,
+        #               zorder=0,linewidth=3.5,palette=color_palette)
+        budget_continuous_regions["Time"]="flight duration"
+        budget_continuous_regions["Sector_Term"]=budget_continuous_regions.index.copy()
+        budget_continuous_regions.index=np.arange(9)
+        budget_ideal_regions["Time"]="instantaneous"
+        budget_ideal_regions["Sector_Term"]=budget_ideal_regions.index.copy()
+        budget_ideal_regions.index=np.arange(9)
+        budget_regions=pd.concat([budget_continuous_regions,budget_ideal_regions],
+                                 ignore_index=True)
+        budget_values=pd.DataFrame(data=np.nan,index=range(6*18),
+                                   columns=["DIV","Sector_Term","Time"])
+        for com,sector_comp in enumerate(budget_ideal_regions.iloc[:,:-2].columns):
+            budget_values["Time"][18*com:18*com+18]=budget_regions["Time"].values
+            budget_values["Sector_Term"][18*com:18*com+18]=sector_comp                                        
+            budget_values["DIV"][18*com:18*com+18]=\
+                                    24*budget_regions[sector_comp].values
+            
+        ax1=sns.boxplot(data=budget_values,x="Sector_Term",y="DIV",
+                    hue="Time",zorder=0,linewidth=2,color="k",
+                    palette=["k","grey"],
+                    medianprops=dict(color="yellow", alpha=0.7,linewidth=4,
+                                     zorder=2),
+                    #boxprops={"linestyle": ["-","--"]},
+                    width=0.4)
+        for axis in ["left","bottom"]:
+            ax1.spines[axis].set_linewidth(3.0)
+        
+            ax1.xaxis.set_tick_params(width=2,length=10)
+            ax1.yaxis.set_tick_params(width=2,length=10)
+                        #ax1.xaxis.spines(width=3)
+        ax1.set_ylabel("Contribution to \nMoisture Budget ($\mathrm{mmd}^{-1}$)")
+        ax1.set_xlabel("Frontal Sector and Component")
+        ax1.set_ylim([-10,10])
+        ax1.legend(loc="lower left", title="Time perspective")
+        file_end=".pdf"
+        if not self.do_instantan:
+            fig_name=self.grid_name+"_Water_Vapour_Budget"
+        else:
+            fig_name=self.grid_name+"_inst"+"_Water_Vapour_Budget"
+        if use_flight_tracks:
+            fig_name=fig_name+"_on_flight"
+        fig_name=fig_name+file_end
+        if not save_as_manuscript_figure:
+            plot_path=self.plot_path
+        else:
+            plot_path=self.plot_path+\
+                "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
+            #if not instantan_comparison:
+        if plot_mean_error:
+            sector_divergence_inst_errors=\
+                24*(budget_continuous_regions.iloc[:,0:6]-\
+                    budget_ideal_regions.iloc[:,0:6])
+            #sector_divergence_errors=budget_regions-budget_ideal_regions
+            mean_sector_divergence_inst_errors=sector_divergence_inst_errors.mean()
+            #mean_sector_divergence_errors=sector_divergence_errors.mean()
+        
+            
+            #inst_mean_error_fig=plt.figure(figsize=(12,9))
+            ax12=ax1.twinx()#inst_mean_error_fig.add_subplot(111)
+            ax12.scatter(mean_sector_divergence_inst_errors.index,
+                         mean_sector_divergence_inst_errors,marker="o",s=100,
+                         color="red",edgecolor="k")
+            ax12.set_ylim([-2,2])
+            #for axis in ["right"]:
+            ax12.spines["right"].set_linewidth(3.0)
+            #ax12.set_xticklabels(color="darkred")
+            ax12.tick_params(axis='y', colors='darkred')
+            ax12.xaxis.set_tick_params(width=2,length=10)
+            ax12.yaxis.set_tick_params(width=2,length=10)
+            ax12.set_ylabel("Mean Error in \n Contribution ($\mathrm{mmd}^{-1}$)",
+                            color="darkred")
+            ax12.spines["left"].set_visible(False)
+            ax12.spines["top"].set_visible(False)
+            ax12.spines["bottom"].set_visible(False)
+        sns.despine(ax=ax1,offset=10)
+        #sns.despine(ax=ax12,offset=10)
+        fig_name="Fig14new_"+fig_name
+        #    else:
+        #        fig_name="Fig18_"+fig_name
+        budget_boxplot.savefig(plot_path+fig_name,
+                       dpi=200,bbox_inches="tight")
+        print("Figure saved as:",plot_path+fig_name)
+        
         
     def sonde_divergence_error_bar(self,save_as_manuscript_figure=False):
             

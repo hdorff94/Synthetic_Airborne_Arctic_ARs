@@ -699,7 +699,8 @@ class Atmospheric_Rivers():
         hmp_outflow["IVT_max_distance"]=hmp_outflow["IVT_max_distance"]-hmp_outflow[\
                                         "IVT_max_distance"].iloc[
                                             hmp_outflow[ivt_var_arg].argmax()]
-        # Following Cobb et al. (2020), now declare the sectors (AR cold sector, warm sector AR core)
+        # Following Cobb et al. (2020), 
+        # now declare the sectors (AR cold sector, warm sector, AR core)
         inflow_core=hmp_inflow.loc[\
                     hmp_inflow[ivt_var_arg]>0.8*hmp_inflow[ivt_var_arg].max()]
         outflow_core=hmp_outflow.loc[\
@@ -737,6 +738,7 @@ class Atmospheric_Rivers():
         AR_outflow_dict["AR_outflow_cold_sector"]=ar_outflow_cold_sector
         
         return AR_inflow_dict,AR_outflow_dict
+    
     def calc_TIVT_of_cross_sections_in_AR_sector(AR_inflow,AR_outflow,grid_name):
         if grid_name=="ERA5":
             ivt_var_arg="Interp_IVT"

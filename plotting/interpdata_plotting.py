@@ -22,6 +22,168 @@ from ICON import ICON_NWP as ICON
 
 from matplotlib.legend_handler import HandlerBase
 
+#@staticmethod
+def ar_cross_sections_overview_flights_vertical_profile(
+        flight_dates,use_era,use_carra,
+        use_icon,na_flights,snd_flights,do_meshing=True):
+    
+    ar_of_day=["AR_internal"]
+    import campaignAR_plotter
+    NA_Hydrometeors,NA_HALO_Dict,NA_cmpgn_cls=campaignAR_plotter.main(
+                                        campaign="North_Atlantic_Run",
+                                        flights=na_flights,
+                                        ar_of_days=ar_of_day,
+                                        era_is_desired=use_era, 
+                                        icon_is_desired=use_icon,
+                                        carra_is_desired=use_carra,
+                                        do_daily_plots=False,
+                                        calc_hmp=False,calc_hmc=True,
+                                        do_instantaneous=False)
+        
+    SND_Hydrometeors,SND_HALO_Dict,SND_cmpgn_cls=campaignAR_plotter.main(
+                                        campaign="Second_Synthetic_Study",
+                                        flights=snd_flights,
+                                        ar_of_days=ar_of_day,
+                                        era_is_desired=use_era, 
+                                        icon_is_desired=use_icon,
+                                        carra_is_desired=use_carra,
+                                        do_daily_plots=False,
+                                        calc_hmp=False,calc_hmc=True,
+                                        do_instantaneous=False)
+            
+    #Hydrometeors_list= {**NA_Hydrometeors, **SND_Hydrometeors}
+    #if analyse_all_flights:
+    key_list=[*NA_Hydrometeors.keys()]
+    for key in key_list:
+        new_dict_entry=int(flight_dates["North_Atlantic_Run"][key])
+        print(new_dict_entry)
+        NA_Hydrometeors[new_dict_entry]=NA_Hydrometeors[key]
+        NA_HALO_Dict[new_dict_entry]=NA_HALO_Dict[key]
+        del NA_Hydrometeors[key], NA_HALO_Dict[key]
+
+    key_list=[*SND_Hydrometeors.keys()]
+    for key in key_list:
+        new_dict_entry=int(flight_dates["Second_Synthetic_Study"][key])
+        SND_Hydrometeors[new_dict_entry]=SND_Hydrometeors[key]
+        SND_HALO_Dict[new_dict_entry]=SND_HALO_Dict[key]
+        del SND_Hydrometeors[key], SND_HALO_Dict[key]
+
+    campaign_Hydrometeors= dict(list(NA_Hydrometeors.items()) +\
+                                list(SND_Hydrometeors.items()))
+    campaign_Hydrometeors=dict(sorted(campaign_Hydrometeors.items()))
+
+    campaign_HALO = dict(list(NA_HALO_Dict.items()) +\
+                             list(SND_HALO_Dict.items())) 
+
+    campaign_HALO=dict(sorted(campaign_HALO.items()))
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    matplotlib.rcParams.update({'font.size': 12})
+    cross_section_fig,ax=plt.subplots(figsize=(18,12),nrows=3,ncols=3)
+    axes=ax.flatten()
+    p=0
+        
+    for date in campaign_Hydrometeors.keys():
+        print("Plotting Moisture Transport components for date ",date)
+        center_int_idx=int(campaign_HALO[date]["inflow"].shape[0]/2)
+        center_distance=campaign_HALO[date]["inflow"]["distance"].iloc[\
+                                                        center_int_idx]
+        distance=campaign_HALO[date]["inflow"]["distance"]-\
+                        center_distance
+            
+        humidity_colormap   = "terrain_r"
+        #Then tick and format with matplotlib:
+        fig=plt.figure(figsize=(16,12))
+        
+        inflow_section_index=campaign_HALO[date]["inflow"].index
+        try:
+            moisture=campaign_Hydrometeors[date]["AR_internal"]["q"].loc[\
+                                                        inflow_section_index]
+        except:
+            moisture=campaign_Hydrometeors[date]["AR_internal"][\
+                                                "specific_humidity"].loc[\
+                                                        inflow_section_index]
+        wind=np.sqrt(campaign_Hydrometeors[date]["AR_internal"]["u"].loc[\
+                                                        inflow_section_index]**2+\
+        campaign_Hydrometeors[date]["AR_internal"]["v"].loc[\
+                                                        inflow_section_index]**2)
+        pressure=campaign_Hydrometeors[date]["AR_internal"]["u"].\
+                                    columns.astype(float)
+        pres_start=0#8
+        # Specific humidity
+        q_min=0
+        q_max=5
+        
+        # Add wind 
+        x_temp=distance
+        y_temp=pressure[pres_start::]
+        y,x=np.meshgrid(y_temp,x_temp)
+        
+        #Create new Hydrometeor content as a sum of all water contents
+        moisture=moisture.replace(to_replace=np.nan,value=0.0)
+        if do_meshing:
+            Ci=axes[p].pcolormesh(x/1000,y,
+                moisture.iloc[:,pres_start::].values*1000,
+                vmin=q_min,vmax=q_max,
+                cmap=humidity_colormap)    
+        else:
+            q_levels=np.linspace(0,5,100)
+            Ci=axes[p].contourf(x/1000,y,
+                moisture.iloc[:,pres_start::].values*1000,
+                levels=q_levels,cmap=cm.get_cmap(
+                    humidity_colormap,len(q_levels)-1),extend="max")
+            
+        moisture_levels=[5,10,20,30,40]
+        wind_levels=[15,25,35]
+        axes[p].set_xlim([-500,500])
+        axes[p].set_xticks([-500,-250,0,250,500])
+        if p%3==0:
+            axes[p].set_yticks([1000,850,700,500])
+        else:
+            axes[p].set_yticks([])
+        if p<6:
+            axes[p].set_xticklabels("")
+        if p==3:
+            axes[p].set_ylabel("Pressure (hPa)",fontsize=14)
+        if p==7:
+            axes[p].set_xlabel("Lateral Distance (km)",fontsize=14)
+            axes[p].text(-450,500,date,color="k")
+        
+        CS2=axes[p].contour(x/1000,y,wind.iloc[:,pres_start::],
+                           levels=wind_levels,colors=["grey","magenta","purple"],
+                           linestyles="--",linewidths=3.0)
+        #    axes[p].set_yscale("log")
+        
+        axes[p].invert_yaxis()
+        axes[p].clabel(CS2,fontsize=16,fmt='%1d $\mathrm{ms}^{-1}$',inline=1)
+        wv_flux=moisture*wind #halo_era5_hmc["wind"]
+        moisture_flux=1/9.82*wv_flux*1000
+        CS=axes[p].contour(x/1000,y,moisture_flux.iloc[:,pres_start::],
+                       levels=moisture_levels,colors="k",
+                       linestyles=["--","-"],linewidths=1.0)
+        axes[p].clabel(CS,fontsize=16,fmt='%1.1f',inline=1)
+        axes[p].set_ylim([1000,400])
+        sns.despine(ax=axes[p],offset=10)
+        p+=1
+        
+    cbar_ax = cross_section_fig.add_axes([0.92, 0.15, 0.02, 0.7])
+    cb=cross_section_fig.colorbar(Ci, cax=cbar_ax)
+    cb.set_label("Specific humidity (g/kg)")
+    cb.set_ticks([0,1,2,3,4,5])
+    if use_era:
+        grid_name="ERA5_"
+    if use_carra:
+        grid_name="CARRA_"
+    # add a overall colorbar for specific humidity    
+    supplement_path=SND_cmpgn_cls.plot_path+\
+                "/../../../Synthetic_AR_Paper/Manuscript/Supplements/"
+    fig_name=grid_name+"AR_inflow_cross_sections_overview.png"
+    cross_section_fig.savefig(supplement_path+fig_name,
+                              dpi=300,bbox_inches="tight")
+    print("Figure saved as: ",supplement_path+fig_name)
+        
+        
 class HandlerBoxPlot(HandlerBase):
     def create_artists(self, legend, orig_handle,
                        xdescent, ydescent, width, height, fontsize,trans):

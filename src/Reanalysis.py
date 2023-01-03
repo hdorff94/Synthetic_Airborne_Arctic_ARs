@@ -1068,7 +1068,7 @@ def main(campaign="NAWDEX"):
     carra_path=central_path+"/"+campaign+"/data/CARRA/"
     
     era_is_desired=True
-    carra_is_desired=True
+    carra_is_desired=False
     carra_initial="09:00"
     domain="east_domain"
         
@@ -1162,8 +1162,8 @@ def main(campaign="NAWDEX"):
     elif campaign=="HALO_AC3":
         synthetic_campaign=False
         analysing_campaign=True
-        flights=["RF03"]#["RF06"]#,"RF06"]
-        dates=["20220313"]#["20220316"]#,"20220316"]
+        flights=["RF08"]#["RF06"]#,"RF06"]
+        dates=["20220321"]#["20220316"]#,"20220316"]
     else:
         raise Exception("The given campaign is not specified in the Downloader")
     if not campaign=="PAMTRA_Retrieval":
@@ -1215,14 +1215,16 @@ def main(campaign="NAWDEX"):
             if config_file["Data_Paths"]["campaign"]=="HALO_AC3_Dry_Run":
                 research_area=[90, -75, 50,  80]
         elif (config_file["Data_Paths"]["campaign"]=="HALO_AC3"):
-            if flights[0]=="RFminus1" or flights[0]=="RF01" or flights[0]=="RF02" or \
+            if flights[0]=="RFminus1" or flights[0]=="RF06plus1" or\
+                flights[0]=="RF06plus2" or flights[0]=="RF06plus3" or \
+                    flights[0]=="RF01" or flights[0]=="RF02" or \
                 flights[0]=="RF03" or flights[0]=="RF04" or \
                     flights[0]=="RF05" or \
                         flights[0]=="RF07" or\
                             flights[0]=="RF08":
                 research_area=[90,-75,50,60]
-            elif flights[0]=="RF06" or flights[0]=="RF16":
-                research_area=[90,-90,60,100]
+            #elif flights[0]=="RF06" or flights[0]=="RF16":
+            #    research_area=[90,-90,60,100]
         elif (config_file["Data_Paths"]["campaign"]=="PAMTRA_Retrieval"):
             research_area=[90,-30,65,50]
         era5_downloader=ERA5_Downloader(
@@ -1251,7 +1253,7 @@ def main(campaign="NAWDEX"):
     #%% Download_Handler
     # HMP Profile data
     if era_is_desired:
-        era5_downloader.download_handler(do_total_columns=True,do_levels=True,
+        era5_downloader.download_handler(do_total_columns=True,do_levels=False,
                                          do_daily_average_single_levels=False,
                                          do_temp_850hPa=True)
     if carra_is_desired:
@@ -1260,4 +1262,4 @@ def main(campaign="NAWDEX"):
 if __name__=="__main__":
     #main(campaign="NA_February_Run")
     #main(campaign="NA_February_Run")
-    main(campaign="NAWDEX")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")
+    main(campaign="HALO_AC3")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")
