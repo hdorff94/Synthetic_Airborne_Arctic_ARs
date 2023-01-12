@@ -21,13 +21,17 @@ def importer():
     aircraft_base_path=major_path+"/Work/GIT_Repository/"
     working_path  = base_working_path+"/src/"
     config_path   = base_working_path+"/config/"
+    scripts_path  = base_working_path+"/major_scripts/"
     plotting_path = base_working_path+"/plotting/"
+    
     plot_figures_path = aircraft_base_path+\
                             "/../Synthetic_AR_Paper/Manuscript/Paper_Plots/"
                             
     sys.path.insert(1, os.path.join(sys.path[0], working_path))
     sys.path.insert(2, os.path.join(sys.path[0], config_path))
     sys.path.insert(3, os.path.join(sys.path[0], plotting_path))
+    sys.path.insert(4,os.path.join(sys.path[0],  scripts_path))
+
     paths_dict={}
     paths_dict["aircraft_base_path"] = aircraft_base_path
     paths_dict["working_path"]       = working_path

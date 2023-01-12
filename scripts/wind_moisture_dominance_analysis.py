@@ -472,7 +472,7 @@ def create_summarized_fig11_q_v_flavor(paths_dict,config_file,
     ax1.plot(mean_cov_df.values,
                 mean_cov_df.index,
                 marker="o",markersize=2,ls="-",lw=2,color="k",
-                label="$cov \cdot s_{q} \cdot s_{v}$")
+                label="$cov_{norm}$")
     ax1.scatter(mean_cov_df.values,mean_cov_df.index,
                  s=moisture_transport_flights_dict[date]["stats"]["transport_mean"]/\
                      moisture_transport_flights_dict[date]\
@@ -522,11 +522,12 @@ def create_summarized_fig11_q_v_flavor(paths_dict,config_file,
         ax1.tick_params(length=6,width=2)#
 
     sns.despine(offset=10)
+    ax1.legend(loc="upper right")
+    
     fig_name="Fig11summarized_IVT_Q_V_Variability.pdf"
     cov_fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
                 bbox_inches="tight")
     print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
-    
     sys.exit()    
     
 def create_updated_fig11_q_v_flavor(paths_dict,config_file,

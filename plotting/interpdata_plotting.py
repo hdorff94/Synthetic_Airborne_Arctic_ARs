@@ -25,7 +25,8 @@ from matplotlib.legend_handler import HandlerBase
 #@staticmethod
 def ar_cross_sections_overview_flights_vertical_profile(
         flight_dates,use_era,use_carra,
-        use_icon,na_flights,snd_flights,do_meshing=True):
+        use_icon,na_flights,snd_flights,do_meshing=True,
+        use_cmasher=True):
     
     ar_of_day=["AR_internal"]
     import campaignAR_plotter
@@ -78,8 +79,13 @@ def ar_cross_sections_overview_flights_vertical_profile(
     campaign_HALO=dict(sorted(campaign_HALO.items()))
     import matplotlib
     import matplotlib.pyplot as plt
+    humidity_colormap   = "terrain_r"
+    if use_cmasher:
+        import cmasher as cmr
+        humidity_colormap = "cmr.rainforest_r" 
     import seaborn as sns
-    matplotlib.rcParams.update({'font.size': 12})
+    font_size=12
+    matplotlib.rcParams.update({'font.size': font_size})
     cross_section_fig,ax=plt.subplots(figsize=(18,12),nrows=3,ncols=3)
     axes=ax.flatten()
     p=0
@@ -92,7 +98,6 @@ def ar_cross_sections_overview_flights_vertical_profile(
         distance=campaign_HALO[date]["inflow"]["distance"]-\
                         center_distance
             
-        humidity_colormap   = "terrain_r"
         #Then tick and format with matplotlib:
         fig=plt.figure(figsize=(16,12))
         
@@ -110,6 +115,13 @@ def ar_cross_sections_overview_flights_vertical_profile(
                                                         inflow_section_index]**2)
         pressure=campaign_Hydrometeors[date]["AR_internal"]["u"].\
                                     columns.astype(float)
+        
+        corr_levels=pd.Series(data=np.nan,index=pressure)
+        for height in corr_levels.index:
+            corr_levels.loc[height]=wind[str(height)].corr(
+                                        moisture[str(height)])
+        
+        # calc the correlation    
         pres_start=0#8
         # Specific humidity
         q_min=0
@@ -133,7 +145,20 @@ def ar_cross_sections_overview_flights_vertical_profile(
                 moisture.iloc[:,pres_start::].values*1000,
                 levels=q_levels,cmap=cm.get_cmap(
                     humidity_colormap,len(q_levels)-1),extend="max")
-            
+        
+        upper_axes=axes[p].twiny()
+        upper_axes.plot(corr_levels,pressure,ls="-",lw=3,color="k",ms=5)
+        upper_axes.plot(corr_levels,pressure,ls="-.",lw=2,color="white",ms=5)
+        
+        upper_axes.invert_yaxis()
+        upper_axes.set_xlim([-1.5,1.5])
+        for corner in ["bottom","left","right","top"]:
+            upper_axes.spines[corner].set_linewidth(0)
+            upper_axes.set_xticks([])
+        if p<3:
+            upper_axes.spines["top"].set_linewidth(2)
+            upper_axes.tick_params(length=4,width=2)
+            upper_axes.set_xticks([-1.0,-0.5,0,0.5,1.0])
         moisture_levels=[5,10,20,30,40]
         wind_levels=[15,25,35]
         axes[p].set_xlim([-500,500])
@@ -141,21 +166,35 @@ def ar_cross_sections_overview_flights_vertical_profile(
         if p%3==0:
             axes[p].set_yticks([1000,850,700,500])
         else:
-            axes[p].set_yticks([])
+            axes[p].set_yticks([1000,850,700,500])
+            axes[p].set_yticklabels("")
         if p<6:
             axes[p].set_xticklabels("")
+        if p==1:
+            upper_axes.set_xlabel("Correlation coefficient $r_{coeff}$",
+                                  fontsize=font_size+4)
         if p==3:
-            axes[p].set_ylabel("Pressure (hPa)",fontsize=14)
+            axes[p].set_ylabel("Pressure (hPa)",fontsize=font_size+4)
         if p==7:
-            axes[p].set_xlabel("Lateral Distance (km)",fontsize=14)
-            axes[p].text(-450,500,date,color="k")
-        
+            axes[p].set_xlabel("Lateral Distance (km)",fontsize=font_size+4)
+        axes[p].text(0.015,0.8,"AR"+str(p+1),color="k",
+                     transform=axes[p].transAxes,
+                     bbox=dict(facecolor='lightgrey', edgecolor='black', 
+                               boxstyle='round,pad=0.2'))
+        #axes[p].text(0.015,0.1,"$\overline{r_{corr}}="+\
+        #             str(np.round(corr_levels.mean()),2),
+        #             transform=axes[p].transAxes,
+        #             bbox=dict(facecolor="lightgrey",edgecolor="k",
+        #                       boxstyle="round,pad=0.2"))
         CS2=axes[p].contour(x/1000,y,wind.iloc[:,pres_start::],
-                           levels=wind_levels,colors=["grey","magenta","purple"],
+                           levels=wind_levels,colors=["grey","plum","magenta"],
                            linestyles="--",linewidths=3.0)
         #    axes[p].set_yscale("log")
-        
+        for axis in ["left","bottom"]:
+            axes[p].spines[axis].set_linewidth(2)
+            axes[p].tick_params(length=4,width=2)
         axes[p].invert_yaxis()
+        axes[p].axvline(0,ls="--",color="k")
         axes[p].clabel(CS2,fontsize=16,fmt='%1d $\mathrm{ms}^{-1}$',inline=1)
         wv_flux=moisture*wind #halo_era5_hmc["wind"]
         moisture_flux=1/9.82*wv_flux*1000
@@ -169,8 +208,9 @@ def ar_cross_sections_overview_flights_vertical_profile(
         
     cbar_ax = cross_section_fig.add_axes([0.92, 0.15, 0.02, 0.7])
     cb=cross_section_fig.colorbar(Ci, cax=cbar_ax)
-    cb.set_label("Specific humidity (g/kg)")
+    cb.set_label("Specific humidity (g/kg)",fontsize=font_size+4)
     cb.set_ticks([0,1,2,3,4,5])
+    plt.subplots_adjust(hspace=0.1)
     if use_era:
         grid_name="ERA5_"
     if use_carra:
