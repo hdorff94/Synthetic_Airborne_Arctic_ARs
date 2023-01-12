@@ -26,8 +26,10 @@ no figures or data are explicitly presented in Sect. 1.
 ### Data
 #### Figure 1 (AR Cases) 
 ```python 
-import ar_cases_overview_map
-# this creates the AR overview maps showing IVT and flight track with sea-ice edge and isobars for all nine AR events
+import plot_ar_cases_overview()
+plot_ar_cases_overview(figure_to_create="fig01")
+# this creates the AR overview maps showing IVT and flight track with sea-ice edge and isobars for all nine AR events.
+# Note it is important to choose "fig01" as figure_to_create
 ```
 #### Figure 2 (Climatological Reference)
 ```python 
@@ -38,20 +40,14 @@ import ar_ivt_climatology_plotting
 ### Methods
 #### Figure 3 (Airborne Moisture Budget Observation)
 This is a sketch of HALO observing AR boxes for the representative moisture budget components. This was created independently with image processing software.
-#### Figure 4 (Flight Duration)
-This is the aircraft flight time bar plot showing the duration for flying all AR cross-sections with given constant flight speed of 250 m/s.
-Go to subpath "/notebooks/"
-and open **Aircraft_Flight_Time.ipnyb**
-#### Figure 5 (AR sectors approach)
+
+#### Figure 4 (AR sectors approach)
 This is the illustration of the AR sectors along the cross-section (warm prefrontal, core, cold postfrontal)
 showing the positioning of seven synthetic sondes along the in- and outflow corridors used for divergence calculations. 
 Go to subpath "/notebooks/" and open **AR_Sector_Illustration.ipnyb**
-### IVT Variability
-#### Figure 6 (AR-IVT shapes)
-This is AR IVT shape multiplot indicating all nine inflow AR-IVT shapes. 
-So far this plot is created manually by repeating the distance-based AR-IVT inflow cross-section plot. **Open issue to create a plot routine**
-#### Figure 7 (Distance-based sonde representation of IVT)
-This is the distance based AR-IVT together with synthetic soundings and gaussian fit for CARRA-IVT compared to ERA5-IVT 
+
+#### Figure 5 (Distance-based sonde representation of IVT)
+This is the distance based AR-IVT together with synthetic soundings and gaussian fit for CARRA-IVT compared to ERA5-IVT for the AR1.
 ```python 
 import campaignAR_plotter
 
@@ -59,11 +55,7 @@ campaignAR_plotter.main(campaign="Second_Synthetic_Study",flights=["SRF02"],calc
                         use_era=True,use_carra_True,do_plotting=True)
 # inside main you can specify the flights that are commented out and the subcampaign for variable campaign_name
 ```
-#### Figure 8 (Gaussian Fit)
-This is the plot of AR-IVT along cross-section (so far with time on y-axis **need to be updated**) for 2011-04-23.
-CARRA-IVT is shown as continuous representation together with sporadic sounding representation declining from 10 to 4 sondes and indicating TIVT.
-
-#### Figure 9 (TIVT Sounding Frequency)
+#### Figure 6 (TIVT Sounding Frequency)
 This is the TIVT dependency on sounding frequency. For that, the following is required to create the data:
 ```python 
 import os 
@@ -71,24 +63,34 @@ script_path=os.getcwd()+"/scripts/"
 sys.path.insert(script_path,1)
 
 import run_sonde_freq_ivt_var_analysis
-
 ```
 The figure as well as some correlations are created by the notebook **TIVT_IVT_Variability_analysis.ipynb**
-#### Figure 10 (Vertical profiles of transport components) 
+
+#### Figure 7 (Vertical profiles of transport components) 
 This is the vertical statistics of q,v, and moisture transport.
 ```python 
 import wind_moisture_dominance_analysis
 
-wind_moisture_dominance_analysis.main(figures_to_create="fig10")
+wind_moisture_dominance_analysis.main(figures_to_create="fig07")
 ```
 
-#### Figure 11 (Variability Dominating Quantity) 
-This shows the variability dominanting quantity for all the cases in a multiplot of vertical profiles.
+#### Figure 08 (Variability Dominating Quantity) 
+This depicts the vertical distribution of the variability components (cov_norm, s_v & s_q) for all inflow cross-sections with the intercase average. 
+Since this was part of the ancient fig11, it has be called "updated_fig11" in the main plotting routine
 ```python 
 import wind_moisture_dominance_analysis
 
-wind_moisture_dominance_analysis.main(figures_to_create="fig11")
+wind_moisture_dominance_analysis.main(figures_to_create="updated_fig11")
 ```
+
+#### Figure 09 (Vertical cross-section AR event comparison)
+This contour multiplot illustrates the vertical cross-section curtains of all ARs in terms of moisture transport distribution and its components.
+```python 
+import plot_ar_cases_overview
+
+plot_ar_cases_overview.main(figure_to_create="fig09")
+```
+
 ### IVT Divergence
 To create the divergence results just run:
 ```python 
@@ -136,6 +138,16 @@ or alternatively, you run the notebook ```AR_Stationarity.ipynb```
 #### Figure 16 (Instantan, Time Propagating Error) 
 %#### Figure 16 (CONV Non Instantan - Instantan)
 %To create the multiplot with comparing non-instantan minus instantan as a vertical profile just run:
+
+#### Supplementary plots
+#### Figure S1 (Flight Duration)
+This is the aircraft flight time bar plot showing the duration for flying all AR cross-sections with given constant flight speed of 250 m/s.
+Go to subpath "/notebooks/"
+and open **Aircraft_Flight_Time.ipnyb**
+#### Figure S2 (AR-IVT shapes)
+This is AR IVT shape multiplot indicating all nine inflow AR-IVT shapes. 
+So far this plot is created manually by repeating the distance-based AR-IVT inflow cross-section plot. **Open issue to create a plot routine**
+
 %```python 
 %import instantan
 %figure_to_create="fig16_conv_error"
