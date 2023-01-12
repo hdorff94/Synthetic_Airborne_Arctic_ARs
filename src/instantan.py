@@ -276,10 +276,13 @@ class Instationarity(GridHalo.ERA_on_HALO,GridHalo.CARRA_on_HALO):
                          self.ivt_outflow["flight"],color="darkred",lw=2)            
             plot_ax.plot(self.ivt_outflow_inst_center/1000,
                          self.ivt_outflow["inst"],color="darkred",lw=2,ls="-.")
-            
-            plot_ax.set_title(flight,fontsize=16,loc="left",y=0.9)
+            plot_ax.text(0.015,0.8,"AR"+str(i+1),color="k",
+                     transform=plot_ax.transAxes,
+                     bbox=dict(facecolor='lightgrey', edgecolor='black', 
+                               boxstyle='round,pad=0.2'))
             plot_ax.set_xlim([-500,500])
-            plot_ax.set_ylim([100,650])
+            plot_ax.set_ylim([100,700])
+            plot_ax.set_yticks([200,400,600])
             for axis in ["left","bottom"]:
                 plot_ax.spines[axis].set_linewidth(2)
                 plot_ax.tick_params(length=6,width=2)#
