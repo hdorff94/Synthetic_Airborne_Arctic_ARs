@@ -112,13 +112,13 @@ def main(figure_to_create="fig13"):
                                                 do_instantan=True,sonde_no=sonde_no)
     on_flight_tracks=True
     
-    if figure_to_create.startswith("fig13"):
+    if figure_to_create.startswith("fig11"):
         Sectors,Ideal_Sectors,cmpgn_cls=\
             Moisture_CONV.load_moisture_convergence_single_case()
         if do_plotting:
             Budget_plots.plot_single_case(Sectors,Ideal_Sectors,
                                 save_as_manuscript_figure=save_for_manuscript)
-    elif figure_to_create.startswith("fig14_"):
+    elif figure_to_create.startswith("fig12_"):
         Campaign_Budgets,Campaign_Ideal_Budgets=\
             Moisture_CONV.get_overall_budgets()
         if do_plotting:
@@ -297,11 +297,13 @@ def main(figure_to_create="fig13"):
 #                    Flight_Moisture_CONV.load_moisture_convergence_single_case()            
 if __name__=="__main__":
     # Figures to create choices:
-    #figure_to_create="fig13_single_case_sector_profiles"
-    #figure_to_create="fig14_campaign_divergence_overviews"
+    #figure_to_create="fig11_single_case_sector_profiles"
+    #figure_to_create="fig12_campaign_divergence_overviews"
     #figure_to_create="fig18_campaign_divergence_overview_instantan_comparison"
-    #figure_to_create="fig14new_divergence_instantan_errorbars"
-    figure_to_create="fig_supplements_sonde_pos_comparison"
+    figure_to_create="fig14new_divergence_instantan_errorbars"
+    
+    #figure_to_create="fig_supplements_sonde_pos_comparison"
+    #figure_to_create="fig12_campaign_divergence_overviews"
     main(figure_to_create=figure_to_create)
 
 """

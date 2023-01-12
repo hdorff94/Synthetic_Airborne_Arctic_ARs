@@ -307,7 +307,7 @@ class Instationarity(GridHalo.ERA_on_HALO,GridHalo.CARRA_on_HALO):
         if not save_as_manuscript_figure:
             plot_path=self.cmpgn_cls.plot_path
         else:
-            fig_name="Fig15_"+fig_name
+            fig_name="Fig12_"+fig_name
             plot_path=self.path_dict["plot_figures_path"]
         f.savefig(plot_path+fig_name,dpi=60,bbox_inches="tight")
         print("Figure saved as:", plot_path+fig_name)
@@ -784,9 +784,9 @@ def main(figure_to_create="fig15_in_outflow_instantan"):
     if figure_to_create.lower().startswith("fig14new"):
         instantan_cls.plot_div_term_instantan_deviations()
         
-    #if figure_to_create.lower().startswith("fig15"):
-    #    instantan_cls.create_data_and_plot_of_instantan_in_outflow(
-    #                        save_as_manuscript_figure=True)
+    if figure_to_create.lower().startswith("fig15"):
+        instantan_cls.create_data_and_plot_of_instantan_in_outflow(
+                            save_as_manuscript_figure=True)
     #if figure_to_create.lower().startswith("fig16"):
     #    conv_limits=instantan_cls.plot_div_term_instantan_comparison("CONV",
     #                        save_as_manuscript_figure=True)
@@ -800,4 +800,4 @@ def main(figure_to_create="fig15_in_outflow_instantan"):
     return None
 
 if __name__=="__main__":
-    main(figure_to_create="fig17_adv_error")
+    main(figure_to_create="fig14new")

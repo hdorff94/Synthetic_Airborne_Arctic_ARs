@@ -1708,7 +1708,7 @@ class IVT_Variability_Plotter(IVT_variability):
                 major_name=self.ar_of_day+"_"+self.flight+\
                         "_IVT_lateral_variability_"
             else:
-                major_name="Fig10_IVT_lateral_variability"
+                major_name="Fig07_IVT_lateral_variability"
             file_format=".pdf"
             if self.sounding_frequency=="standard":
                 if not self.grid_sounding_profiles:
@@ -1902,14 +1902,18 @@ class IVT_Variability_Plotter(IVT_variability):
                  ar_outflow_cold_sector[ivt_var_arg],
                  lw=3,ls="-.",color="darkred")
             if TIVT_diff>0: 
-                plot_ax.arrow(-400,500 ,0 ,70,facecolor="mediumseagreen",
+                plot_ax.arrow(-300,500 ,0 ,70,facecolor="mediumseagreen",
                               edgecolor="k",linewidth=3,linestyle="-",width=14)
             else:
-                plot_ax.arrow(-400,620,0 ,-70,facecolor="tan",edgecolor="k",
+                plot_ax.arrow(-300,620,0 ,-70,facecolor="tan",edgecolor="k",
                               linewidth=3,width=14,linestyle="-")
                 
             print("ARROW plotted")
-            plot_ax.set_title(flight,fontsize=16,loc="left",y=0.9)
+            plot_ax.text(0.015,0.8,"AR"+str(i+1),color="k",
+                     transform=plot_ax.transAxes,
+                     bbox=dict(facecolor='lightgrey', edgecolor='black', 
+                               boxstyle='round,pad=0.2'))        
+            #plot_ax.set_title(flight,fontsize=16,loc="left",y=0.9)
             plot_ax.set_xlim([-500,500])
             plot_ax.set_ylim([100,700])
             for axis in ["left","bottom"]:
@@ -1939,7 +1943,7 @@ class IVT_Variability_Plotter(IVT_variability):
                 
             i+=1
         sns.despine(offset=10)
-        fig_name="Fig12_"+grid_name+"_AR_TIVT_cases_overview.pdf"
+        fig_name="Fig10_"+grid_name+"_AR_TIVT_cases_overview.pdf"
         if plot_path=="":
             plt_path=cmpn_cls.plot_path
         else:

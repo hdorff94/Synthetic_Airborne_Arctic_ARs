@@ -1347,7 +1347,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         else:
             fig_plot_path=self.cmpgn_cls.plot_path+"/../../../"+\
                     "Synthetic_AR_Paper/"+"/Manuscript/Paper_Plots/"
-            fig_name="Fig13_"+fig_name
+            fig_name="Fig11_"+fig_name
         profile.savefig(fig_plot_path+fig_name,dpi=300,bbox_inches="tight")
         print("Figure saved as:",fig_plot_path+fig_name)
     
@@ -1741,18 +1741,18 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         sns.despine(offset=10)
         ax1.set_ylim([-8,8])
         if not self.do_instantan:
-            fig_name=self.grid_name+"_Water_Vapour_Budget.png"
+            fig_name=self.grid_name+"_Water_Vapour_Budget.pdf"
         else:
-            fig_name=self.grid_name+"_inst"+"_Water_Vapour_Budget.png"
+            fig_name=self.grid_name+"_inst"+"_Water_Vapour_Budget.pdf"
         if not save_as_manuscript_figure:
             plot_path=self.plot_path
         else:
             plot_path=self.plot_path+\
                 "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
             if not instantan_comparison:
-                fig_name="Fig14_"+fig_name
+                fig_name="Fig12_"+fig_name
             else:
-                fig_name="Fig18_"+fig_name
+                fig_name="Fig16_"+fig_name
         budget_boxplot.savefig(plot_path+fig_name,
                        dpi=300,bbox_inches="tight")
         print("Figure saved as:",plot_path+fig_name)

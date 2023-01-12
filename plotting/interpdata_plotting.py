@@ -84,7 +84,7 @@ def ar_cross_sections_overview_flights_vertical_profile(
         import cmasher as cmr
         humidity_colormap = "cmr.rainforest_r" 
     import seaborn as sns
-    font_size=12
+    font_size=14
     matplotlib.rcParams.update({'font.size': font_size})
     cross_section_fig,ax=plt.subplots(figsize=(18,12),nrows=3,ncols=3)
     axes=ax.flatten()
@@ -217,8 +217,8 @@ def ar_cross_sections_overview_flights_vertical_profile(
         grid_name="CARRA_"
     # add a overall colorbar for specific humidity    
     supplement_path=SND_cmpgn_cls.plot_path+\
-                "/../../../Synthetic_AR_Paper/Manuscript/Supplements/"
-    fig_name=grid_name+"AR_inflow_cross_sections_overview.png"
+                "/../../../Synthetic_AR_Paper/Manuscript/Paper_Plots/"
+    fig_name="Fig09_"+grid_name+"AR_inflow_cross_sections_overview.png"
     cross_section_fig.savefig(supplement_path+fig_name,
                               dpi=300,bbox_inches="tight")
     print("Figure saved as: ",supplement_path+fig_name)

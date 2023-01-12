@@ -225,7 +225,7 @@ def prepare_data(paths_dict,config_file,flight_dates,reanalysis_to_use,
     extra_output["cmpgn_cls"]=cmpgn_cls
     return merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output
     
-def create_fig10_q_v_vertical_variability(paths_dict,config_file,flight_dates,
+def create_fig_q_v_vertical_variability(paths_dict,config_file,flight_dates,
                                           reanalysis_to_use):
     #campaigns=[*flight_dates.keys()]
     merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
@@ -257,7 +257,7 @@ def create_fig10_q_v_vertical_variability(paths_dict,config_file,flight_dates,
                                     extra_output["cmpgn_cls"].plot_path,
                                     "SAR_internal","all",ivt_logger)
 
-    IVT_var_Plotter.plot_IVT_vertical_variability(subsample_day="2011-03-17",
+    IVT_var_Plotter.plot_IVT_vertical_variability(subsample_day="2015-03-14",
             save_figure=True,undefault_path=paths_dict["plot_figures_path"])
 
 def create_fig11_q_v_flavor(paths_dict,config_file,flight_dates,
@@ -411,7 +411,7 @@ def create_pre_fig11_q_v_flavor(paths_dict,config_file,
                 bbox_inches="tight")
     print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)
 
-def create_summarized_fig11_q_v_flavor(paths_dict,config_file,
+def create_summarized_fig08_q_v_flavor(paths_dict,config_file,
                                        flight_dates,reanalysis_to_use):
     import matplotlib
     import matplotlib.pyplot as plt
@@ -524,7 +524,7 @@ def create_summarized_fig11_q_v_flavor(paths_dict,config_file,
     sns.despine(offset=10)
     ax1.legend(loc="upper right")
     
-    fig_name="Fig11summarized_IVT_Q_V_Variability.pdf"
+    fig_name="Fig08_summarized_IVT_Q_V_Variability.pdf"
     cov_fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
                 bbox_inches="tight")
     print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
@@ -623,19 +623,19 @@ def plotter(figures_to_create,flight_dates,reanalysis_to_use):
     
     #import matplotlib.pyplot as plt
     #import seaborn as sns
-    plot_fct_dict={"fig10":[create_fig10_q_v_vertical_variability],
-                   "fig11":[create_fig11_q_v_flavor],
-                   "updated_fig11":[create_summarized_fig11_q_v_flavor,
+    plot_fct_dict={"fig07":[create_fig_q_v_vertical_variability],
+                   #"fig11":[create_fig11_q_v_flavor], --> old figure 11
+                   "updated_fig11":[create_summarized_fig08_q_v_flavor,
                                     create_pre_fig11_q_v_flavor,
                                     create_updated_fig11_q_v_flavor],
-                   "both":[create_fig10_q_v_vertical_variability,
+                   "both":[create_fig_q_v_vertical_variability,
                            create_fig11_q_v_flavor]}
     plot_fct_list=plot_fct_dict[figures_to_create]
     for fct in plot_fct_list:
         fct(paths_dict,config_file,flight_dates,reanalysis_to_use)
          
 #%%
-def main(reanalysis_to_use="ERA-5",figures_to_create="updated_fig11"):
+def main(reanalysis_to_use="ERA-5",figures_to_create="updated_fig11"):#"updated_fig11"):
     #plot_fct_kwargs={"fig10":[paths_dict,config_file,
     #                          flight_dates,reanalysis_to_use],
     #                 "fig11":[],
