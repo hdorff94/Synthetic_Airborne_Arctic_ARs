@@ -307,7 +307,7 @@ class Instationarity(GridHalo.ERA_on_HALO,GridHalo.CARRA_on_HALO):
         if not save_as_manuscript_figure:
             plot_path=self.cmpgn_cls.plot_path
         else:
-            fig_name="Fig12_"+fig_name
+            fig_name="Fig13_"+fig_name
             plot_path=self.path_dict["plot_figures_path"]
         f.savefig(plot_path+fig_name,dpi=60,bbox_inches="tight")
         print("Figure saved as:", plot_path+fig_name)

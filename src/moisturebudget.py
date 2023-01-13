@@ -1867,7 +1867,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             ax12.spines["bottom"].set_visible(False)
         sns.despine(ax=ax1,offset=10)
         #sns.despine(ax=ax12,offset=10)
-        fig_name="Fig14new_"+fig_name
+        fig_name="Fig14_"+fig_name
         #    else:
         #        fig_name="Fig18_"+fig_name
         budget_boxplot.savefig(plot_path+fig_name,
@@ -1946,7 +1946,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         else:
             plot_path=self.plot_path+\
                 "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
-        fig_name="Fig18_"+fig_name
+        fig_name="Fig15_"+fig_name
         error_fig.savefig(plot_path+fig_name,dpi=300,bbox_inches="tight")
         print("Figure saved as:", plot_path+fig_name)
         return None

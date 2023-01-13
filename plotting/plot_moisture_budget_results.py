@@ -55,7 +55,7 @@ def main(figure_to_create="fig13"):
     #####################################################################
     #%% Specifications
     # Major configurations
-    campaign="Second_Synthetic_Study"#"North_Atlantic_Run"#"Second_Synthetic_Study"# 
+    campaign="Second_Synthetic_Study"#"North_Atlantic_Run"
 
     init_flight="SRF08"
     grid_name="CARRA"#"CARRA"#"ERA5"
@@ -87,16 +87,16 @@ def main(figure_to_create="fig13"):
 
     if campaign=="North_Atlantic_Run":
         cmpgn_cls=flightcampaign.North_Atlantic_February_Run(
-                             is_flight_campaign=True,
-                             major_path=config_file["Data_Paths"]["campaign_path"],
-                             aircraft="HALO",interested_flights=flight,
-                             instruments=["radar","radiometer","sonde"])
+                    is_flight_campaign=True,
+                    major_path=config_file["Data_Paths"]["campaign_path"],
+                    aircraft="HALO",interested_flights=flight,
+                    instruments=["radar","radiometer","sonde"])
     elif campaign=="Second_Synthetic_Study":
         cmpgn_cls=flightcampaign.Second_Synthetic_Study(
-                             is_flight_campaign=True,
-                             major_path=config_file["Data_Paths"]["campaign_path"],
-                             aircraft="HALO",interested_flights=flight,
-                             instruments=["radar","radiometer","sonde"])
+                    is_flight_campaign=True,
+                    major_path=config_file["Data_Paths"]["campaign_path"],
+                    aircraft="HALO",interested_flights=flight,
+                    instruments=["radar","radiometer","sonde"])
     else:
         pass
 
@@ -108,9 +108,9 @@ def main(figure_to_create="fig13"):
     Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,config_file,
                  grid_name=grid_name,do_instantan=do_instantan,sonde_no=sonde_no)
     Inst_Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,
-                                                config_file,grid_name=grid_name,
-                                                do_instantan=True,sonde_no=sonde_no)
-    on_flight_tracks=True
+                                        config_file,grid_name=grid_name,
+                                        do_instantan=True,sonde_no=sonde_no)
+    on_flight_tracks=False
     
     if figure_to_create.startswith("fig11"):
         Sectors,Ideal_Sectors,cmpgn_cls=\
@@ -126,7 +126,7 @@ def main(figure_to_create="fig13"):
                                                         Campaign_Ideal_Budgets,
                                 save_as_manuscript_figure=save_for_manuscript)
     
-    elif figure_to_create.startswith("fig14new"):
+    elif figure_to_create.startswith("fig14_"):
         # Here we take the continuous representation
         # so reset the sonde no
         #Moisture_CONV.sonde_no="100"
@@ -137,7 +137,7 @@ def main(figure_to_create="fig13"):
                                     grid_name=grid_name,do_instantan=True)
         #Inst_Moisture_CONV.sonde_no="100"
         Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets(
-                                            use_flight_tracks=on_flight_tracks)
+                        use_flight_tracks=on_flight_tracks)
         # Airborne Budgets
         Campaign_Budgets,Campaign_Ideal_Budgets=\
             Moisture_CONV.get_overall_budgets(use_flight_tracks=on_flight_tracks)
@@ -156,7 +156,33 @@ def main(figure_to_create="fig13"):
                 Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
                 save_as_manuscript_figure=True,
                 use_flight_tracks=on_flight_tracks,
-                plot_mean_error=True)    
+                plot_mean_error=True)
+        
+    elif figure_to_create.startswith("fig15"):
+        Campaign_Budgets,Campaign_Ideal_Budgets=\
+            Moisture_CONV.get_overall_budgets()
+        Inst_Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,
+                                    flight+"_instantan",config_file,
+                                    flight_dates=flight_dates,
+                                    grid_name=grid_name,do_instantan=True)
+        Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets()
+       
+        if do_plotting:
+            Inst_Budget_plots.moisture_convergence_cases_overview(
+                            Campaign_Budgets=Campaign_Budgets,
+                            Campaign_Ideal_Budgets=Campaign_Ideal_Budgets,
+                            Campaign_Inst_Budgets={},
+                            Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
+                            instantan_comparison=True,
+                            save_as_manuscript_figure=False)
+            Inst_Budget_plots.sonde_divergence_error_bar(
+                save_as_manuscript_figure=True)            
+#        Flight_Moisture_CONV=Moist_Convergence(
+#                        cmpgn_cls,flight,self.cfg_file,
+#                        grid_name=self.grid_name,do_instantan=False)    
+#            Flight_Sectors,Flight_Ideal_Sectors,cmpgn_cls=\
+#                    Flight_Moisture_CONV.load_moisture_convergence_single_case()            
+
     elif figure_to_create.startswith("fig_supplements"):
         import interpdata_plotting
         #---------------------------------------------------------------------#
@@ -186,9 +212,9 @@ def main(figure_to_create="fig13"):
         snd_flights=[*SND_flights_to_analyse.keys()]
         
         do_instantaneous=True
-        interpdata_plotting.ar_cross_sections_overview_flights_vertical_profile(
-            flight_dates,use_era,use_carra,use_icon,na_flights,snd_flights,
-            do_meshing=False)
+        #interpdata_plotting.ar_cross_sections_overview_flights_vertical_profile(
+        #    flight_dates,use_era,use_carra,use_icon,na_flights,snd_flights,
+        #    do_meshing=False)
         
         
         #%%
@@ -271,36 +297,12 @@ def main(figure_to_create="fig13"):
                                                  Inst_Ideal_Budgets,
                                                  save_as_manuscript_figure=False)
         
-    elif figure_to_create.startswith("fig18"):
-        Campaign_Budgets,Campaign_Ideal_Budgets=\
-            Moisture_CONV.get_overall_budgets()
-        Inst_Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,
-                                    flight+"_instantan",config_file,
-                                    flight_dates=flight_dates,
-                                    grid_name=grid_name,do_instantan=True)
-        Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets()
-       
-        if do_plotting:
-            Inst_Budget_plots.moisture_convergence_cases_overview(
-                            Campaign_Budgets=Campaign_Budgets,
-                            Campaign_Ideal_Budgets=Campaign_Ideal_Budgets,
-                            Campaign_Inst_Budgets={},
-                            Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
-                            instantan_comparison=True,
-                            save_as_manuscript_figure=True)
-            Inst_Budget_plots.sonde_divergence_error_bar(
-                save_as_manuscript_figure=True)            
-#        Flight_Moisture_CONV=Moist_Convergence(
-#                        cmpgn_cls,flight,self.cfg_file,
-#                        grid_name=self.grid_name,do_instantan=False)    
-#            Flight_Sectors,Flight_Ideal_Sectors,cmpgn_cls=\
-#                    Flight_Moisture_CONV.load_moisture_convergence_single_case()            
 if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig11_single_case_sector_profiles"
     #figure_to_create="fig12_campaign_divergence_overviews"
-    #figure_to_create="fig18_campaign_divergence_overview_instantan_comparison"
-    figure_to_create="fig14new_divergence_instantan_errorbars"
+    #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
+    figure_to_create="fig14_divergence_instantan_errorbars"
     
     #figure_to_create="fig_supplements_sonde_pos_comparison"
     #figure_to_create="fig12_campaign_divergence_overviews"
