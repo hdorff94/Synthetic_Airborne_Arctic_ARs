@@ -46,6 +46,7 @@ This is the illustration of the AR sectors along the cross-section (warm prefron
 showing the positioning of seven synthetic sondes along the in- and outflow corridors used for divergence calculations. 
 Go to subpath "/notebooks/" and open **AR_Sector_Illustration.ipnyb**
 
+### IVT variability
 #### Figure 5 (Distance-based sonde representation of IVT)
 This is the distance based AR-IVT together with synthetic soundings and gaussian fit for CARRA-IVT compared to ERA5-IVT for the AR1.
 ```python 
@@ -146,15 +147,57 @@ figure_to_create="fig14_divergence_instantan_errorbars""
 plot_moisture_budgets.main(figure_to_create=figure_to_create)
 ```
 This routine internally runs Budgets.Moisture_Budget_Plots.moisture_convergence_time_instantan_comparison() comparing both ideal-based (continuous) 
-frontal-specific divergence components.  
+frontal-specific divergence components. 
+
+For detailed flight specific information, check for **Figure S4,S5**
+#### Figure 15 (IVT Convergence Error Sounding Error and Instantaneous)
+So far this the partioned comparison for sounding frequency and instantaneous error arising comparing both magnitudes.
+It is called as:
+```python 
+import plot_moisture_budgets
+figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
+plot_moisture_budgets.main(figure_to_create=figure_to_create)
+```
+
 #### Supplementary plots
-#### Figure S1 (Flight Duration)
+##### Figure S1 (Flight Duration)
 This is the aircraft flight time bar plot showing the duration for flying all AR cross-sections with given constant flight speed of 250 m/s.
 Go to subpath "/notebooks/"
 and open **Aircraft_Flight_Time.ipnyb**
-#### Figure S2 (AR-IVT shapes)
+##### Figure S2 (AR-IVT shapes)
 This is AR IVT shape multiplot indicating all nine inflow AR-IVT shapes. 
 So far this plot is created manually by repeating the distance-based AR-IVT inflow cross-section plot. **Open issue to create a plot routine**
+##### Figure S3 (Fig 12 but for instantan perspectives)
+Runned by:
+```python 
+import plot_moisture_budgets_results
+figure_to_create="fig_supplements_sonde_pos_comparison"
+plot_moisture_budgets_results.main(figure_to_create=figure_to_create)
+```
+From the Budgets module, this runs sonde_divergence_error_bar() which is also needed for Figure 12.
+
+##### Figure S4 (Sonde positioning)
+Runned by:
+```python 
+import plot_moisture_budgets_results
+figure_to_create="fig_supplements_sonde_pos_comparison"
+plot_moisture_budgets_results.main(figure_to_create=figure_to_create)
+```
+this runs two fcts with the first being Inst_Budget_plots.compare_inst_sonde_pos()
+and illustrates the sonde positioning for the instantan and continuous representation. 
+If the sounding locations change is specified in the Instantan & Budget class (default on_flight_tracks=True). 
+This argument has to be given for Budgets.get_overall_budgets()
+    
+#### Figure S5 (Daily comparison of Moisture Budget contribution for Continuous and Instantan)
+Runned by:
+```python 
+import plot_moisture_budgets_results
+figure_to_create="fig_supplements_sonde_pos_comparison"
+plot_moisture_budgets_results.main(figure_to_create=figure_to_create)
+```
+analogue to above, the function creates S4 and S5. The relevant for S5 is: Inst_Budget_plots.mean_errors_per_flight()
+This shows the sector-based contributions of the divergence components for each flight. On top of that, it compares
+the continuous flight propagating and instantaneous values. Again, the sonde positioning has to be defined (default on_flight_tracks=True).
 
 %```python 
 %import instantan
@@ -163,6 +206,7 @@ So far this plot is created manually by repeating the distance-based AR-IVT infl
 %# this itself calls
 %instantan.cls.plot_div_tern_instantan_comparison("CONV",save_as_manuscript=False) # if last is set True figure is stored for manuscript
 %```
+
 %#### Figure 17 (ADV Non Instantan - Instantan
 %Very similar to Fig 16, same plot style with slight adaptations:
 %```python 
