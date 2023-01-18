@@ -302,9 +302,9 @@ if __name__=="__main__":
     #figure_to_create="fig11_single_case_sector_profiles"
     #figure_to_create="fig12_campaign_divergence_overviews"
     #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
-    figure_to_create="fig14_divergence_instantan_errorbars"
+    #figure_to_create="fig14_divergence_instantan_errorbars"
     
-    #figure_to_create="fig_supplements_sonde_pos_comparison"
+    figure_to_create="fig_supplements_sonde_pos_comparison"
     #figure_to_create="fig12_campaign_divergence_overviews"
     main(figure_to_create=figure_to_create)
 

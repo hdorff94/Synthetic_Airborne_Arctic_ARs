@@ -1901,12 +1901,20 @@ class IVT_Variability_Plotter(IVT_variability):
             plot_ax.plot(ar_outflow_cold_sector["IVT_max_distance"]/1000,
                  ar_outflow_cold_sector[ivt_var_arg],
                  lw=3,ls="-.",color="darkred")
+            print(TIVT_diff/1e6)
+            scale_factor=round(abs(30/(TIVT_diff/1e6))+1)
+            arrow_length=280/scale_factor
+            print(scale_factor, "Scale factor")
             if TIVT_diff>0: 
-                plot_ax.arrow(-300,500 ,0 ,70,facecolor="mediumseagreen",
-                              edgecolor="k",linewidth=3,linestyle="-",width=14)
+                plot_ax.arrow(-300,500,0,arrow_length,
+                              facecolor="mediumseagreen",
+                              edgecolor="k",linewidth=6/scale_factor,
+                              linestyle="-",width=28/scale_factor)
             else:
-                plot_ax.arrow(-300,620,0 ,-70,facecolor="tan",edgecolor="k",
-                              linewidth=3,width=14,linestyle="-")
+                plot_ax.arrow(-300,620,0,-1*arrow_length,
+                              facecolor="tan",edgecolor="k",
+                              linewidth=3/scale_factor,width=28/scale_factor,
+                              linestyle="-")
                 
             print("ARROW plotted")
             plot_ax.text(0.015,0.8,"AR"+str(i+1),color="k",
