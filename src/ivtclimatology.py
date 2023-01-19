@@ -476,7 +476,7 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
     import seaborn as sns
     import matplotlib
     # Allocation
-    matplotlib.rcParams.update({"font.size":16})
+    matplotlib.rcParams.update({"font.size":18})
         
     combined_AR_df=AR_df    
         
@@ -508,13 +508,14 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
     # Plotting
     snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",
                           s=5,alpha=0.5,color="teal",#"mediumseagreen",
-                          space=1.2,height=8)
+                          space=1.2,height=10)
     
     #snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",hue="season",
     #                      s=3,alpha=0.3,space=1.2,height=8)
     #    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=3)
         
-    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=3,color="teal")#"green")
+    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=[0.25,0.75],
+                       color="teal")#"green")
     #AR_campaign_df
     # get legend entries depending on available indices and flights
     legend_label=[str(AR_campaign_df.index[i]) \
@@ -531,8 +532,16 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
                                      AR_campaign_df["IVT_y"]**2)[i],
                                      AR_campaign_df["clat"][i],
                                      color=flight_colors[legend_key],
-                                     marker=marker_type,s=80,edgecolor="k",
+                                     marker=marker_type,s=120,edgecolor="k",
                                      label=legend_label[i]+" (AR"+str(i+1)+")")
+            snsplot.ax_joint.spines["left"].set_linewidth(3.0)
+            snsplot.ax_joint.spines["bottom"].set_linewidth(3.0)
+            
+            #ax12.set_xticklabels(color="darkred")
+            #snsplot.ax_joint.axis.tick_params(axis='y', colors='darkred')
+            snsplot.ax_joint.xaxis.set_tick_params(width=2,length=6)
+            snsplot.ax_joint.yaxis.set_tick_params(width=2,length=6)
+            
             if add_centered_halo_lat:
                 campaign_name=flight_dates[legend_label[i]][0]
                 flight=flight_dates[legend_label[i]][1]
@@ -549,13 +558,12 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
     snsplot.ax_joint.set_ylim([lower_lat,upper_lat])
     snsplot.ax_joint.set_xlim([100,500])
     snsplot.ax_joint.legend(loc="best",fontsize=12)
-    sns.despine(offset=2)
+    sns.despine(offset=5)
     output_path=cmpgn_cls.plot_path
-    
+    snsplot.fig.set_figwidth(12)
     snsplot.savefig(output_path+"Fig02_Seasonal_AR_statistics.png",
                         dpi=300,bbox_inches="tight")
     print("Statistics saved as:",output_path+"Fig02_Seasonal_AR_statistics.png")
-
     return None    
 
 def run_plot_IVT_long_term_stats(cmpgn_cls,HMPs,

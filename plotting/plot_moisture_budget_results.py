@@ -122,9 +122,10 @@ def main(figure_to_create="fig13"):
         Campaign_Budgets,Campaign_Ideal_Budgets=\
             Moisture_CONV.get_overall_budgets()
         if do_plotting:
-            Budget_plots.moisture_convergence_cases_overview(Campaign_Budgets,
-                                                        Campaign_Ideal_Budgets,
-                                save_as_manuscript_figure=save_for_manuscript)
+            Budget_plots.moisture_convergence_cases_overview(
+                            Campaign_Budgets,Campaign_Ideal_Budgets,
+                            save_as_manuscript_figure=save_for_manuscript,
+                            with_mean_error=True)
     
     elif figure_to_create.startswith("fig14_"):
         # Here we take the continuous representation
@@ -159,13 +160,17 @@ def main(figure_to_create="fig13"):
                 plot_mean_error=True)
         
     elif figure_to_create.startswith("fig15"):
+        # This figure compares continuous instantan divergence representation
+        # with the time-propagating sonde based values
+        
         Campaign_Budgets,Campaign_Ideal_Budgets=\
             Moisture_CONV.get_overall_budgets()
         Inst_Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,
                                     flight+"_instantan",config_file,
                                     flight_dates=flight_dates,
                                     grid_name=grid_name,do_instantan=True)
-        Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets()
+        Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets(
+            use_flight_tracks=on_flight_tracks)
        
         if do_plotting:
             Inst_Budget_plots.moisture_convergence_cases_overview(
@@ -175,8 +180,9 @@ def main(figure_to_create="fig13"):
                             Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
                             instantan_comparison=True,
                             save_as_manuscript_figure=False)
-            Inst_Budget_plots.sonde_divergence_error_bar(
-                save_as_manuscript_figure=True)            
+            Inst_Budget_plots.plot_rmse_instantan_sonde()
+            #Inst_Budget_plots.sonde_divergence_error_bar(
+            #    save_as_manuscript_figure=True)            
 #        Flight_Moisture_CONV=Moist_Convergence(
 #                        cmpgn_cls,flight,self.cfg_file,
 #                        grid_name=self.grid_name,do_instantan=False)    
@@ -300,11 +306,11 @@ def main(figure_to_create="fig13"):
 if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig11_single_case_sector_profiles"
-    #figure_to_create="fig12_campaign_divergence_overviews"
-    #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
+    figure_to_create="fig12_campaign_divergence_overviews"
     #figure_to_create="fig14_divergence_instantan_errorbars"
+    #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
     
-    figure_to_create="fig_supplements_sonde_pos_comparison"
+    #figure_to_create="fig_supplements_sonde_pos_comparison"
     #figure_to_create="fig12_campaign_divergence_overviews"
     main(figure_to_create=figure_to_create)
 
