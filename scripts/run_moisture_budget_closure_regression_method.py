@@ -126,5 +126,5 @@ if __name__=="__main__":
                }}
 
     
-    main(flight_dates,grid_name="CARRA",instantan=True,do_supplements=False,
+    main(flight_dates,grid_name="CARRA",instantan=False,do_supplements=False,
          flight_locations=True)

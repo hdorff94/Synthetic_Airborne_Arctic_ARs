@@ -110,7 +110,7 @@ def main(figure_to_create="fig13"):
     Inst_Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,
                                         config_file,grid_name=grid_name,
                                         do_instantan=True,sonde_no=sonde_no)
-    on_flight_tracks=False
+    on_flight_tracks=True
     
     if figure_to_create.startswith("fig11"):
         Sectors,Ideal_Sectors,cmpgn_cls=\
@@ -306,8 +306,8 @@ def main(figure_to_create="fig13"):
 if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig11_single_case_sector_profiles"
-    figure_to_create="fig12_campaign_divergence_overviews"
-    #figure_to_create="fig14_divergence_instantan_errorbars"
+    #figure_to_create="fig12_campaign_divergence_overviews"
+    figure_to_create="fig14_divergence_instantan_errorbars"
     #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
     
     #figure_to_create="fig_supplements_sonde_pos_comparison"

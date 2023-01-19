@@ -1854,7 +1854,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.set_ylabel("Contribution to \nMoisture Budget ($\mathrm{mmd}^{-1}$)")
         ax1.set_xlabel("Frontal Sector and Component")
         ax1.set_ylim([-10,10])
-        ax1.legend(loc="lower left", title="Time perspective")
+        ax1.legend(loc="lower left", title="Time reference")
         file_end=".pdf"
         if not self.do_instantan:
             fig_name=self.grid_name+"_Water_Vapour_Budget"
