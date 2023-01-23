@@ -305,8 +305,6 @@ def main(config_file_path=os.getcwd(),
                                             shifted_lon=synthetic_icon_lon,
                                             load_save_instantan=do_instantaneous)
             
-         #flight_track_exists=Flight_Tracker.check_if_flight_track_exists()
-         #if flight_track_exists:
          halo_df,campaign_path=Flight_Tracker.get_synthetic_flight_track()
          print("Synthetic flight track loaded")
          # If halo df is a dict, then this may arise from the 
@@ -320,11 +318,10 @@ def main(config_file_path=os.getcwd(),
              
                     
     halo_df["Hour"]=pd.DatetimeIndex(halo_df.index).hour
-                            #pd.DatetimeIndex(halo_df.index).hour[0]
     halo_df["Minutes"]=pd.DatetimeIndex(halo_df.index).minute
     halo_df["Minutesofday"]=halo_df["Hour"]*60+halo_df["Minutes"]
-    halo_df["Minutesofday"]=halo_df["Minutesofday"]#-\
-                         #halo_df["Minutesofday"].iloc[0]
+    #halo_df["Minutesofday"]=halo_df["Minutesofday"]#-\
+    #                     #halo_df["Minutesofday"].iloc[0]
     if "distance" in halo_df.columns:
         del halo_df["distance"]
     #Define the file names of hydrometeor data and paths
@@ -408,10 +405,11 @@ def main(config_file_path=os.getcwd(),
             
             radar_ds=RADAR_cls.processed_radar_ds
             radar={}
-            radar["Reflectivity"]=pd.DataFrame(data=np.array(radar_ds["dBZg"].values[:]),
-                               index=pd.DatetimeIndex(
-                                   np.array(radar_ds.time[:])),
-                               columns=np.array(radar_ds["height"][:]))
+            radar["Reflectivity"]=pd.DataFrame(data=np.array(
+                                    radar_ds["dBZg"].values[:]),
+                                       index=pd.DatetimeIndex(
+                                           np.array(radar_ds.time[:])),
+                                       columns=np.array(radar_ds["height"][:]))
             radar["LDR"]=pd.DataFrame(data=np.array(radar_ds["LDRg"].values[:]),
                             index=pd.DatetimeIndex(
                             np.array(radar_ds.time[:])),

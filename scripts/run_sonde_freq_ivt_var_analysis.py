@@ -52,7 +52,10 @@ def calc_ivt_stats_all_RFs(flight_dates,flight_to_analyse=None,
                            campaign_to_analyse=None,return_single_flight=False):
     
     ivt_stats=pd.DataFrame(index=range(18),
-                           columns=["flight","TIVT","IVT_max","IVT_std"])
+                           columns=["flight","TIVT","TIVT_ERA",
+                                    "IVT_mean","IVT_mean_ERA",
+                                    "IVT_max","IVT_max_ERA",
+                                    "IVT_std_ERA","IVT_std"])
     i=0
     for campaign in flight_dates.keys():
         for flight in flight_dates[campaign]:
@@ -81,7 +84,7 @@ def calc_ivt_stats_all_RFs(flight_dates,flight_to_analyse=None,
                                 load_save_instantan=False)
             halo_df,campaign_path=Flight_Tracker.get_synthetic_flight_track(
                 as_dict=False)
-            ################################################################################
+            ###################################################################
             # for reanalysis (CARRA)
             carra_lvls_path=cmpgn_cls.campaign_path+"/data/CARRA/"
             #print(carra_lvls_path)    
@@ -90,9 +93,33 @@ def calc_ivt_stats_all_RFs(flight_dates,flight_to_analyse=None,
                 carra_path=carra_lvls_path) 
             CARRA_on_HALO=gridonhalo.CARRA_on_HALO(halo_df,carra_lvls_path,
                 True,campaign,config_file["Data_Paths"]["campaign_path"],
-                [flight],flight_dates[campaign][flight],config_file,ar_of_day=ar_of_day,
+                [flight],flight_dates[campaign][flight],
+                config_file,ar_of_day=ar_of_day,
                 synthetic_flight=True,do_instantaneous=False)
-            ###############################################################################
+            ###################################################################
+            # for reanalysis comparison (ERA5)
+            era_lvls_path=cmpgn_cls.campaign_path+"/data/ERA-5/"
+            era5=ERA5(for_flight_campaign=True,campaign=campaign,
+                      research_flights=None,era_path=era_lvls_path)
+
+            ERA5_on_HALO=gridonhalo.ERA_on_HALO(
+                halo_df,era_lvls_path,"hydrometeors_pressure_levels_"+date+".nc",
+                "",True,campaign,config_file["Data_Paths"]["campaign_path"],
+                [flight],flight_dates[campaign][flight],config_file,
+                ar_of_day=ar_of_day,synthetic_flight=True,
+                do_instantaneous=False)
+            if ar_of_day:
+                interpolated_hmp_file=flight+"_"+ar_of_day+\
+                                "_HMP_ERA_HALO_"+date+".csv"
+            else:
+                interpolated_hmp_file="HMP_ERA_HALO_"+date+".csv"
+            interpolated_hmp_file="Synthetic_"+interpolated_hmp_file
+    
+            ERA5_on_HALO.update_interpolated_hmp_file(interpolated_hmp_file)
+        
+            halo_era5_hmp=ERA5_on_HALO.load_hmp(cmpgn_cls)
+            
+            ###################################################################
             # Load HMPs and IVT
             CARRA_on_HALO.load_or_calc_interpolated_hmp_data()
             # Load flight track interpolated data
@@ -103,9 +130,11 @@ def calc_ivt_stats_all_RFs(flight_dates,flight_to_analyse=None,
                                                         halo_carra_hmp)
             
             halo_carra_hmp["highres_Interp_IWV"]=\
-                halo_carra_hmp["Interp_IWV_clc"].values
+                halo_carra_hmp["Interp_IWV_clc"].values.copy()
             halo_carra_hmp["highres_Interp_IVT"]=\
-                halo_carra_hmp["Interp_IVT"].values
+                halo_carra_hmp["Interp_IVT"].values.copy()
+            halo_carra_hmp["Interp_IVT"]=halo_era5_hmp["Interp_IVT"].values.copy()
+            
             halo_carra_inflow = \
                 halo_carra_hmp.loc[halo_df[halo_df["leg_type"]=="inflow"].index]
             halo_carra_outflow = \
@@ -125,21 +154,50 @@ def calc_ivt_stats_all_RFs(flight_dates,flight_to_analyse=None,
                         hmp_flow.name="CARRA"
                         cmpgn_cls_to_analyse=cmpgn_cls
         
-            TIVT=atmospheric_rivers.Atmospheric_Rivers.calc_TIVT_of_cross_sections_in_AR_sector(
+            TIVT=atmospheric_rivers.Atmospheric_Rivers.\
+                calc_TIVT_of_cross_sections_in_AR_sector(
                     halo_carra_inflow,halo_carra_outflow,halo_carra_hmp.name)
-            ivt_stats["flight"].iloc[i*2]   = date+"_inflow"
-            ivt_stats["TIVT"].iloc[i*2]     = TIVT["inflow"]/10e6
-            ivt_stats["IVT_max"].iloc[i*2]  = \
+            
+            ivt_stats["flight"].iloc[i*2]       = date+"_inflow"
+            ivt_stats["TIVT"].iloc[i*2]         = TIVT["inflow"]/10e6
+            
+            ## Inflow cross-section
+            # Mean IVT value
+            ivt_stats["IVT_mean"].iloc[i*2]     = \
+                halo_carra_inflow["highres_Interp_IVT"].mean()
+            ivt_stats["IVT_mean_ERA"].iloc[i*2] = \
+                halo_carra_inflow["Interp_IVT"].mean()
+            # Max IVT value of cross-sections
+            ivt_stats["IVT_max"].iloc[i*2]      = \
                     halo_carra_inflow["highres_Interp_IVT"].max()
-            ivt_stats["IVT_std"].iloc[i*2]  = \
+            ivt_stats["IVT_max_ERA"].iloc[i*2]  = \
+                    halo_carra_inflow["Interp_IVT"].max()
+            # Std IVT value
+            ivt_stats["IVT_std"].iloc[i*2]      = \
                     halo_carra_inflow["highres_Interp_IVT"].std()
-            ivt_stats["flight"].iloc[i*2+1]  = date+"_outflow"
-            ivt_stats["TIVT"].iloc[i*2+1]    = TIVT["inflow"]/10e6
-            ivt_stats["IVT_max"].iloc[i*2+1] =\
+            ivt_stats["IVT_std_ERA"].iloc[i*2]  = \
+                    halo_carra_inflow["Interp_IVT"].std()
+                    
+            ## Outflow cross-section        
+            ivt_stats["flight"].iloc[i*2+1]         = date+"_outflow"
+            ivt_stats["TIVT"].iloc[i*2+1]           = TIVT["outflow"]/10e6
+            # Mean IVT value
+            ivt_stats["IVT_mean"].iloc[i*2+1]       = \
+                halo_carra_outflow["highres_Interp_IVT"].mean()
+            ivt_stats["IVT_mean_ERA"].iloc[i*2+1]   = \
+                halo_carra_outflow["Interp_IVT"].mean()
+            # Max IVT value
+            ivt_stats["IVT_max"].iloc[i*2+1]        =\
                 halo_carra_outflow["highres_Interp_IVT"].max()
+            ivt_stats["IVT_max_ERA"].iloc[i*2+1]        =\
+                halo_carra_outflow["Interp_IVT"].max()
+            # Std IVT value
             ivt_stats["IVT_std"].iloc[i*2+1] =\
                 halo_carra_outflow["highres_Interp_IVT"].std()
+            ivt_stats["IVT_std_ERA"].iloc[i*2+1] =\
+                halo_carra_outflow["Interp_IVT"].std()
             i+=1
+            
     ivt_stats.to_csv(path_or_buf=cmpgn_cls_to_analyse.campaign_data_path+\
                  "/IVT_Stats_Overall_all_RFs.csv",index=True)
     print("IVT Statistics saved as:",
