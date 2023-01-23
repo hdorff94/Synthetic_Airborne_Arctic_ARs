@@ -125,6 +125,7 @@ if __name__=="__main__":
                "SRF12":"20180225"
                }}
 
-    
-    main(flight_dates,grid_name="CARRA",instantan=False,do_supplements=False,
-         flight_locations=True)
+    flight_locations=True # has to be True for instantan comparison if sondes on 
+                            # same positions should be compared
+    main(flight_dates,grid_name="CARRA",instantan=True,do_supplements=False,
+         flight_locations=flight_locations)

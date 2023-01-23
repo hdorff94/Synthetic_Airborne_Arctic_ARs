@@ -1914,41 +1914,57 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         
         sector_divergence_inst_sonde_errors=\
                             budget_regions-budget_inst_ideal_regions
-        
+        sector_divergence_sonde_errors=\
+                            budget_regions-budget_ideal_regions
+                            
         # Continuous to instantan errors
         sector_squared_divergence_inst_errors = \
             (sector_divergence_inst_errors)**2
         # Entire errors
         sector_squared_divergence_inst_sonde_errors      = \
             (sector_divergence_inst_sonde_errors)**2
+        # Pure sonde errors
+        sector_squared_divergence_sonde_errors= \
+            (sector_divergence_sonde_errors)**2
         
         rmse_inst       = np.sqrt(sector_squared_divergence_inst_errors.mean())
         rmse_inst_sonde = np.sqrt(sector_squared_divergence_inst_sonde_errors.mean())
-            
+        rmse_pure_sonde = np.sqrt(sector_squared_divergence_sonde_errors.mean())    
+        
         #### Statistics of errors
         mean_sector_divergence_inst_errors=\
             sector_divergence_inst_errors.mean()
         mean_sector_divergence_inst_sonde_errors=\
             sector_divergence_inst_sonde_errors.mean()
+        mean_sector_divergence_sonde_errors=\
+            sector_divergence_sonde_errors.mean()
         std_sector_divergence_inst_errors=\
             sector_divergence_inst_errors.std()
         std_sector_divergence_inst_sonde_errors=\
             sector_divergence_inst_sonde_errors.std()
+        std_sector_divergence_sonde_errors=\
+            sector_divergence_sonde_errors.std()
         
         error_fig=plt.figure(figsize=(12,9))
         ax1=error_fig.add_subplot(111)
-        ax1.bar(np.arange(rmse_inst.shape[0])+0.9,
+        ax1.bar(np.arange(rmse_inst.shape[0])+1,
                 rmse_inst,facecolor="darkgrey",
-                width=0.2,edgecolor="k",linewidth=3,alpha=0.9,label="Instationarity")
-        ax1.bar(np.arange(rmse_inst.shape[0])+1.1,
+                width=0.15,edgecolor="k",linewidth=3,
+                alpha=0.9,label="Instationarity")
+        ax1.bar(np.arange(rmse_inst.shape[0])+0.85,
                 rmse_inst_sonde,facecolor="peachpuff",
-                width=0.2,edgecolor="saddlebrown",linewidth=3,linestyle=":",
-                alpha=0.9,label="Instationarity + Sonde")
-        #ax1.axhline(y=0,color="brown",ls="--",lw=2)
-        #yerr=abs_std_sector_divergence_errors,color="lightgrey")
+                width=0.15,edgecolor="saddlebrown",
+                linewidth=3,linestyle=":",
+                alpha=0.9,label="Instationarity &\nSonde")
+        ax1.bar(np.arange(rmse_inst.shape[0])+1.15,
+                rmse_pure_sonde,facecolor="lightgreen",width=0.15,linestyle="--",
+                edgecolor="darkgreen",linewidth=3,alpha=0.9,label="Pure Sonde")
+        
         ax1.set_xticks(np.arange(rmse_inst.shape[0])+1)
         ax1.set_xticklabels(rmse_inst.index,fontsize=10)
-        ax1.set_ylabel("Difference (inst-flight) in \nIVT Divergence ($\mathrm{mmd}^{-1}$)")
+        ax1.set_xlabel("Frontal Sector and Component")
+        
+        ax1.set_ylabel("Error (inst-flight) in \nIVT Divergence ($\mathrm{mmd}^{-1}$)")
         # Axis linewidth
         for axis in ["left","bottom"]:
             ax1.spines[axis].set_linewidth(3.0)
@@ -1957,46 +1973,43 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         sns.despine(offset=10)
         ##### Instationarity error
         eb1=ax1.errorbar(np.arange(
-                        mean_sector_divergence_inst_errors.shape[0])+0.9,
-                        mean_sector_divergence_inst_errors,
-                        fmt="d",markersize=20,markeredgecolor="k",ecolor="k",
+                        mean_sector_divergence_inst_errors.shape[0])+1,
+                        mean_sector_divergence_inst_errors,markeredgewidth=2,
+                        fmt="s",markersize=15,markeredgecolor="k",ecolor="k",
                         yerr=std_sector_divergence_inst_errors,
                         color="white",zorder=2)
         eb2=ax1.errorbar(np.arange(
-                        mean_sector_divergence_inst_sonde_errors.shape[0])+1.1,
-                        mean_sector_divergence_inst_sonde_errors,
-                        fmt="v",markersize=20,markeredgecolor="k",ecolor="k",
+                        mean_sector_divergence_inst_sonde_errors.shape[0])+0.85,
+                        mean_sector_divergence_inst_sonde_errors,markeredgewidth=2,
+                        fmt="d",markersize=15,markeredgecolor="k",ecolor="k",
                         yerr=std_sector_divergence_inst_errors,
                         color="seashell",zorder=2)
-        
+        eb3=ax1.errorbar(np.arange(
+                        mean_sector_divergence_sonde_errors.shape[0])+1.15,
+                        mean_sector_divergence_sonde_errors,markeredgewidth=2,
+                        fmt="v",markersize=15,markeredgecolor="k",ecolor="k",
+                        yerr=std_sector_divergence_inst_errors,
+                        color="lightgreen",zorder=2)
         eb1[-1][0].set_linestyle("-")
         eb1[-1][0].set_linewidth(3)
-        eb2[-1][0].set_linestyle("--")
+        eb2[-1][0].set_linestyle(":")
         eb2[-1][0].set_linewidth(3)
-        
-        
+        eb3[-1][0].set_linestyle("--")
+        eb3[-1][0].set_linewidth(3)
         ax1.axhline(y=0,color="k",ls="-.",lw=2)
-        ax1.legend(loc="lower left",fontsize=20)
-        
-        # 
-        #eb2=ax1.errorbar(np.arange(abs_mean_sector_divergence_errors.shape[0])+0.1,
-        #             mean_sector_divergence_inst_errors,fmt="d",markersize=25,
-        #             markeredgecolor="k",ecolor="k",
-        #             yerr=std_sector_divergence_inst_errors,
-        #             color="darkgrey",zorder=2,label="Sonde Instationarity Err")
-        #eb2[-1][0].set_linestyle("-")
-        #eb2[-1][0].set_linewidth(2)
-        
-        #ax1.bar(np.arange(abs_mean_sector_divergence_errors.shape[0]),
-        #        abs_mean_sector_divergence_errors,color="lightgrey",alpha=0.6)
-        #ax1.bar(np.arange(abs_mean_sector_divergence_errors.shape[0]),
-        #        abs_mean_sector_divergence_inst_error-\
-        #            abs_mean_sector_divergence_errors,
-        #        bottom=abs_mean_sector_divergence_errors,
-        #        color="darkgray",alpha=0.6)
-        #ax1.bar(np.arange(abs_mean_sector_divergence_errors.shape[0]),
-        #        abs_mean_sector_divergence_inst_error,
-        #        fill=False, edgecolor="k",lw=2,alpha=0.6)
+        ax1.legend(loc="lower left",fontsize=18,title="RMSE")
+        file_end=".pdf"
+        fig_name=self.grid_name+"_Inst_Sonde_Error_Overview"
+        fig_name=fig_name+file_end
+        if not save_as_manuscript_figure:
+            plot_path=self.plot_path
+        else:
+            plot_path=self.plot_path+\
+                "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
+        fig_name="Fig15_"+fig_name
+        error_fig.savefig(plot_path+fig_name,
+                       dpi=200,bbox_inches="tight")
+        print("Figure saved as:",plot_path+fig_name)
         
         
     def sonde_divergence_error_bar(self,save_as_manuscript_figure=False):

@@ -1623,7 +1623,7 @@ class IVT_Variability_Plotter(IVT_variability):
         xlim_transport_max=self.grid_mean["moist_transport"].max()//5*5+10
         ax3.set_xlim([0,xlim_transport_max])
         ax3.set_xlabel(r'$\frac{1}{g}\cdot q\cdot{v}_{\mathrm{h}}$'+\
-                       ' (g/kg$\cdot\mathrm{s}$)')
+                       r" ($\mathrm{gkg}^{-1}\mathrm{s}$)")
         ax3.spines["left"].set_visible(False)
         ax3.yaxis.set_visible(False)
         
@@ -1638,8 +1638,10 @@ class IVT_Variability_Plotter(IVT_variability):
             ax1.legend(handles=legend_elements,loc="upper left")
         
         elif subsample_day!=" ":
+            if subsample_day=="2015-03-14":  subsample_day_str="AR3" 
+            
             legend_elements=[mlines.Line2D([0],[0],color="magenta",lw=3,
-                                marker="v",markersize=10,label=subsample_day)]
+                                marker="v",markersize=10,label=subsample_day_str)]
             #Patch(facecolor="mistyrose",edgecolor="salmon",
             #               label=subsample_day)]
             ax1.legend(handles=legend_elements,loc="upper left")

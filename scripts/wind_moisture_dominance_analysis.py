@@ -661,4 +661,4 @@ def main(reanalysis_to_use="ERA-5",figures_to_create="updated_fig11"):#"updated_
     plotter(figures_to_create,flight_dates,reanalysis_to_use)    
 
 if __name__=="__main__":
-    main()
+    main(figures_to_create="fig07")
