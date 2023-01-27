@@ -1765,7 +1765,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             ax12.spines["bottom"].set_visible(False)
         
         sns.despine(ax=ax1,offset=10)
-        ax1.set_ylim([-8,8])
+        ax1.set_ylim([-10,10])
         fileend=".pdf"
         if not self.do_instantan:
             fig_name=self.grid_name+"_Water_Vapour_Budget"

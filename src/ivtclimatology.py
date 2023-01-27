@@ -476,7 +476,7 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
     import seaborn as sns
     import matplotlib
     # Allocation
-    matplotlib.rcParams.update({"font.size":18})
+    matplotlib.rcParams.update({"font.size":22})
         
     combined_AR_df=AR_df    
         
@@ -507,7 +507,7 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
                    "2020-04-19":"grey"}        
     # Plotting
     snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",
-                          s=5,alpha=0.5,color="teal",#"mediumseagreen",
+                          s=20,alpha=0.5,color="teal",#"mediumseagreen",
                           space=1.2,height=10)
     
     #snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",hue="season",
@@ -557,7 +557,8 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
     snsplot.ax_joint.set_ylabel("AR Centre Latitude in $^{\circ}$N")
     snsplot.ax_joint.set_ylim([lower_lat,upper_lat])
     snsplot.ax_joint.set_xlim([100,500])
-    snsplot.ax_joint.legend(loc="best",fontsize=12)
+    snsplot.ax_joint.set_xticks([100,200,300,400,500])
+    snsplot.ax_joint.legend(loc="best",fontsize=16)
     sns.despine(offset=5)
     output_path=cmpgn_cls.plot_path
     snsplot.fig.set_figwidth(12)
