@@ -1869,7 +1869,7 @@ class ICON_on_HALO(ICON):
                     #        self.lat_changed=True
                     upsample_resolution=None
                     if self.campaign_name=="HALO_AC3":
-                        upsample_resolution="30min"
+                        upsample_resolution="10min"
                     interp_q_icon = self.interpolate_icon_3D_data(icon_ds,var,
                                             upsample_time=upsample_resolution,
                                             geo_interpolation_type="triangle",

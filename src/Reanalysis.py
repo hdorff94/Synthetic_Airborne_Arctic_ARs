@@ -1162,8 +1162,8 @@ def main(campaign="NAWDEX"):
     elif campaign=="HALO_AC3":
         synthetic_campaign=False
         analysing_campaign=True
-        flights=["RF16"]#["RF06"]#,"RF06"]
-        dates=["20220410"]#["20220316"]#,"20220316"]
+        flights=["RF05"]#["RF06"]#,"RF06"]
+        dates=["20220315"]#["20220316"]#,"20220316"]
     else:
         raise Exception("The given campaign is not specified in the Downloader")
     if not campaign=="PAMTRA_Retrieval":
@@ -1222,7 +1222,7 @@ def main(campaign="NAWDEX"):
                     flights[0]=="RF05" or \
                         flights[0]=="RF07" or\
                             flights[0]=="RF08" or flights[0]=="RF16":
-                research_area=[90,-75,50,60]
+                research_area=[90,-90,50,90]
             #elif flights[0]=="RF06" or flights[0]=="RF16":
             #    research_area=[90,-90,60,100]
         elif (config_file["Data_Paths"]["campaign"]=="PAMTRA_Retrieval"):

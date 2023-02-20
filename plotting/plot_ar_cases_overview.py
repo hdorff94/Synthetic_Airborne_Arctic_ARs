@@ -107,6 +107,7 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
     if figure_to_create.startswith("fig01"):    
         #%% Plot the map
         import matplotlib
+        import matplotlib.patches as patches
         matplotlib.rcParams.update({"font.size":16})
         import matplotlib.pyplot as plt
         import cartopy
@@ -211,7 +212,7 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                #cb.set_ticks([50,100,200,300,400,500,600])
                            
                halo_df=flight_tracks_dict[flight_date]
-               axs[row,col].coastlines(resolution="50m")
+               axs[row,col].coastlines(resolution="50m",zorder=0)
                axs[row,col].set_extent([-20,25,60,90])
                #axs[row,col].gridlines()
                # Date and Timestep
@@ -228,6 +229,7 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                                  halo_df["latitude"],
                                  color="indianred",lw=2,
                                  transform=ccrs.PlateCarree())
+               
                # AR label (AR1)
                axs[row,col].text(-60,82,ar_label[flight_date],transform=ccrs.PlateCarree(),
                                  color="k",bbox=dict(facecolor="lightgrey",
@@ -241,26 +243,51 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                v=v.where(v>200)
                v=np.array(v)
                u=np.array(u)
-               quiver=axs[row,col].quiver(quiver_lon,quiver_lat,u,v,color="white",
-                                 edgecolor="k",lw=1,
-                                 scale=800,scale_units="inches",
-                                          pivot="mid",width=0.015,
-                                          transform=ccrs.PlateCarree())
+               quiver=axs[row,col].quiver(quiver_lon,quiver_lat,
+                                          u,v,color="white",
+                                          edgecolor="k",lw=1,
+                                          scale=800,scale_units="inches",
+                                              pivot="mid",width=0.015,
+                                              transform=ccrs.PlateCarree())
+               if key==8:
+                   x=[-16,21,23,-16.75]
+                   y=[63.5, 61.4, 63.2, 65.6]
+                   q_typ=600.0
+                   qk=axs[row, col].quiverkey(quiver,0.4,0.13,q_typ,
+                    label=str(q_typ)+' $\mathrm{kgm}^{-1}\mathrm{s}^{-1}$',
+                    coordinates="axes",labelpos="E",fontproperties={"size":12},
+                    #bbox=dict(facecolor='lightgrey',edgecolor="black")
+                    #fancybox={"facecolor":"grey",
+                    #          "edgecolor":"k"}
+                    zorder=10)
+                   qk.text.set_zorder(50)
+                   qk.Q.set_zorder(50)#
+                   
+                   #ax.add_patch(patches.Polygon(xy=list(zip(x,y))
+                   rect = axs[row,col].add_patch(
+                           patches.Polygon(xy=list(zip(x,y)),fill=True,
+                           linewidth=1, edgecolor='k', facecolor='lightgrey',
+                           transform=ccrs.Geodetic(),zorder=1,alpha=0.8))
+                   #qk.vector.set_zorder(6)
+                   #qk.text.set_backgroundcolor('w')
+                   # Create a Rectangle patch
+                   
                key+=1
         # Adjust the location of the subplots on the page to make room for the colorbar
-        fig.subplots_adjust(bottom=0.15, top=0.9, left=0.15, right=0.9,
+        fig.subplots_adjust(#
+                            bottom=0.15,top=0.9, left=0.15, right=0.9,
                             wspace=0.05, hspace=0.05)
         # Add a colorbar axis at the bottom of the graph
         cbar_ax = fig.add_axes([0.905, 0.225, 0.02, 0.6])
         cbar=fig.colorbar(C1, cax=cbar_ax,extend="max")
-        cbar_ax.text(1.3,0.5,meteo_var+" "+met_var_dict["units"][meteo_var],
-                     rotation=90,fontsize=22,transform=cbar_ax.transAxes)
+        cbar_ax.text(3.2,0.375,meteo_var+" "+met_var_dict["units"][meteo_var],
+                     rotation=90,fontsize=18,transform=cbar_ax.transAxes)
         cbar.set_ticks([50,250,500])
         if not save_in_manuscript_path:
             fig_path=paths_dict["airborne_plotting_module_path"]
         else:
             fig_path=paths_dict["manuscript_path"]
-        fig_name="Fig01_AR_cases_overview.png"
+        fig_name="Fig01_AR_cases_overview.pdf"
         fig.savefig(fig_path+fig_name,dpi=300,bbox_inches="tight")
         print("Figure saved as:",fig_path+fig_name)
         #plt.adjust_subplots(hspace=0.1,vspace=0.1)
@@ -296,4 +323,4 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         raise Exception("You have given the wrong figure name.",
                         " No figure created")
 if __name__=="__main__":
-    main(save_in_manuscript_path=True,figure_to_create="fig09_")
+    main(save_in_manuscript_path=True,figure_to_create="fig01_")

@@ -3939,9 +3939,9 @@ def main():
     name="data_config_file"
     config_file_exists=False
     #campaign_name="NAWDEX"
-    campaign_name="HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"#"NA_February_Run"    
-    flights=["RF16"]#["SRF03"]#["SRF07"]#["RF07"]#["SRF06"]
-    met_variable="IVT"
+    campaign_name="NA_February_Run"#"HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"#"NA_February_Run"    
+    flights=["SRF08"]#["SRF03"]#["SRF07"]#["RF07"]#["SRF06"]
+    met_variable="IWV"
     ar_of_day="SAR_internal"
     ###Switcher in order to specify maps plots to create
     should_plot_iop_map=False
@@ -4007,7 +4007,7 @@ def main():
                           instruments=["radar","radiometer","sonde"])
         ar_na.specify_flights_of_interest(flights)
         ar_na.create_directory(directory_types=["data"])
-        print("NA_February_Run interested flights", ar_na.interested_flights)
+        print(campaign_name+" interested flights", ar_na.interested_flights)
         cmpgn_cls=ar_na
 
     else:

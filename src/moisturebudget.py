@@ -1982,13 +1982,13 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                         mean_sector_divergence_inst_sonde_errors.shape[0])+0.85,
                         mean_sector_divergence_inst_sonde_errors,markeredgewidth=2,
                         fmt="d",markersize=15,markeredgecolor="k",ecolor="k",
-                        yerr=std_sector_divergence_inst_errors,
+                        yerr=std_sector_divergence_inst_sonde_errors,
                         color="seashell",zorder=2)
         eb3=ax1.errorbar(np.arange(
                         mean_sector_divergence_sonde_errors.shape[0])+1.15,
                         mean_sector_divergence_sonde_errors,markeredgewidth=2,
                         fmt="v",markersize=15,markeredgecolor="k",ecolor="k",
-                        yerr=std_sector_divergence_inst_errors,
+                        yerr=std_sector_divergence_sonde_errors,
                         color="lightgreen",zorder=2)
         eb1[-1][0].set_linestyle("-")
         eb1[-1][0].set_linewidth(3)
@@ -2010,8 +2010,274 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         error_fig.savefig(plot_path+fig_name,
                        dpi=200,bbox_inches="tight")
         print("Figure saved as:",plot_path+fig_name)
+        # Add flight specific values as table
+        #relative Error
+        rel_sec_div_inst_errors=sector_divergence_inst_errors/\
+                                    budget_inst_ideal_regions
+        rel_sec_div_inst_sonde_errors=sector_divergence_inst_sonde_errors/\
+                                        budget_inst_ideal_regions
+        rel_sec_div_sonde_errors=sector_divergence_sonde_errors/\
+                                    budget_ideal_regions
         
+        rel_sec_div_inst_errors.index+=1
+        rel_sec_div_inst_sonde_errors.index+=1
+        rel_sec_div_sonde_errors.index+=1
+        error_case_fig=plt.figure(figsize=(16,22))
+        ax1=error_case_fig.add_subplot(321)
+        ax2=error_case_fig.add_subplot(322)
+        ax3=error_case_fig.add_subplot(323)
+        ax4=error_case_fig.add_subplot(324)
+        ax5=error_case_fig.add_subplot(325)
+        ax6=error_case_fig.add_subplot(326)
+
+        color_palette=["darkorange","orange","lightgreen",
+                   "green","lightblue","blue"]                    
+
+        # Warm ADV
+        ax1.plot(sector_divergence_inst_errors["Warm\nADV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax1.plot(sector_divergence_sonde_errors["Warm\nADV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax1.plot(sector_divergence_inst_sonde_errors["Warm\nADV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax1.set_yticks(np.arange(0,9)+1)
+        ax1.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax1.text(-5,9,"Warm ADV", color=color_palette[0],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=16)
+        ax1.set_ylim([0,10])
+        # Warm CONV
+        ax2.plot(sector_divergence_inst_errors["Warm\nCONV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax2.plot(sector_divergence_sonde_errors["Warm\nCONV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax2.plot(sector_divergence_inst_sonde_errors["Warm\nCONV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax2.set_yticks(np.arange(0,9)+1)
+        ax2.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax2.text(-5,9,"Warm CONV", color=color_palette[1],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax2.set_ylim([0,10])
+        # Core ADV
+        ax3.plot(sector_divergence_inst_errors["Core\nADV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax3.plot(sector_divergence_sonde_errors["Core\nADV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax3.plot(sector_divergence_inst_sonde_errors["Core\nADV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax3.set_yticks(np.arange(0,9)+1)
+        ax3.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax3.text(-3,9,"Core ADV", color=color_palette[2],
+                 bbox={"facecolor":"darkgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax3.set_ylim([0,10])
+        # Core CONV
+        ax4.plot(sector_divergence_inst_errors["Core\nCONV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax4.plot(sector_divergence_sonde_errors["Core\nCONV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax4.plot(sector_divergence_inst_sonde_errors["Core\nCONV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax4.set_yticks(np.arange(0,9)+1)
+        ax4.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax4.text(-3,9,"Core CONV", color=color_palette[3],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax4.set_ylim([0,10])
+        # Cold ADV
+        ax5.plot(sector_divergence_inst_errors["Cold\nADV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax5.plot(sector_divergence_sonde_errors["Cold\nADV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax5.plot(sector_divergence_inst_sonde_errors["Cold\nADV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax5.set_yticks(np.arange(0,9)+1)
+        ax5.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax5.text(-3,9,"Cold ADV", color=color_palette[4],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax5.set_ylim([0,10])
+        # Cold CONV
+        ax6.plot(sector_divergence_inst_errors["Cold\nCONV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax6.plot(sector_divergence_sonde_errors["Cold\nCONV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax6.plot(sector_divergence_inst_sonde_errors["Cold\nCONV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax6.set_yticks(np.arange(0,9)+1)
+        ax6.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax6.text(-3,9,"Core CONV", color=color_palette[5],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax6.set_ylim([0,10])
+        plt.suptitle("Absolute Errors in mm/d for\n(flight-inst)",y=0.92)
+        ax1.set_xlim([-6,6])
+        ax2.set_xlim([-6,6])
+        ax3.set_xlim([-6,6])
+        ax4.set_xlim([-6,6])
+        ax5.set_xlim([-6,6])
+        ax6.set_xlim([-6,6])
+        ax1.axvline(x=0,ls="--",color="grey",lw=2)
+        ax2.axvline(x=0,ls="--",color="grey",lw=2)
+        ax3.axvline(x=0,ls="--",color="grey",lw=2)
+        ax4.axvline(x=0,ls="--",color="grey",lw=2)
+        ax5.axvline(x=0,ls="--",color="grey",lw=2)
+        ax6.axvline(x=0,ls="--",color="grey",lw=2)
+        plot_path=self.plot_path+\
+                "/../../../../Synthetic_AR_paper/Manuscript/Supplements/"
+        fig_name=plot_path+"Single case errors.png"
+        error_case_fig.savefig(fig_name, dpi=300,bbox_inches="tight")
+        print("Supplementary fig saved as:",fig_name)
+        # Relative errors
+        rel_error_case_fig=plt.figure(figsize=(16,22))
+        ax1=rel_error_case_fig.add_subplot(321)
+        ax2=rel_error_case_fig.add_subplot(322)
+        ax3=rel_error_case_fig.add_subplot(323)
+        ax4=rel_error_case_fig.add_subplot(324)
+        ax5=rel_error_case_fig.add_subplot(325)
+        ax6=rel_error_case_fig.add_subplot(326)
+
+        color_palette=["darkorange","orange","lightgreen",
+                   "green","lightblue","blue"]                    
+
+        # Warm ADV
+        ax1.plot(rel_sec_div_inst_errors["Warm\nADV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax1.plot(rel_sec_div_sonde_errors["Warm\nADV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax1.plot(rel_sec_div_inst_sonde_errors["Warm\nADV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax1.set_yticks(np.arange(0,9)+1)
+        ax1.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax1.text(-5,9,"Warm ADV", color=color_palette[0],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=16)
+        ax1.set_ylim([0,10])
+        # Warm CONV
         
+        ax2.plot(rel_sec_div_inst_errors["Warm\nCONV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax2.plot(rel_sec_div_sonde_errors["Warm\nCONV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax2.plot(rel_sec_div_inst_sonde_errors["Warm\nCONV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax2.set_yticks(np.arange(0,9)+1)
+        ax2.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax2.text(-5,9,"Warm CONV", color=color_palette[1],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax2.set_ylim([0,10])
+        # Core ADV
+        ax3.plot(rel_sec_div_inst_errors["Core\nADV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax3.plot(rel_sec_div_sonde_errors["Core\nADV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax3.plot(rel_sec_div_inst_sonde_errors["Core\nADV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax3.set_yticks(np.arange(0,9)+1)
+        ax3.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax3.text(-3,9,"Core ADV", color=color_palette[2],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax3.set_ylim([0,10])
+        # Core CONV
+        ax4.plot(rel_sec_div_inst_errors["Core\nCONV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax4.plot(rel_sec_div_sonde_errors["Core\nCONV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax4.plot(rel_sec_div_inst_sonde_errors["Core\nCONV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax4.set_yticks(np.arange(0,9)+1)
+        ax4.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax4.text(-3,9,"Core ADV", color=color_palette[3],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax4.set_ylim([0,10])
+        # Cold ADV
+        ax5.plot(rel_sec_div_inst_errors["Core\nADV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax5.plot(rel_sec_div_sonde_errors["Core\nADV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax5.plot(rel_sec_div_inst_sonde_errors["Core\nADV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax5.set_yticks(np.arange(0,9)+1)
+        ax5.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax5.text(-3,9,"Core ADV", color=color_palette[4],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax5.set_ylim([0,10])
+        # Cold CONV
+        ax6.plot(rel_sec_div_inst_errors["Core\nCONV"],
+                 rel_sec_div_inst_errors.index,
+                 color="black",lw=2,ls="-")
+        ax6.plot(rel_sec_div_sonde_errors["Core\nCONV"],
+                 rel_sec_div_sonde_errors.index,
+                 color="green",lw=2,ls="--")
+        ax6.plot(rel_sec_div_inst_sonde_errors["Core\nCONV"],
+                 rel_sec_div_inst_sonde_errors.index,
+                 color="darkorange",lw=2,ls=":")
+        ax6.set_yticks(np.arange(0,9)+1)
+        ax6.set_yticklabels(["AR"+str(i+1) for i in range(9)])
+        ax6.text(-3,9,"Core CONV", color=color_palette[5],
+                 bbox={"facecolor":"lightgrey","edgecolor":"k",
+                       "linewidth":2},fontsize=14)
+        ax6.set_ylim([0,10])
+        plt.suptitle("Absolute Errors in mm/d",y=0.92)
+        ax1.set_xlim([-6,6])
+        ax2.set_xlim([-6,6])
+        ax3.set_xlim([-6,6])
+        ax4.set_xlim([-6,6])
+        ax5.set_xlim([-6,6])
+        ax6.set_xlim([-6,6])
+        ax1.axvline(x=0,ls="--",color="grey",lw=2)
+        ax2.axvline(x=0,ls="--",color="grey",lw=2)
+        ax3.axvline(x=0,ls="--",color="grey",lw=2)
+        ax4.axvline(x=0,ls="--",color="grey",lw=2)
+        ax5.axvline(x=0,ls="--",color="grey",lw=2)
+        ax6.axvline(x=0,ls="--",color="grey",lw=2)
+        
+        #ax1.plot(rel_sec_div_inst["Warm_ADV"],rel_sec_div_inst_errors.index,
+        #         color="orange",lw=2,ls="-")
+        #ax1.plot(rel_sec_div_inst["Warm_ADV"],rel_sec_div_inst_errors.index,
+        #         color="orange",lw=2,ls="-")
+        #ax1.plot(rel_sec_div_inst["Warm_ADV"],rel_sec_div_inst_errors.index,
+        #         color="orange",lw=2,ls="-")
+       # 
+       # )
     def sonde_divergence_error_bar(self,save_as_manuscript_figure=False):
             
         budget_inst_ideal_regions=24*self.budget_inst_ideal_regions
