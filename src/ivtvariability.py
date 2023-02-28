@@ -1787,6 +1787,9 @@ class IVT_Variability_Plotter(IVT_variability):
     @staticmethod
     def multiplot_inflow_outflow_IVT_sectors(cmpn_cls,HALO_dict,HMP_dict,
                                              grid_name,plot_path=""):
+        
+        #difference to consider: will be asserted in AR.calc_TIVT
+        difference_referred="AR_"    
         import matplotlib
         matplotlib.rcParams.update({"font.size":16})
         import atmospheric_rivers as AR
@@ -1811,10 +1814,11 @@ class IVT_Variability_Plotter(IVT_variability):
             Flights_inflow_dict[flight], Flights_outflow_dict[flight]=\
                 AR.Atmospheric_Rivers.locate_AR_cross_section_sectors(
                     HALO_dict,HMP_dict,flight)
+            print("Flights_inflow_dict:",Flights_inflow_dict[flight])
             Flights_TIVT_inflow[flight],Flights_TIVT_outflow[flight]=\
                 AR.Atmospheric_Rivers.calc_TIVT_of_sectors(
                     Flights_inflow_dict[flight],Flights_outflow_dict[flight],
-                    grid_name)
+                    grid_name,cross_section_to_refer=difference_referred)
         row_number=3
         col_number=int(len(HMP_dict.keys())/row_number)+len(HMP_dict.keys()) % row_number
         f,ax=plt.subplots(nrows=row_number,ncols=col_number,
@@ -1833,8 +1837,8 @@ class IVT_Variability_Plotter(IVT_variability):
             hmp_inflow   = Flights_inflow_dict[flight]["entire_inflow"]
             hmp_outflow  = Flights_outflow_dict[flight]["entire_outflow"]
         
-            #ar_inflow    = Flights_inflow_dict[flight]["AR_inflow"]
-            #ar_outflow   = Flights_outflow_dict[flight]["AR_outflow"]
+            ar_inflow    = Flights_inflow_dict[flight]["AR_inflow"]
+            ar_outflow   = Flights_outflow_dict[flight]["AR_outflow"]
             inflow_core  = Flights_inflow_dict[flight]["AR_inflow_core"]
             outflow_core = Flights_outflow_dict[flight]["AR_outflow_core"]
     

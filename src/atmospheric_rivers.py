@@ -768,7 +768,33 @@ class Atmospheric_Rivers():
         TIVT["outflow"]=(AR_outflow[ivt_var_arg].rolling(2).mean()*\
                             AR_outflow["IVT_max_distance"].diff()).sum()
         return TIVT
-    def calc_TIVT_of_sectors(AR_inflow_dict,AR_outflow_dict,grid_name):
+    
+    def calc_TIVT_of_sectors(AR_inflow_dict,AR_outflow_dict,grid_name,
+                             cross_section_to_refer="AR_"):
+        """
+        
+
+        Parameters
+        ----------
+        AR_inflow_dict : dict
+            inflow dictionary with all sectors defined.
+        AR_outflow_dict : dict
+            outflow dictionary with all sectors defined.
+        grid_name : str
+            can be either ERA5 or CARRA so far, ICON is still missing.
+        cross_section_to_refer : str, optional
+            this defines whether the entire cross-section is used or just the 
+            subdomain that is considered as AR according to our criteria.
+            The default is "AR_" taking only the AR domain.
+
+        Returns
+        -------
+        TIVT_inflow_dict : TYPE
+            DESCRIPTION.
+        TIVT_outflow_dict : TYPE
+            DESCRIPTION.
+
+        """
         # Calc TIVT
         if grid_name=="ERA5":
             ivt_var_arg="Interp_IVT"
@@ -777,8 +803,10 @@ class Atmospheric_Rivers():
         else:
             print("Others also like ICON-2km are not yet included.")
         
-        ar_inflow=AR_inflow_dict["AR_inflow"]
-        ar_outflow=AR_outflow_dict["AR_outflow"]
+        # This will be used for Figure 10 later on 
+        # and takes the relevant sector
+        ar_inflow=AR_inflow_dict[cross_section_to_refer+"inflow"]
+        ar_outflow=AR_outflow_dict[cross_section_to_refer+"outflow"]
         
         inflow_core=AR_inflow_dict["AR_inflow_core"]
         outflow_core=AR_outflow_dict["AR_outflow_core"]
