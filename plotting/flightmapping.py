@@ -1695,9 +1695,13 @@ class FlightMaps(flight_campaign):
             flight_date=flight_date+"-"+\
                         campaign_cls.flight_day[flight_str]
             
-            AR=AR.Atmospheric_Rivers("ERA")
+            if int(flight_date[0:4])<2022:
+                use_era5_ARs=False    
+            else:
+                use_era5_ARs=True
+            AR=AR.Atmospheric_Rivers("ERA",use_era5=use_era5_ARs)
             AR_era_ds=AR.open_AR_catalogue(after_2019=int(flight_date[0:4])>2019)
-            
+                
             AR_era_data=AR.specify_AR_data(AR_era_ds,flight_date)
         
         
@@ -1723,9 +1727,13 @@ class FlightMaps(flight_campaign):
         
         #Aircraft Position
         if not self.synthetic_campaign:
+            
             if campaign_cls.is_flight_campaign:
-                halo_dict=campaign_cls.get_aircraft_position([flight_str],
+                if not hasattr(self,"halo_dict"):
+                    halo_dict=campaign_cls.get_aircraft_position([flight_str],
                                                          campaign_cls.name)
+                else:
+                    halo_dict=self.halo_dict
         else:
             if campaign_cls.name=="HALO_AC3_Dry_Run":
             # Load Halo Dataset
@@ -2029,7 +2037,7 @@ class FlightMaps(flight_campaign):
             AR_cutted_halo,_,ar_of_day=ERA5_on_HALO.cut_halo_to_AR_crossing(\
                                                     self.ar_of_day,flight_str, 
                                                     halo_df,None,
-                                                    campaign=campaign_cls.name,
+                                                    #campaign=campaign_cls.name,
                                                     device="halo",
                                                     invert_flight=invert_flight)
         else:
@@ -2268,14 +2276,23 @@ class FlightMaps(flight_campaign):
                                                 [:,"6000.0"].values
         
             else:
-                index_var=Dropsondes["Time"].loc["6000.0"]
-                dropsonde_releases=pd.Series()
-                dropsonde_releases["Lat"]=np.array(Dropsondes["Lat"]\
+                dropsonde_releases=pd.DataFrame(data=np.nan,
+                                                columns=["Lat","Lon"])
+                
+                if "Time" in [*Dropsondes.keys()]:
+                    index_var=Dropsondes["Time"].loc["6000.0"]
+                    dropsonde_releases["Lat"]=np.array(Dropsondes["Lat"]\
                                                    .loc["6000.0"])
-                dropsonde_releases["Lon"]=np.array(Dropsondes["Lon"]\
+                    dropsonde_releases["Lon"]=np.array(Dropsondes["Lon"]\
                                                    .loc["6000.0"])
+                else:
+                    index_var=[*Dropsondes["reference_time"].keys()]
+                    dropsonde_releases["Lat"]=[float(val) \
+                            for val in [*Dropsondes["reference_lat"].values()]]
+                    dropsonde_releases["Lon"]=[float(val) \
+                            for val in [*Dropsondes["reference_lon"].values()]]
                 dropsonde_releases["Time"]=index_var
-        
+            
             if not self.flight=="RF08":
                 relevant_dropsondes=dropsonde_releases.loc[\
                                         cut_radar["Reflectivity"].index[0]:\

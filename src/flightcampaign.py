@@ -2213,6 +2213,7 @@ class HALO_AC3(Campaign):
         flight_years=zip(months,[self.year] * len(months))
         self.years=dict(flight_years)
         self.campaign_path=self.major_path+"/"+self.name
+        self.campaign_data_path=self.campaign_path
         if not os.path.exists(self.campaign_path):
             os.makedirs(self.campaign_path)
             print("Path of Campaign",self.name,"is created under:",

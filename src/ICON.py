@@ -11,6 +11,7 @@ import xarray as xr
 
 class ICON_NWP():
     def __init__(self,start_hour,resolution,for_flight_campaign=True,
+                 upsample_time="10min",
                  campaign="NAWDEX",flight="RF02",research_flights=None,
                  icon_path=os.getcwd(),synthetic_flight=False):
         prefix='C:\\Users\\u300737\\Desktop\\PhD_UHH_WIMI\\Work\\GIT_Repository/'
@@ -26,6 +27,7 @@ class ICON_NWP():
         if for_flight_campaign:
             self.campaign_name=campaign
             self.flight=flight
+        self.upsample_time=upsample_time
         self.start_hour=start_hour
         self.minutes_time=['00:00', '00:10', '00:20',
                          '00:30', '00:40', '00:50']
@@ -173,11 +175,11 @@ class ICON_NWP():
         print("in order to better simulate the time variability")
         print("---this takes a while, as it is compute extensively----")
         icon_upsampled_hmp={}
-        icon_upsampled_hmp["IWV"]=iwv_icon.resample(time="1min").\
+        icon_upsampled_hmp["IWV"]=iwv_icon.resample(time=self.upsample_time).\
                                         interpolate("linear")
-        icon_upsampled_hmp["LWP"]=lwp_icon.resample(time="1min").\
+        icon_upsampled_hmp["LWP"]=lwp_icon.resample(time=self.upsample_time).\
                                         interpolate("linear")
-        icon_upsampled_hmp["IWP"]=iwp_icon.resample(time="1min").\
+        icon_upsampled_hmp["IWP"]=iwp_icon.resample(time=self.upsample_time).\
                                         interpolate("linear")
         self.icon_upsampled_hmp=icon_upsampled_hmp
     
@@ -347,6 +349,7 @@ class ICON_NWP():
                     icon_var_list=[icon16,icon17]
                 if flight[0]=="RF05":
                     start_hour="10"
+                    
                     if ar_of_day=="AR1":
                         icon10=ICON_NWP(start_hour,resolution,
                                     for_flight_campaign=True,
@@ -357,6 +360,44 @@ class ICON_NWP():
                                     campaign=campaign,research_flights=None,
                                     icon_path=hydrometeor_icon_path)
                         icon_var_list=[icon10,icon11]
+                    elif ar_of_day=="AR_entire_1":
+                        icon10=ICON_NWP(start_hour,resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon11=ICON_NWP("11",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon12=ICON_NWP("12",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon13=ICON_NWP("13",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon_var_list=[icon10,icon11,icon12,icon13]
+                    elif ar_of_day=="AR_entire_2":
+                        start_hour="12"
+                        icon12=ICON_NWP(start_hour,resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon13=ICON_NWP("13",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon14=ICON_NWP("14",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon15=ICON_NWP("15",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        icon_var_list=[icon12,icon13,icon14,icon15]
+                        
                     elif ar_of_day=="AR2":    
                         icon11=ICON_NWP("11",resolution,
                                     for_flight_campaign=True,
@@ -392,7 +433,7 @@ class ICON_NWP():
                         
                         icon_var_list=[icon14,icon15]
                 if flight[0]=="RF06":
-                    if ar_of_day=="AR1":
+                    if ar_of_day=="AR1" or ar_of_day=="AR_entire_1":
                         start_hour="10"
                         icon10=ICON_NWP(start_hour,resolution,
                                     for_flight_campaign=True,
@@ -412,13 +453,9 @@ class ICON_NWP():
                                     campaign=campaign,research_flights=None,
                                     icon_path=hydrometeor_icon_path)
                         icon_var_list=[icon10,icon11,icon12,icon13]
-                    if ar_of_day=="AR2":
-                        start_hour="11"
-                        icon11=ICON_NWP(start_hour,resolution,
-                                    for_flight_campaign=True,
-                                    campaign=campaign,research_flights=None,
-                                    icon_path=hydrometeor_icon_path)
-                        icon12=ICON_NWP("12",resolution,
+                    if ar_of_day=="AR2" or ar_of_day=="AR_entire_2":
+                        start_hour="12"
+                        icon12=ICON_NWP(start_hour,resolution,
                                     for_flight_campaign=True,
                                     campaign=campaign,research_flights=None,
                                     icon_path=hydrometeor_icon_path)
@@ -431,7 +468,12 @@ class ICON_NWP():
                                     for_flight_campaign=True,
                                     campaign=campaign,research_flights=None,
                                     icon_path=hydrometeor_icon_path)
-                        icon_var_list=[icon11,icon12,icon13,icon14]
+                        icon15=ICON_NWP("15",resolution,
+                                    for_flight_campaign=True,
+                                    campaign=campaign,research_flights=None,
+                                    icon_path=hydrometeor_icon_path)
+                        
+                        icon_var_list=[icon12,icon13,icon14,icon15]
                     
                 if flight[0]=="RF07":
                     start_hour="14"

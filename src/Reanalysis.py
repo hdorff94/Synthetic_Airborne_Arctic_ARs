@@ -1067,9 +1067,9 @@ def main(campaign="NAWDEX"):
     era_path=central_path+"/"+campaign+"/data/ERA-5/"
     carra_path=central_path+"/"+campaign+"/data/CARRA/"
     
-    era_is_desired=True
-    carra_is_desired=False
-    carra_initial="09:00"
+    era_is_desired=False
+    carra_is_desired=True
+    carra_initial="15:00"
     domain="east_domain"
         
     # Check campaign name to specify flights and, i.e. dates to download
@@ -1162,8 +1162,8 @@ def main(campaign="NAWDEX"):
     elif campaign=="HALO_AC3":
         synthetic_campaign=False
         analysing_campaign=True
-        flights=["RF05"]#["RF06"]#,"RF06"]
-        dates=["20220315"]#["20220316"]#,"20220316"]
+        flights=["RF06"]#["RF06"]#,"RF06"]
+        dates=["20220316"]#["20220316"]#,"20220316"]
     else:
         raise Exception("The given campaign is not specified in the Downloader")
     if not campaign=="PAMTRA_Retrieval":
@@ -1219,7 +1219,7 @@ def main(campaign="NAWDEX"):
                 flights[0]=="RF06plus2" or flights[0]=="RF06plus3" or \
                     flights[0]=="RF01" or flights[0]=="RF02" or \
                 flights[0]=="RF03" or flights[0]=="RF04" or \
-                    flights[0]=="RF05" or \
+                    flights[0]=="RF05" or flights[0]=="RF06" or\
                         flights[0]=="RF07" or\
                             flights[0]=="RF08" or flights[0]=="RF16":
                 research_area=[90,-90,50,90]
@@ -1257,7 +1257,7 @@ def main(campaign="NAWDEX"):
                                          do_daily_average_single_levels=False,
                                          do_temp_850hPa=True)
     if carra_is_desired:
-        carra_downloader.download_handler(do_total_columns=True,do_levels=False,
+        carra_downloader.download_handler(do_total_columns=True,do_levels=True,
                                           do_hydrometeors=False)
 if __name__=="__main__":
     #main(campaign="NA_February_Run")

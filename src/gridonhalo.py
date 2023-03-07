@@ -788,8 +788,10 @@ class ERA_on_HALO(ERA5):
 class CARRA_on_HALO(CARRA):
     def __init__(self,halo_df,carra_lvls_path,
                  is_flight_campaign,campaign,major_path,
-                 flights,date,config_file,ar_of_day=None,last_index=None,
+                 flights,date,config_file,ar_of_day=None,
+                 last_index=None,
                  synthetic_flight=False,
+                 upsample_time="10min",
                  HMPs=["IWV_clc","IVT","IVT_u","IVT_v"],
                  HMCs=["specific_humidity","u","v","z"],
                  do_instantaneous=False):
@@ -797,6 +799,8 @@ class CARRA_on_HALO(CARRA):
              super().__init__(self,is_flight_campaign,
                               major_path,carra_path=carra_lvls_path)
              self.campaign=campaign
+             self.upsample_time=upsample_time
+            
              self.flight=flights[0]
              if do_instantaneous==True:
                  if not self.flight.endswith("instantan"):
@@ -1224,7 +1228,6 @@ class CARRA_on_HALO(CARRA):
             ####### Upsample vars
             # Now upsampling is done for 10 minutes, but it is recommened to do 
             # that for 10 minutes and then upsample specific times
-            self.upsample_time="10min"
             if not upsampling_done:
                 if self.config["Data_Paths"]["system"]=="windows":
                     #        #having it as g/kg
@@ -1288,7 +1291,8 @@ class CARRA_on_HALO(CARRA):
                                   carra_time_index,carra_range_index,
                                   self.halo_df.index,i)
             print("Resample one hour data to minute frequency")
-            self.hour_data=self.hour_data.resample(time="1min").interpolate("linear")
+            self.hour_data=self.hour_data.resample(time=self.upsample_time).\
+                                    interpolate("linear")
             hour_data_index=pd.DatetimeIndex(self.hour_data.time.values)
             hour_data_hours=hour_data_index.hour
             last_index=self.last_index
@@ -1301,7 +1305,7 @@ class CARRA_on_HALO(CARRA):
                     self.idx_loc_desired_times(self.upsampled_intc[var],
                                   carra_time_index,carra_range_index,
                                   self.halo_df.index,i)
-                    self.hour_data=self.hour_data.resample(time="1min").\
+                    self.hour_data=self.hour_data.resample(time=self.upsample_time).\
                         interpolate("linear")
                     hour_data_index=pd.DatetimeIndex(self.hour_data.time.values)
                     hour_data_hours=hour_data_index.hour
@@ -1373,6 +1377,7 @@ class ICON_on_HALO(ICON):
     def __init__(self,cmpgn_cls,icon_var_list,halo_df,flight,date,
                  interpolated_hmp_file=None,interpolated_hmc_file=None,
                  ar_of_day=None,synthetic_icon=False,synthetic_icon_lat=0,
+                 upsample_time="10min",
                  HMPs=["IWV","LWP","IWP"],HMCs=[],
                  synthetic_flight=False):
         
@@ -1390,6 +1395,7 @@ class ICON_on_HALO(ICON):
         self.last_index=self.halo_df.shape[0]
         self.HMPs=HMPs
         self.HMCs=HMCs
+        self.upsample_time=upsample_time
         self.synthetic_flight=synthetic_flight
         self.campaign_name=cmpgn_cls.name
     def update_ICON_hydrometeor_data_path(self,hydro_path):
@@ -1449,9 +1455,9 @@ class ICON_on_HALO(ICON):
         for hmp in self.HMPs:
             print("Interpolate ",hmp)
             for i in range(iterative_length):
-                relevant_index=icon_simulations_minute_of_day[\
-                           icon_simulations_minute_of_day==\
-                           halo_icon["Minutesofday"].iloc[i]].index[0]
+                minutes_difference=abs(icon_simulations_minute_of_day-\
+                           halo_icon["Minutesofday"].iloc[i])
+                relevant_index=minutes_difference.idxmin()
                 icon_grid_values=self.icon_upsampled_hmp[hmp][relevant_index,:]
         
                 lon=np.array(np.rad2deg(icon_grid_values.clon[:]))
@@ -1551,7 +1557,7 @@ class ICON_on_HALO(ICON):
         return self.halo_icon_hmp
     
     #%% Hydrometeorcontents (HMCs)
-    def interpolate_icon_3D_data(self,icon_q,var,upsample_time=None,
+    def interpolate_icon_3D_data(self,icon_q,var,
                                  geo_interpolation_type="triangle",
                                  save_interpolation_df=False):
         """
@@ -1564,9 +1570,6 @@ class ICON_on_HALO(ICON):
             DESCRIPTION.
         var : str
             Variable to interpolate the data to be saved will named by this.
-        upsample_time : str
-            str containing the resolution to consider. Default is None due to 
-            computation ressources
         geo_interpolation_type : str
             str defining the interpolation method for the geolocation. 
             Default is triangle using Triangulation from matplotlib, 
@@ -1608,9 +1611,10 @@ class ICON_on_HALO(ICON):
         
         icon_q=icon_q[varname]
         if not var=="Z_Height":
-            if not (upsample_time is None):
-                print("Interpolate ICON in time to ",upsample_time)
-                icon_q=icon_q.resample(time=upsample_time).interpolate("linear")
+            if not (self.upsample_time is None):
+                print("Interpolate ICON in time to ",self.upsample_time)
+                icon_q=icon_q.resample(time=self.upsample_time).interpolate(
+                                            "linear")
             if not self.campaign_name=="HALO_AC3":
                 icon_initial_hour=self.icon_var_list[0]
             
@@ -1744,8 +1748,8 @@ class ICON_on_HALO(ICON):
         return q_interp_point
     
     def load_hwc(self,with_hydrometeors=False):
-            interp_icon_q_file="Specific_Humidity_interpolated_profile.csv"
-            #interp_icon_q_file="V_Wind_interpolated_profile.csv"
+            #interp_icon_q_file="Specific_Humidity_interpolated_profile.csv"
+            interp_icon_q_file="V_Wind_interpolated_profile.csv"
             
             if self.ar_of_day is not None:
                 interp_icon_q_file=self.flight+"_"+self.ar_of_day+\
@@ -1868,10 +1872,7 @@ class ICON_on_HALO(ICON):
                     #              "for Synthetic Observations")
                     #        self.lat_changed=True
                     upsample_resolution=None
-                    if self.campaign_name=="HALO_AC3":
-                        upsample_resolution="10min"
                     interp_q_icon = self.interpolate_icon_3D_data(icon_ds,var,
-                                            upsample_time=upsample_resolution,
                                             geo_interpolation_type="triangle",
                                             save_interpolation_df=True)
                     icon_var=halo_icon_keys[k]

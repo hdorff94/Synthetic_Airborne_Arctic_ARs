@@ -43,6 +43,7 @@ def main(config_file_path=os.getcwd(),
          # USEFUL values
          synthetic_icon_lat=0,
          synthetic_icon_lon=0,
+         upsample_time="20min", # ---> very important for computational ressources
          #synthetic_icon_lat=-7,
          #synthetic_icon_lon=-12,
          #synthetic_icon_lat=1.8,
@@ -382,6 +383,7 @@ def main(config_file_path=os.getcwd(),
                                 analysing_campaign,campaign,
                                 config_file["Data_Paths"]["campaign_path"],
                                 flight,date,config_file,ar_of_day=ar_of_day,
+                                upsample_time=upsample_time,
                                 synthetic_flight=synthetic_flight,
                                 do_instantaneous=do_instantaneous)
    
@@ -489,6 +491,7 @@ def main(config_file_path=os.getcwd(),
                             cmpgn_cls,icon_var_list,halo_df,flight,date,
                             interpolated_hmp_file=interp_icon_hmp_file,
                             interpolated_hmc_file=None,ar_of_day=ar_of_day,
+                            upsample_time=upsample_time,
                             synthetic_icon=synthetic_icon,
                             synthetic_flight=synthetic_flight)
         if campaign=="HALO_AC3":
@@ -703,12 +706,14 @@ def main(config_file_path=os.getcwd(),
                 # Moisture and Moisture Budget
             AR_flight_section_mapping(ERA5_on_HALO,radar,Dropsondes,cmpgn_cls,
                                       halo_data=halo_df)
-            if not cmpgn_cls.name=="HALO_AC3":
-                Flightmap.plot_AR_moisture_components_map(ERA5_on_HALO,radar,
+
+            Flightmap.halo_dict={flight[0]:halo_df}
+            #if not cmpgn_cls.name=="HALO_AC3":
+            Flightmap.plot_AR_moisture_components_map(ERA5_on_HALO,radar,
                                                   Dropsondes,cmpgn_cls)
-                if not flight[0].endswith("instantan"):
-                    Flightmap.plot_moisture_budget(ERA5_on_HALO,radar,
-                                       Dropsondes,cmpgn_cls)
+            #if not flight[0].endswith("instantan"):
+            #        Flightmap.plot_moisture_budget(ERA5_on_HALO,radar,
+            #                           Dropsondes,cmpgn_cls)
             
             
             if icon_is_desired:
