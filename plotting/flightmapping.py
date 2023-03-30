@@ -1200,7 +1200,6 @@ class FlightMaps(flight_campaign):
                     Dropsondes["Lon"]=pd.Series(data=np.array(sondes_lon),
                                                 index=Dropsondes["IWV"].index)
 
-            #print(halo_dict)
             else:
                 # Load Halo Dataset
                 halo_waypoints=campaign_cls.get_aircraft_waypoints(filetype=".csv")
@@ -1633,7 +1632,7 @@ class FlightMaps(flight_campaign):
     def plot_AR_moisture_components_map(self,era_on_halo_cls,cut_radar,
                                     Dropsondes,campaign_cls,
                                     opt_plot_path=os.getcwd(),
-                                    invert_flight=False):
+                                    invert_flight=False,do_sector_based=False):
         """
         
 
@@ -1775,28 +1774,38 @@ class FlightMaps(flight_campaign):
         halo_df.index=pd.DatetimeIndex(halo_df.index)
         #map_fig=plt.figure(figsize=(13,10))
         
+        if flight_str=="RF05":
+            central_lat=70
+            central_lon=-10
+        elif flight_str=="RF06":
+            central_lat=74
+            central_lon=15
         map_fig=plt.figure(figsize=(22,20))
         
         ax1 = plt.subplot(2,2,1,projection=ccrs.AzimuthalEquidistant(
-                                central_longitude=-5.0,central_latitude=60))
+                                central_longitude=central_lon,
+                                central_latitude=central_lat))
         ax1.coastlines(resolution="50m")
         gl1=ax1.gridlines(draw_labels=True,dms=True,
                           x_inline=False,y_inline=False)
         
         ax2 = plt.subplot(2,2,2,projection=ccrs.AzimuthalEquidistant(
-                                central_longitude=-5.0,central_latitude=60))
+                                central_longitude=central_lon,
+                                central_latitude=central_lat))
         ax2.coastlines(resolution="50m")
         gl2=ax2.gridlines(draw_labels=True,dms=True,
                           x_inline=False,y_inline=False)
         
         ax3 = plt.subplot(2,2,3,projection=ccrs.AzimuthalEquidistant(
-                                central_longitude=-5.0,central_latitude=60))
+                                central_longitude=central_lon,
+                                central_latitude=central_lat))
         ax3.coastlines(resolution="50m")
         gl3=ax3.gridlines(draw_labels=True,dms=True,
                           x_inline=False,y_inline=False)
         
         ax4 = plt.subplot(2,2,4,projection=ccrs.AzimuthalEquidistant(
-                                central_longitude=-5.0,central_latitude=60))
+                                central_longitude=central_lon,
+                                central_latitude=central_lat))
         ax4.coastlines(resolution="50m")
         gl4=ax4.gridlines(draw_labels=True,dms=True,
                           x_inline=False,y_inline=False)
@@ -1811,18 +1820,18 @@ class FlightMaps(flight_campaign):
         gl1.right_labels=False
         gl2.right_labels=False
         
-        gl3.top_labels=True
-        gl4.top_labels=True
-        gl3.bottom_labels=False
-        gl4.bottom_labels=False
+        gl3.top_labels=False
+        gl4.top_labels=False
+        gl3.bottom_labels=True
+        gl4.bottom_labels=True
         
-        gl3.left_labels=False
-        
+        gl3.left_labels=True
+        gl4.left_labels=False
         gl3.right_labels=False
         gl4.right_labels=False
         
-        ticklabel_color="dimgrey"
-        tick_size=14
+        ticklabel_color="k"
+        tick_size=18
         gl1.xlabel_style= {'size':tick_size,
                            'color':ticklabel_color}
         gl2.xlabel_style= {'size':tick_size,
@@ -1831,10 +1840,18 @@ class FlightMaps(flight_campaign):
                            'color':ticklabel_color}
         gl2.ylabel_style= {'size':tick_size,
                            'color':ticklabel_color}
+        gl3.xlabel_style= {'size':tick_size,
+                           'color':ticklabel_color}
+        gl4.xlabel_style= {'size':tick_size,
+                           'color':ticklabel_color}
+        gl3.ylabel_style= {'size':tick_size,
+                           'color':ticklabel_color}
+        gl4.ylabel_style= {'size':tick_size,
+                           'color':ticklabel_color}
         
         #     if flight=="RF01" or flight=="RF13":
-        lat_extension=2.0
-        lon_extension=2.0
+        lat_extension=.5
+        lon_extension=1.0
             # 
         axins1=inset_axes(ax1,width="3%",
                               height="80%",
@@ -1844,20 +1861,81 @@ class FlightMaps(flight_campaign):
                               borderpad=0)        
             
         #Plot HALO flight course
-        ax1.plot(halo_df["longitude"],halo_df["latitude"],
-                  transform=ccrs.PlateCarree(),
-                  color="salmon",linestyle='--',linewidth=1.0,alpha=0.9)    
-        ax2.plot(halo_df["longitude"],halo_df["latitude"],
-                  transform=ccrs.PlateCarree(),color="salmon",
-                  linestyle='--',linewidth=1.0,alpha=0.9)    
-        ax3.plot(halo_df["longitude"],halo_df["latitude"],
-                  transform=ccrs.PlateCarree(),
-                  color="salmon",linestyle='--',linewidth=1.0,alpha=0.9)    
-        ax4.plot(halo_df["longitude"],halo_df["latitude"],
-                  transform=ccrs.PlateCarree(),color="salmon",
-                  linestyle='--',linewidth=1.0,alpha=0.9)
+        #ax1.plot(halo_df["longitude"],halo_df["latitude"],
+        #          transform=ccrs.PlateCarree(),
+        #          color="purp",linestyle='--',linewidth=1.0,alpha=0.9)    
+        #ax2.plot(halo_df["longitude"],halo_df["latitude"],
+        #          transform=ccrs.PlateCarree(),color="salmon",
+        #          linestyle='--',linewidth=1.0,alpha=0.9)    
+        #ax3.plot(halo_df["longitude"],halo_df["latitude"],
+        #          transform=ccrs.PlateCarree(),
+        #          color="salmon",linestyle='--',linewidth=1.0,alpha=0.9)    
+        #ax4.plot(halo_df["longitude"],halo_df["latitude"],
+        #          transform=ccrs.PlateCarree(),color="salmon",
+        #          linestyle='--',linewidth=1.0,alpha=0.9)
         
-        
+        if do_sector_based:
+            if self.flight=="RF05":
+                if self.ar_of_day=="AR_entire_1":
+                    inflow_times=["2022-03-15 10:11","2022-03-15 11:13"]
+                    internal_times=["2022-03-15 11:18","2022-03-15 12:14"]
+                    outflow_times=["2022-03-15 12:20","2022-03-15 13:15"]
+                elif self.ar_of_day=="AR_entire_2":
+                    inflow_times=["2022-03-15 14:30 ","2022-03-15 15:25"]
+                    internal_times=["2022-03-15 13:20 ","2022-03-15 14:25"]
+                    outflow_times=["2022-03-15 12:20","2022-03-15 13:15"]
+            if self.flight=="RF06":
+                if self.ar_of_day=="AR_entire_1":
+                    inflow_times=["2022-03-16 10:45","2022-03-16 11:21"]
+                    internal_times=["2022-03-16 11:25","2022-03-16 12:10"]
+                    outflow_times=["2022-03-16 12:15","2022-03-16 12:50"]
+                elif self.ar_of_day=="AR_entire_2":
+                    inflow_times=["2022-03-16 12:12","2022-03-16 12:55"]
+                    internal_times=["2022-03-16 12:58","2022-03-16 13:40"]
+                    outflow_times=["2022-03-16 13:45","2022-03-16 14:18"]
+                    
+            new_halo_dict={self.flight:{
+                "inflow":halo_df.loc[inflow_times[0]:inflow_times[1]],
+                "internal":halo_df.loc[internal_times[0]:internal_times[1]],
+                "outflow":halo_df.loc[outflow_times[0]:outflow_times[1]]
+                }
+                }
+            from atmospheric_rivers import Atmospheric_Rivers
+            AR_inflow,AR_outflow=Atmospheric_Rivers.locate_AR_cross_section_sectors(
+                                    new_halo_dict,era_on_halo_cls.halo_era5,
+                                    self.flight)
+            # Two sondes per sector
+            number_of_sondes=2
+            sondes_selection={}
+            for sector in ["warm_sector","core","cold_sector"]:
+                add_sonde=1
+                #if sector=="core":
+                #    add_sonde=1
+                sondes_selection["ind_inflow_"+sector]=np.linspace(0,
+                                    AR_inflow["AR_inflow_"+sector].shape[0]-1,
+                                    num=number_of_sondes+add_sonde).astype(int)
+                sondes_selection["ind_outflow_"+sector]=np.linspace(0,
+                                    AR_outflow["AR_outflow_"+sector].shape[0]-1,
+                                    num=number_of_sondes+add_sonde).astype(int)
+                sondes_selection["time_inflow_"+sector]=\
+                    AR_inflow["AR_inflow_"+sector].index[\
+                                    sondes_selection["ind_inflow_"+sector]]
+                sondes_selection["time_outflow_"+sector]=\
+                    AR_outflow["AR_outflow_"+sector].index[\
+                                    sondes_selection["ind_outflow_"+sector]]
+                sondes_selection["pos_inflow_"+sector]=\
+                    AR_inflow["AR_inflow_"+sector][\
+                            ["Halo_Lat","Halo_Lon"]].loc[\
+                                    sondes_selection["time_inflow_"+sector]]
+                sondes_selection["pos_outflow_"+sector]=\
+                    AR_outflow["AR_outflow_"+sector][\
+                                ["Halo_Lat","Halo_Lon"]].loc[\
+                                    sondes_selection["time_outflow_"+sector]]
+
+                sondes_selection["pos_all_"+sector]=pd.concat(\
+                                    [sondes_selection["pos_inflow_"+sector],
+                                     sondes_selection["pos_outflow_"+sector]])
+
         if not cut_radar=={}:
             last_minute=cut_radar["Reflectivity"].index.minute[-1]
             if last_minute>30:
@@ -1946,9 +2024,10 @@ class FlightMaps(flight_campaign):
             
         #Identify periods of strong radar reflectivity
         if not self.synthetic_campaign:
-                high_dbZ_index=cut_radar["Reflectivity"][\
-                                    cut_radar["Reflectivity"]>15].any(axis=1)
-                high_dbZ=cut_radar["Reflectivity"].loc[high_dbZ_index]
+            temporary_cut_radar=cut_radar["Reflectivity"].iloc[:,6::]
+            high_dbZ_index=temporary_cut_radar[\
+                                    temporary_cut_radar>15].any(axis=1)
+            high_dbZ=temporary_cut_radar.loc[high_dbZ_index.values]
         else:
             # Just for not creating coding mess-up, no radar data is given
             cut_radar=dict()
@@ -1959,27 +2038,146 @@ class FlightMaps(flight_campaign):
                                              cut_radar["Reflectivity"].index[-1]],
                     halo_df["latitude"].loc[cut_radar["Reflectivity"].index[0]:\
                                      cut_radar["Reflectivity"].index[-1]],
-                    transform=ccrs.PlateCarree(),marker=".",s=3,color="red",
+                    transform=ccrs.PlateCarree(),marker=".",s=10,color="purple",
                     alpha=0.95,zorder=1)    
         ax2.scatter(halo_df["longitude"].loc[cut_radar["Reflectivity"].index[0]:\
                                              cut_radar["Reflectivity"].index[-1]],
                     halo_df["latitude"].loc[cut_radar["Reflectivity"].index[0]:\
                                          cut_radar["Reflectivity"].index[-1]],
-                        transform=ccrs.PlateCarree(),marker='.',s=3,
-                        color="red",alpha=0.95,zorder=1)    
+                        transform=ccrs.PlateCarree(),marker='.',s=10,
+                        color="purple",alpha=0.95,zorder=1)    
         ax3.scatter(halo_df["longitude"].loc[cut_radar["Reflectivity"].index[0]:\
                                              cut_radar["Reflectivity"].index[-1]],
                     halo_df["latitude"].loc[cut_radar["Reflectivity"].index[0]:\
                                          cut_radar["Reflectivity"].index[-1]],
-                    transform=ccrs.PlateCarree(),marker='.',s=3,
-                    color="red",alpha=0.95,zorder=1)    
+                    transform=ccrs.PlateCarree(),marker='.',s=10,
+                    color="purple",alpha=0.95,zorder=1)    
         
         ax4.scatter(halo_df["longitude"].loc[cut_radar["Reflectivity"].index[0]:\
                                              cut_radar["Reflectivity"].index[-1]],
                     halo_df["latitude"].loc[cut_radar["Reflectivity"].index[0]:\
                                          cut_radar["Reflectivity"].index[-1]],
-                    transform=ccrs.PlateCarree(),marker='.',s=3,
-                    color="red",alpha=0.95,zorder=1)    
+                    transform=ccrs.PlateCarree(),marker='.',s=10,
+                    color="purple",alpha=0.95,zorder=1)    
+        axes_list=[ax1,ax2,ax3,ax4]
+        
+        for axis in axes_list:
+            # warm sector
+            axis.plot(AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"],
+                      AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"],
+                      ls="-.",color="lightgrey",lw=3,zorder=2,
+                      transform=ccrs.PlateCarree())
+            axis.plot(AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"],
+                      AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"],
+                      ls="-.",color="lightgrey",lw=3,zorder=2,
+                      transform=ccrs.PlateCarree())
+            #core
+            axis.plot(AR_inflow["AR_inflow_core"]["Halo_Lon"],
+                      AR_inflow["AR_inflow_core"]["Halo_Lat"],
+                      ls="-",color="white",lw=3,zorder=2,
+                      transform=ccrs.PlateCarree())
+            axis.plot(AR_outflow["AR_outflow_core"]["Halo_Lon"],
+                      AR_outflow["AR_outflow_core"]["Halo_Lat"],
+                      ls="-",color="white",lw=3,zorder=2,
+                      transform=ccrs.PlateCarree())
+            # cold sector
+            axis.plot(AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"],
+                      AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"],
+                      ls="-",color="white",lw=3,zorder=2,
+                      transform=ccrs.PlateCarree())
+            axis.plot(AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"],
+                      AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"],
+                      ls="--",color="lightblue",lw=4,zorder=2,
+                      transform=ccrs.PlateCarree())
+            #connecting lines
+            axis.plot([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].iloc[0],
+                       AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].iloc[0]],
+                       [AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].iloc[0],
+                       AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].iloc[0]],
+                       color="k",ls="--",transform=ccrs.PlateCarree(),zorder=10)
+            axis.plot([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].iloc[-1],
+                       AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].iloc[-1]],
+                       [AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].iloc[-1],
+                       AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].iloc[-1]],
+                       color="k",ls="--",transform=ccrs.PlateCarree(),zorder=10)
+            axis.plot([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].iloc[0],
+                       AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].iloc[0]],
+                       [AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].iloc[0],
+                       AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].iloc[0]],
+                       color="k",ls="--",transform=ccrs.PlateCarree(),zorder=10)
+            axis.plot([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].iloc[-1],
+                       AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].iloc[-1]],
+                       [AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].iloc[-1],
+                       AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].iloc[-1]],
+                       color="k",ls="--",transform=ccrs.PlateCarree(),zorder=10)
+        
+        #calc sector ERA5 means
+        #warm pre-frontal
+        w_lon_max=np.max([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].max(),
+                          AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].max()])
+        w_lon_min=np.min([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].min(),
+                          AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].min()])
+        w_lat_max=np.max([AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].max(),
+                          AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].max()])
+        w_lat_min=np.min([AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].min(),
+                          AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].min()])
+        #core
+        core_lon_max=np.max([AR_inflow["AR_inflow_core"]["Halo_Lon"].max(),
+                          AR_outflow["AR_outflow_core"]["Halo_Lon"].max()])
+        core_lon_min=np.min([AR_inflow["AR_inflow_core"]["Halo_Lon"].min(),
+                          AR_outflow["AR_outflow_core"]["Halo_Lon"].min()])
+        core_lat_max=np.max([AR_inflow["AR_inflow_core"]["Halo_Lat"].max(),
+                          AR_outflow["AR_outflow_core"]["Halo_Lat"].max()])
+        core_lat_min=np.min([AR_inflow["AR_inflow_core"]["Halo_Lat"].min(),
+                          AR_outflow["AR_outflow_core"]["Halo_Lat"].min()])
+        #cold post-frontal
+        c_lon_max=np.max([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].max(),
+                          AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].max()])
+        c_lon_min=np.min([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].min(),
+                          AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].min()])
+        c_lat_max=np.max([AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].max(),
+                          AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].max()])
+        c_lat_min=np.min([AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].min(),
+                          AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].min()])
+        
+        # subsample ds
+        warm_ds=ds.sel({"longitude":slice(w_lon_min,w_lon_max),
+                        "latitude":slice(w_lat_max,w_lat_min)})
+        core_ds=ds.sel({"longitude":slice(core_lon_min,core_lon_max),
+                        "latitude":slice(core_lat_max,core_lat_min)})
+        cold_ds=ds.sel({"longitude":slice(c_lon_min,c_lon_max),
+                        "latitude":slice(c_lat_max,c_lat_min)})
+        
+        mean_divIVT_warm_ds=warm_ds["IVT_conv"][last_hour,:,:].mean()
+        mean_IWV_dt_warm_ds=dIWV_dt.sel(
+            {"longitude":slice(w_lon_min,w_lon_max),
+             "latitude":slice(w_lat_max,w_lat_min)})[:,:].mean()                                                     
+        
+        mean_e_warm_ds=warm_ds["e"][last_hour,:,:].mean()
+        mean_p_warm_ds=warm_ds["tp"][last_hour,:,:].mean()
+        warm_center_lon=warm_ds.longitude.mean()
+        warm_center_lat=warm_ds.latitude.mean()
+        # core
+        mean_divIVT_core_ds=core_ds["IVT_conv"][last_hour,:,:].mean()
+        mean_IWV_dt_core_ds=dIWV_dt.sel(
+            {"longitude":slice(core_lon_min,core_lon_max),
+             "latitude":slice(core_lat_max,core_lat_min)})[:,:].mean()                                                     
+        
+        mean_e_core_ds=core_ds["e"][last_hour,:,:].mean()
+        mean_p_core_ds=core_ds["tp"][last_hour,:,:].mean()
+        core_center_lon=core_ds.longitude.mean()
+        core_center_lat=core_ds.latitude.mean()
+        # cold sector
+        # core
+        mean_divIVT_cold_ds=cold_ds["IVT_conv"][last_hour,:,:].mean()
+        mean_IWV_dt_cold_ds=dIWV_dt.sel(
+            {"longitude":slice(c_lon_min,c_lon_max),
+             "latitude":slice(c_lat_max,c_lat_min)})[:,:].mean()                                                     
+        
+        mean_e_cold_ds=cold_ds["e"][last_hour,:,:].mean()
+        mean_p_cold_ds=cold_ds["tp"][last_hour,:,:].mean()
+        cold_center_lon=cold_ds.longitude.mean()
+        cold_center_lat=cold_ds.latitude.mean()
         #------------------------------------------------------------------#
         ## Add quiver
         step=15
@@ -2009,35 +2207,110 @@ class FlightMaps(flight_campaign):
                            pivot="mid",width=0.008,
                            transform=ccrs.PlateCarree())
         #-----------------------------------------------------------------#    
+        # warm sector quantities
+        ax1.text(warm_center_lon,warm_center_lat,
+                 s=str(np.round(float(mean_divIVT_warm_ds),2)),
+                 color="red",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        ax2.text(warm_center_lon,warm_center_lat,
+                 s=str(np.round(float(mean_e_warm_ds),2)),
+                 color="red",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        ax3.text(warm_center_lon,warm_center_lat,
+                 s=str(np.round(float(mean_p_warm_ds),2)),
+                 color="red",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        ax4.text(warm_center_lon,warm_center_lat,
+                 s=str(np.round(float(mean_IWV_dt_warm_ds),2)),
+                 color="red",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        #core sector quantities
+        ax1.text(core_center_lon,core_center_lat,
+                 s=str(np.round(float(mean_divIVT_core_ds),2)),
+                 color="darkgreen",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        ax2.text(core_center_lon,core_center_lat,
+                 s=str(np.round(float(mean_e_core_ds),2)),
+                 color="darkgreen",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        ax3.text(core_center_lon,core_center_lat,
+                 s=str(np.round(float(mean_p_core_ds),2)),
+                 color="darkgreen",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        ax4.text(core_center_lon,core_center_lat,
+                 s=str(np.round(float(mean_IWV_dt_core_ds),2)),
+                 color="darkgreen",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        #cold sector quantities
+        ax1.text(cold_center_lon,cold_center_lat,
+                 s=str(np.round(float(mean_divIVT_cold_ds),2)),
+                 color="blue",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        ax2.text(cold_center_lon,cold_center_lat,
+                 s=str(np.round(float(mean_e_cold_ds),2)),
+                 color="blue",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        ax3.text(cold_center_lon,cold_center_lat,
+                 s=str(np.round(float(mean_p_cold_ds),2)),
+                 color="blue",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        ax4.text(cold_center_lon,cold_center_lat,
+                 s=str(np.round(float(mean_IWV_dt_cold_ds),2)),
+                 color="blue",
+                 bbox=dict(facecolor='lightgrey',edgecolor="k",
+                 boxstyle="round",alpha=0.8),
+                 transform=ccrs.PlateCarree(),zorder=12)
+        
         if not self.synthetic_campaign:
             #Plot high reflectivity values
             ax1.scatter(halo_df["longitude"].loc[high_dbZ.index],
-                    halo_df["latitude"].loc[high_dbZ.index],
+                    halo_df["latitude"].loc[high_dbZ.index]+0.1,
                     s=30,color="white",marker="D",linewidths=0.5,
                     label="Radar dbZ > 15",edgecolor="k",
-                    transform=ccrs.PlateCarree())
+                    transform=ccrs.PlateCarree(),zorder=5)
         
             ax2.scatter(halo_df["longitude"].loc[high_dbZ.index],
-                    halo_df["latitude"].loc[high_dbZ.index],
+                    halo_df["latitude"].loc[high_dbZ.index]+0.1,
                     s=30,color="white",marker="D",
                     linewidths=0.5,edgecolor="k",
-                    transform=ccrs.PlateCarree())
+                    transform=ccrs.PlateCarree(),zorder=5)
                 
-            ax3.scatter(halo_df["longitude"].loc[high_dbZ.index],
-                    halo_df["latitude"].loc[high_dbZ.index],
+            ax3.scatter(halo_df["longitude"].loc[high_dbZ.index]+0.1,
+                    halo_df["latitude"].loc[high_dbZ.index]+0.1,
                     s=30,color="white",marker="D",linewidths=0.5,
-                    edgecolor="k",transform=ccrs.PlateCarree())
+                    edgecolor="k",transform=ccrs.PlateCarree(),zorder=5)
         
             ax4.scatter(halo_df["longitude"].loc[high_dbZ.index],
-                    halo_df["latitude"].loc[high_dbZ.index],
+                    halo_df["latitude"].loc[high_dbZ.index]+0.1,
                     s=30,color="white",marker="D",linewidths=0.5,
-                    edgecolor="k",transform=ccrs.PlateCarree())
+                    edgecolor="k",transform=ccrs.PlateCarree(),zorder=5)
         #######################################################################
         # if no cut_radar data, e.g for Synthetic campaign or flight tracks
             AR_cutted_halo,_,ar_of_day=ERA5_on_HALO.cut_halo_to_AR_crossing(\
                                                     self.ar_of_day,flight_str, 
                                                     halo_df,None,
-                                                    #campaign=campaign_cls.name,
                                                     device="halo",
                                                     invert_flight=invert_flight)
         else:
@@ -2136,15 +2409,15 @@ class FlightMaps(flight_campaign):
         
             # #-----------------------------------------------------------------#    
         
-        ax1.scatter(AR_cutted_halo["longitude"],
-                        AR_cutted_halo["latitude"],
-                        transform=ccrs.PlateCarree(),marker=".",
-                        s=3,color="red",
-                        alpha=0.95,zorder=1)    
-        ax2.scatter(AR_cutted_halo["longitude"],
-                        AR_cutted_halo["latitude"],
-                        transform=ccrs.PlateCarree(),marker='.',s=3,
-                        color="red",alpha=0.95,zorder=1)    
+        #ax1.scatter(AR_cutted_halo["longitude"],
+        #                AR_cutted_halo["latitude"],
+        #                transform=ccrs.PlateCarree(),marker=".",
+        #                s=3,color="red",
+        #                alpha=0.95,zorder=1)    
+        #ax2.scatter(AR_cutted_halo["longitude"],
+        #                AR_cutted_halo["latitude"],
+        #                transform=ccrs.PlateCarree(),marker='.',s=3,
+        #                color="red",alpha=0.95,zorder=1)    
         #######################################################################
             
         print("Hour of the day:",last_hour)
@@ -2154,18 +2427,18 @@ class FlightMaps(flight_campaign):
             (start_pos["latitude"]-end_pos["latitude"])
         print("Meridional-Zonal ratio: ",deg_ratio)
         resizing_done=False
-        if abs((start_pos["longitude"]-end_pos["longitude"])/\
-               (start_pos["latitude"]-end_pos["latitude"]))>1.5:
-            lat_extension=4
-            resizing_done=True
-        elif abs((start_pos["latitude"]-end_pos["latitude"])/\
-                 (start_pos["longitude"]-end_pos["longitude"]))>1.5:
-            lon_extension=4
-            resizing_done=True
-        else:
-            pass
+        #if abs((start_pos["longitude"]-end_pos["longitude"])/\
+        #       (start_pos["latitude"]-end_pos["latitude"]))>1.5:
+        #    lat_extension=0.5
+        #    resizing_done=True
+        #elif abs((start_pos["latitude"]-end_pos["latitude"])/\
+        #         (start_pos["longitude"]-end_pos["longitude"]))>1.5:
+        #    lon_extension=0.5
+        #resizing_done=True
+        #else:
+        #    pass
         lower_lon=np.min([start_pos["longitude"],end_pos["longitude"]])-\
-                                                lon_extension*5
+                                                lon_extension*5*2
         upper_lon=np.max([start_pos["longitude"],end_pos["longitude"]])+\
                                                 lon_extension*5
         lower_lat=np.min([start_pos["latitude"],end_pos["latitude"]])-\
@@ -2276,8 +2549,7 @@ class FlightMaps(flight_campaign):
                                                 [:,"6000.0"].values
         
             else:
-                dropsonde_releases=pd.DataFrame(data=np.nan,
-                                                columns=["Lat","Lon"])
+                dropsonde_releases=pd.DataFrame()
                 
                 if "Time" in [*Dropsondes.keys()]:
                     index_var=Dropsondes["Time"].loc["6000.0"]
@@ -2287,10 +2559,10 @@ class FlightMaps(flight_campaign):
                                                    .loc["6000.0"])
                 else:
                     index_var=[*Dropsondes["reference_time"].keys()]
-                    dropsonde_releases["Lat"]=[float(val) \
-                            for val in [*Dropsondes["reference_lat"].values()]]
-                    dropsonde_releases["Lon"]=[float(val) \
-                            for val in [*Dropsondes["reference_lon"].values()]]
+                    dropsonde_releases["Lat"]=Dropsondes["Lat"]#[float(val) \
+                            #for val in [*Dropsondes["reference_lat"].values()]]
+                    dropsonde_releases["Lon"]=Dropsondes["Lon"]#[float(val) \
+                            #for val in [*Dropsondes["reference_lon"].values()]]
                 dropsonde_releases["Time"]=index_var
             
             if not self.flight=="RF08":
@@ -2299,42 +2571,43 @@ class FlightMaps(flight_campaign):
                                         cut_radar["Reflectivity"].index[-1]]
                 if relevant_dropsondes.shape[0]>0:
                     ax1.scatter(relevant_dropsondes["Lon"],
-                            relevant_dropsondes["Lat"],
+                            relevant_dropsondes["Lat"]-0.1,
                             s=100,marker="v",color="orange",
                             edgecolors="black",label="Dropsondes",
                             transform=ccrs.PlateCarree())
                 
                     ax2.scatter(relevant_dropsondes["Lon"],
-                            relevant_dropsondes["Lat"],
+                            relevant_dropsondes["Lat"]-0.1,
                             s=100,marker="v",color="orange",
                             edgecolors="black",label="Dropsondes",
                             transform=ccrs.PlateCarree())
                     ax3.scatter(relevant_dropsondes["Lon"],
-                            relevant_dropsondes["Lat"],
+                            relevant_dropsondes["Lat"]-0.1,
                             s=100,marker="v",color="orange",
                             edgecolors="black",label="Dropsondes",
                             transform=ccrs.PlateCarree())
                 
                     ax4.scatter(relevant_dropsondes["Lon"],
-                            relevant_dropsondes["Lat"],
+                            relevant_dropsondes["Lat"]-0.1,
                             s=100,marker="v",color="orange",
                             edgecolors="black",label="Dropsondes",
                             transform=ccrs.PlateCarree())
 
         
-        if not resizing_done:    
-            map_fig.suptitle(campaign_cls.name+" ERA-5 Moisture Budget for "+\
-                             flight_str+": "+campaign_cls.year+"-"+\
-                             campaign_cls.flight_month[flight_str]+"-"+\
-                             campaign_cls.flight_day[flight_str]+" "+\
-                             calc_time,y=0.94)
-        else:
-            map_fig.suptitle(campaign_cls.name+" ERA-5 Moisture Budget for "+\
+        #if not resizing_done:    
+        #    map_fig.suptitle(campaign_cls.name+" ERA-5 Moisture Budget for "+\
+        #                     flight_str+": "+campaign_cls.year+"-"+\
+        #                     campaign_cls.flight_month[flight_str]+"-"+\
+        #                     campaign_cls.flight_day[flight_str]+" "+\
+        #                     calc_time,y=0.94)
+        #else:
+        map_fig.suptitle(campaign_cls.name+" ERA-5 Moisture Budget for "+\
                              flight_str+": "+campaign_cls.year+"-"+\
                              campaign_cls.flight_month[flight_str]+\
                              "-"+campaign_cls.flight_day[flight_str]+\
                              " "+calc_time,y=0.94)
-        legend=ax1.legend(bbox_to_anchor=(0.65,-0.15,1.5,0),
+        
+        legend=ax1.legend(bbox_to_anchor=(0.55,-0.15,1.5,0),
                           facecolor='lightgrey',
                           loc="lower center",
                           ncol=2,mode="expand")

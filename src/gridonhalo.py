@@ -1378,7 +1378,7 @@ class ICON_on_HALO(ICON):
                  interpolated_hmp_file=None,interpolated_hmc_file=None,
                  ar_of_day=None,synthetic_icon=False,synthetic_icon_lat=0,
                  upsample_time="10min",
-                 HMPs=["IWV","LWP","IWP"],HMCs=[],
+                 HMPs=["IWV","LWP","IWP","Precip","EV"],HMCs=[],
                  synthetic_flight=False):
         
         self.ar_of_day=ar_of_day
@@ -1453,6 +1453,11 @@ class ICON_on_HALO(ICON):
     
         print("The hydrometeorpaths will be interpolated")
         for hmp in self.HMPs:
+            if hmp in ["Precip","EV"]:
+                if hmp not in [*self.icon_upsampled_hmp.keys()]:
+                    continue
+                else:
+                    pass
             print("Interpolate ",hmp)
             for i in range(iterative_length):
                 minutes_difference=abs(icon_simulations_minute_of_day-\
@@ -1758,18 +1763,18 @@ class ICON_on_HALO(ICON):
                 interp_icon_q_file="Synthetic_"+interp_icon_q_file
             
             if not with_hydrometeors:
-                variables=["Pressure",
-                       "Specific_Humidity",
-                       "U_Wind",
+                variables=[#"Pressure",
+                       #"Specific_Humidity",
+                       #"U_Wind",
                        "V_Wind",
                        "Z_Height"]
-                halo_icon_keys=["pres",
-                                "qv",
-                                "u",
+                halo_icon_keys=[#"pres",
+                                #"qv",
+                                #"u",
                                 "v",
                                 "Z_Height"]
-                dataset_var=["pres",
-                             "qv"#,
+                dataset_var=[#"pres",
+                             #"qv"#,
                              "u"
                              "v",
                              "z_mc"]
@@ -1900,7 +1905,8 @@ class ICON_on_HALO(ICON):
                 print("Changed Latitude of HALO Aircraft for Synthetic Observations")
                 #lat_changed=True
                 if not with_hydrometeors:
-                    halo_icon_keys=["p","q","u","v","Z_Height"]
+                    halo_icon_keys=["p","q",
+                                    "u","v","Z_Height"]
                     csv_icon_keys=["Pressure","Specific_Humidity",
                                "U_Wind","V_Wind","Z_Height"]
                 else:
@@ -1945,6 +1951,7 @@ class ICON_on_HALO(ICON):
                     del self.icon_ivt["time"]
             self.halo_icon_hmc["IVT"]=self.icon_ivt
             return self.halo_icon_hmc     
+    
     
     def calc_interp_IVT(self,save_ivt=True):
         """

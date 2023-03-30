@@ -655,6 +655,9 @@ class Atmospheric_Rivers():
                                 "end":"2022-03-12 13:32"}
             ARs["RF03"]["AR1"]={"start":"2022-03-13 10:00", # temporary
                                 "end":"2022-03-13 11:45"}   # temporary
+            ARs["RF03"]["AR_entire_1"]={"start":"2022-03-13 10:00", # temporary
+                                "end":"2022-03-13 11:45"}   # temporary
+            
             ARs["RF04"]["AR1"]={"start":"2022-03-14 16:00",
                                 "end":"2022-03-14 16:45"}
             ARs["RF05"]["AR_entire_1"]={"start":"2022-03-15 10:11",
@@ -671,7 +674,11 @@ class Atmospheric_Rivers():
                                 "end":"2022-03-15 15:20"}
             ARs["RF16"]["AR1"]={"start":"2022-04-10 10:30",
                                 "end":"2022-04-10 12:22"}
+            ARs["RF16"]["AR_entire_1"]={"start":"2022-04-10 10:30",
+                                "end":"2022-04-10 12:22"}
             ARs["RF16"]["AR2"]={"start":"2022-04-10 11:45",
+                                "end":"2022-04-10 13:45"}
+            ARs["RF16"]["AR_entire_2"]={"start":"2022-04-10 11:45",
                                 "end":"2022-04-10 13:45"}
             ARs["RF06"]["AR_entire_1"]={"start":"2022-03-16 10:45",
                                 "end":"2022-03-16 12:55"}
@@ -692,14 +699,18 @@ class Atmospheric_Rivers():
         # Get inflow and outflow
         inflow_flight_df  = HALO_Dict[analysed_flight]["inflow"]
         outflow_flight_df = HALO_Dict[analysed_flight]["outflow"]
-    
-        hmp_inflow  = Hydrometeors[analysed_flight]["AR_internal"].loc[\
+        if isinstance(Hydrometeors,dict):
+            hmp_inflow  = Hydrometeors[analysed_flight]["AR_internal"].loc[\
                                                         inflow_flight_df.index]
-        hmp_outflow = Hydrometeors[analysed_flight]["AR_internal"].loc[\
+            hmp_outflow = Hydrometeors[analysed_flight]["AR_internal"].loc[\
                                                         outflow_flight_df.index]
+            grid_name=Hydrometeors[analysed_flight]["AR_internal"].name
         
+        else:
+            hmp_inflow=Hydrometeors.loc[inflow_flight_df.index]
+            hmp_outflow=Hydrometeors.loc[outflow_flight_df.index]
+            grid_name="ERA5"
         # CARRA and ERA have different Interp_IVT names. This has to be defined here
-        grid_name=Hydrometeors[analysed_flight]["AR_internal"].name
         if grid_name=="ERA5":
             
             ivt_var_arg="Interp_IVT"

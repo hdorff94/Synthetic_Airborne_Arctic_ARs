@@ -530,6 +530,7 @@ def main(config_file_path=os.getcwd(),
             halo_era5=cmpgn_cls.calc_distance_to_IVT_max(
                         halo_df,
                         halo_era5)
+        ERA5_on_HALO.halo_era5=halo_era5.copy()
         #---------------------------------------------------------------------#
         if carra_is_desired:
             CARRA_on_HALO.load_or_calc_interpolated_hmp_data()
@@ -539,7 +540,7 @@ def main(config_file_path=os.getcwd(),
         if icon_is_desired:
             ICON_on_HALO.update_ICON_hydrometeor_data_path(hydrometeor_icon_path)
             halo_icon_hmp=ICON_on_HALO.load_interpolated_hmp()
-            #high_res_hmp=halo_icon_hmp.copy()
+            high_res_hmp=halo_icon_hmp.copy()
        #----------------------------------------------------------------------# 
     #%%
     if hmc_plotting_desired:
@@ -708,9 +709,9 @@ def main(config_file_path=os.getcwd(),
                                       halo_data=halo_df)
 
             Flightmap.halo_dict={flight[0]:halo_df}
-            #if not cmpgn_cls.name=="HALO_AC3":
             Flightmap.plot_AR_moisture_components_map(ERA5_on_HALO,radar,
-                                                  Dropsondes,cmpgn_cls)
+                                                  Dropsondes,cmpgn_cls,
+                                                  do_sector_based=True)
             #if not flight[0].endswith("instantan"):
             #        Flightmap.plot_moisture_budget(ERA5_on_HALO,radar,
             #                           Dropsondes,cmpgn_cls)

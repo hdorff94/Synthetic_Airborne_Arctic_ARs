@@ -146,7 +146,11 @@ class ICON_NWP():
             temporary_iwv=icon_ds["tqv_dia"]
             temporary_iwp=icon_ds["tqi_dia"]*1000
             temporary_lwp=icon_ds["tqc_dia"]*1000
-            
+            if "hourly_prec" in [*icon_ds.variables.keys()]:
+                temporary_rain=icon_ds["hourly_prec"]#*997
+                temporary_ev  =icon_ds["qhfl_s"]*997
+            #    temporary_rain=icon_h.adapt_icon_time_index(temporary_iwv, 
+            #                                           self.date, self.flight)
             # Interpolate the 10-min total columns to minutely data
             if not self.campaign_name=="HALO_AC3":
                 temporary_iwv=icon_h.adapt_icon_time_index(temporary_iwv, 
@@ -158,7 +162,12 @@ class ICON_NWP():
             if i==0:
                 iwv_icon=temporary_iwv#
                 lwp_icon=temporary_lwp 
-                iwp_icon=temporary_iwp 
+                iwp_icon=temporary_iwp
+                if "hourly_prec" in [*icon_ds.variables.keys()]:
+                    precip_icon=temporary_rain
+                    evap_icon  =temporary_ev
+                    
+             
             else:
                 iwv_icon=xr.concat([iwv_icon,temporary_iwv],dim="time").\
                     drop_duplicates(dim="time")
@@ -166,10 +175,18 @@ class ICON_NWP():
                     drop_duplicates(dim="time")
                 lwp_icon=xr.concat([lwp_icon,temporary_lwp],dim="time").\
                     drop_duplicates(dim="time")
-                
+                if "hourly_prec" in [*icon_ds.variables.keys()]:
+                    precip_icon=xr.concat([precip_icon,temporary_rain],
+                                          dim="time").drop_duplicates(dim="time")
+                    evap_icon    =xr.concat([evap_icon,temporary_ev],dim="time").\
+                                    drop_duplicates(dim="time")
+                    #temporary_ev  =icon_ds["qhfl_s"]*997
+            
             del temporary_iwv
             del temporary_lwp
             del temporary_iwp
+            del temporary_rain
+            del temporary_ev
             i+=1
             
         print("in order to better simulate the time variability")
@@ -181,6 +198,16 @@ class ICON_NWP():
                                         interpolate("linear")
         icon_upsampled_hmp["IWP"]=iwp_icon.resample(time=self.upsample_time).\
                                         interpolate("linear")
+        if "tot_prec" in [*icon_ds.variables.keys()]:
+            icon_upsampled_hmp["Precip"]=precip_icon.resample(
+                time=self.upsample_time).interpolate("linear")
+            icon_upsampled_hmp["EV"]=evap_icon.resample(
+                time=self.upsample_time).interpolate("linear")
+            #icon_upsampled_hmp["EV"]=evap_icon.resample(
+            #    time=self.upsample_time).interpolate("linear")
+            #icon_upsampled_hmp["EV"]=precip_icon.resample(
+            #    time=self.upsample_time).interpolate("linear")                    
+                            
         self.icon_upsampled_hmp=icon_upsampled_hmp
     
     @staticmethod
@@ -509,7 +536,7 @@ class ICON_NWP():
                                     icon_path=hydrometeor_icon_path)
                     icon_var_list=[icon09,icon10,icon11]
                 if flight[0]=="RF16":
-                    if ar_of_day=="AR1":
+                    if ar_of_day=="AR1" or ar_of_day=="AR_entire_1":
                         start_hour="10"
                         icon10=ICON_NWP(start_hour,resolution,
                                     for_flight_campaign=True,
@@ -529,7 +556,7 @@ class ICON_NWP():
                                     icon_path=hydrometeor_icon_path)
                         
                         icon_var_list=[icon10,icon11,icon12,icon13]
-                    if ar_of_day=="AR2":
+                    if ar_of_day=="AR2" or ar_of_day=="AR_entire_2":
                         start_hour="10"
                         icon10=ICON_NWP(start_hour,resolution,
                                     for_flight_campaign=True,

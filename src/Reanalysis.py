@@ -1067,10 +1067,10 @@ def main(campaign="NAWDEX"):
     era_path=central_path+"/"+campaign+"/data/ERA-5/"
     carra_path=central_path+"/"+campaign+"/data/CARRA/"
     
-    era_is_desired=False
-    carra_is_desired=True
-    carra_initial="15:00"
-    domain="east_domain"
+    era_is_desired=True
+    carra_is_desired=False
+    carra_initial="12:00"
+    domain="west_domain"
         
     # Check campaign name to specify flights and, i.e. dates to download
     if campaign.upper()=="NAWDEX":
@@ -1143,7 +1143,20 @@ def main(campaign="NAWDEX"):
     elif campaign=="PAMTRA_Retrieval":
         synthetic_campaign=True
         analysing_campaign=True
-        flights=["SRF08"]
+        flights=["SRF01","SRF02","SRF03","SRF04","SRF05"]
+        
+        # all 50 flights
+        dates=['19790312', '19810330', '19810424', '19820320', '19820416', 
+         '19830316', '19830331', '19830414', '19840308', '19840413',
+         '19840428', '19880330', '19890422', '19900409', '19900411',
+         '19900418', '19910301', '19910428', '19920302', '19920413', 
+         '19930303', '19930430', '19940421', '19950306', '19950317', 
+         '19970322', '19980324', '19980409', '20030415', '20050401', 
+         '20060317', '20070324', '20080313', '20080404', '20080411', 
+         '20080430', '20090324', '20100323', '20110311', '20110329', 
+         '20110413', '20140309', '20140330', '20160409', '20180319', 
+         '20180326', '20200326', '20220315', '20220316', '20220410'
+         ]
         # SRF01 1982-03-20
         # SRF02 1990-04-09
         # SRF03 1991-04-28
@@ -1152,7 +1165,7 @@ def main(campaign="NAWDEX"):
         # SRF06 2005-04-18
         # SRF07 2017-04-25    
         # SRF08 2021-03-31
-        dates=["20210331"]       
+        #dates=["20210331"]       
         
     elif campaign=="Weather_Course":
         synthetic_campaign=False
@@ -1162,8 +1175,8 @@ def main(campaign="NAWDEX"):
     elif campaign=="HALO_AC3":
         synthetic_campaign=False
         analysing_campaign=True
-        flights=["RF06"]#["RF06"]#,"RF06"]
-        dates=["20220316"]#["20220316"]#,"20220316"]
+        flights=["RF03"]#["RF06"]#,"RF06"]
+        dates=["20220313"]#["20220316"]#,"20220316"]
     else:
         raise Exception("The given campaign is not specified in the Downloader")
     if not campaign=="PAMTRA_Retrieval":
@@ -1262,4 +1275,4 @@ def main(campaign="NAWDEX"):
 if __name__=="__main__":
     #main(campaign="NA_February_Run")
     #main(campaign="NA_February_Run")
-    main(campaign="HALO_AC3")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")
+    main(campaign="PAMTRA_Retrieval")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")

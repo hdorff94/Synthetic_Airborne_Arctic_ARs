@@ -26,8 +26,8 @@ class Moisture_Budgets():
         pass
 class Moisture_Convergence(Moisture_Budgets):
     
-    def __init__(self,cmpgn_cls,flight,config_file,
-                 flight_dates={},sonde_no=3,
+    def __init__(self,cmpgn_cls,flight,config_file,flight_dates={},
+                 sonde_no=3,sector_types=["warm","core","cold"],
                  grid_name="ERA5",do_instantan=False):
         
         self.cmpgn_cls=cmpgn_cls
@@ -52,10 +52,47 @@ class Moisture_Convergence(Moisture_Budgets):
                                 }}
         self.flight_dates=flight_dates
         self.sonde_no=sonde_no
+        self.sector_types=sector_types
         self.sector_colors={"warm_sector":"orange",
                             "core":"darkgreen",
                             "cold_sector":"darkblue"}            
     
+    def vertically_integrated_divergence(self,):
+        integrated_divergence={}
+        
+        for sector in self.sector_types:
+            ###################################################################
+            # get mean pressure values
+            p_grid=self.sector_sonde_values[sector]["pres"].mean(axis=1)
+            pres_index=pd.Series(p_grid*100)
+            print(pres_index)
+            pres_index=pres_index.loc[self.div_scalar_mass[sector].index]
+            g=9.82
+            ###################################################################
+            # 
+            integrated_divergence[sector]={}
+            integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
+                self.div_scalar_mass[sector].values[::-1]*pres_index[::-1])/\
+                    1000*3600
+            integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
+                self.adv_q_calc[sector].values[::-1]*pres_index[::-1])/\
+                    1000*3600
+            #for term in ["ADV","CONV","TRANSP"]:
+            #        if term=="ADV":
+            #            series_term=term+"_calc"
+            #        else:
+            #            series_term=term
+            #        core_budgets[term].at[campaign_id+flight+\
+            #                              "_sonde_"+str(self.sonde_no)+term]=\
+            #        1/g*np.trapz(core[series_term][::-1],axis=0,x=pres_index[::-1])
+            #        warm_budgets[term].at[campaign_id+flight+\
+            #                              "_sonde_"+str(self.sonde_no)+term]=\
+            #        1/g*np.trapz(warm[series_term][::-1],
+            #                     axis=0,x=pres_index[::-1])
+        self.integrated_divergence=integrated_divergence
+                
+            #integrated_divergence[sector]["q_ADV"]=
+            #integrated_divergence[sector]["mass_div"]=
     #%% Budget functions
     def run_rough_budget_closure(self,wind_field,q_field,moisture_transport,
                                  wind_sector_inflow,wind_sector_outflow,
@@ -840,6 +877,51 @@ class Moisture_Convergence(Moisture_Budgets):
         
         return mean_parameter, dx_parameter, dy_parameter
     @staticmethod
+    def unify_vertical_dropsonde_grid(sonde_data,Z_grid,time_list,
+                        relevant_times=[],sector_type="warm",
+                        met_vars=["u","v","wind","q","pres","transport"]):
+
+        import scipy.interpolate as scint
+
+        uninterp_vars={}
+        interp_vars={}
+        sector_div_vars={}
+        for met_var in met_vars:
+            interp_vars=pd.DataFrame(data=np.nan,
+                                     index=Z_grid,columns=time_list)
+            t=0    
+            for time in relevant_times:
+                uninterp_vars["u"]=pd.Series(data=np.array(
+                    sonde_data["u_wind"][time][:]),
+                    index=np.array(sonde_data["alt"][time][:]))
+                uninterp_vars["v"]=pd.Series(data=np.array(sonde_data["v_wind"][time][:]),
+                            index=np.array(sonde_data["alt"][time][:]))
+        
+                uninterp_vars["wind"]=pd.Series(data=\
+                                np.array(sonde_data["wspd"][time][:]),
+                                index=np.array(sonde_data["alt"][time][:]))
+                uninterp_vars["q"]=pd.Series(data=\
+                                np.array(sonde_data["q"][pd.Timestamp(time)][:]),
+                                index=np.array(sonde_data["alt"][time][:]))
+                uninterp_vars["transport"]=\
+                    uninterp_vars["wind"]*uninterp_vars["q"]
+                uninterp_vars["pres"]=pd.Series(data=np.array(
+                                        sonde_data["pres"][time][:]),
+                                        index=np.array(sonde_data["alt"][time][:]))
+                not_nan_index=uninterp_vars[met_var].index.dropna()
+
+                # common scipy method with met_var as a function of z
+                interp_func=scint.interp1d(not_nan_index,
+                                   uninterp_vars[met_var].loc[not_nan_index],
+                                   kind="nearest",bounds_error=False,
+                                   fill_value=np.nan)
+                interp_vars[time_list[t]]=pd.Series(data=interp_func(Z_grid),
+                                    index=Z_grid)
+                t+=1 
+            sector_div_vars[met_var]=interp_vars    
+        sector_div_vars["sector_name"]=sector_type
+        return sector_div_vars
+    @staticmethod
     def run_haloac3_sondes_regression(geo_domain,domain_values,parameter):
         # similar to run_regression but with inverted values
         # for pressure values
@@ -930,8 +1012,102 @@ class Moisture_Convergence(Moisture_Budgets):
 
         
         return mean_parameter, dx_parameter, dy_parameter
+    #@staticmethod
+    def get_sector_sonde_values(self,Dropsondes,relevant_sector_sondes):
+        relevant_times=[*Dropsondes["reference_time"].keys()]
+        
+        sondes_pos_all={}
+        sector_sonde_values={}
+        sector_relevant_times={}
+            
+        # Geolocate the sondes once again to make
+        # it compatible for divergence calculation
+        self.sondes_pos_all={}
+        for sector in self.sector_types:
+            sector_relevant_times[sector]=[relevant_times[sector_time] \
+                        for sector_time in relevant_sector_sondes[sector]]
+            sector_sondes_lat=[Dropsondes["reference_lat"][time].data \
+                        for time in sector_relevant_times[sector]]
+            sector_sondes_lon=[Dropsondes["reference_lon"][time].data \
+                        for time in sector_relevant_times[sector]]
+            
+            # Merge location in dataframe
+            sondes_pos_all[sector]=pd.DataFrame(
+                                data=np.nan,columns=["Halo_Lat","Halo_Lon"],
+                                index=pd.DatetimeIndex(
+                                    sector_relevant_times[sector]))
+            sondes_pos_all[sector]["Halo_Lat"][:]=sector_sondes_lat
+            sondes_pos_all[sector]["Halo_Lon"][:]=sector_sondes_lon
+            sector_domain_values={}
+            sector_domain_values={}
+            # Positions relevant for divergence calculations
+            self.sondes_pos_all[sector]=self.get_xy_coords_for_domain(
+                sondes_pos_all[sector])
+            
+            # heights of sonde measurements are on 
+            # irregular grid depending on fall. 
+            # We interpolate onto a 10-m grid.
+            time_list=[str(pd.Timestamp(time)) \
+                       for time in sector_relevant_times[sector]]
+            # the regular grid requires a regular vertical grid with 
+            # maximum height based on all considered sondes
+            zmax_grid=[float(Dropsondes["alt"][time][:].max()) \
+                       for time in sector_relevant_times[sector]]
+            zmax_grid=pd.Series(zmax_grid).min()//10*10+10
+            Z_grid=np.arange(0,zmax_grid,step=10)
+        
+                # Get relevant sonde values
+            sector_sonde_values[sector]=\
+                self.unify_vertical_dropsonde_grid(Dropsondes,Z_grid,time_list,
+                    relevant_times=sector_relevant_times[sector],
+                    sector_type=sector)#
+        return sector_sonde_values
+    
+    def perform_entire_sonde_ac3_divergence_calcs(self,
+        Dropsondes,relevant_sector_sondes):
+        
+        if not hasattr(self,"sector_sonde_values"):
+            self.sector_sonde_values=self.get_sector_sonde_values(
+                        Dropsondes,relevant_sector_sondes)
+        
+        self.div_scalar_mass={}
+        self.adv_q_calc={}
+        for sector in self.sector_types:
+            sector_mean_qv,sector_dx_qv,sector_dy_qv=\
+                self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
+                                                   self.sector_sonde_values[sector],
+                                                    "transport")
 
+            sector_q,sector_dx_q_calc,sector_dy_q_calc=\
+                self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
+                                                self.sector_sonde_values[sector],"q")          
 
+            sector_mean_scalar_wind,sector_dx_scalar_wind,sector_dy_scalar_wind=\
+                self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
+                                                self.sector_sonde_values[sector],
+                                                "wind")
+            
+            sector_div_qv=(sector_dx_qv+sector_dy_qv)*1000
+            sector_div_scalar_wind = (sector_dx_scalar_wind+\
+                                      sector_dy_scalar_wind)
+            
+            sector_div_q_calc      = (sector_dx_q_calc+sector_dy_q_calc)
+            # Intersection checks for products needed
+            intersect_index=sector_div_qv.index.intersection(
+                                    sector_div_scalar_wind.index)
+            intersect_index=intersect_index.intersection(
+                            sector_div_q_calc.index)
+            # Both Divergence terms
+            # Mass Divergence (q * nabla_v)
+            sector_div_scalar_mass=sector_div_scalar_wind.loc[intersect_index]*\
+                self.sector_sonde_values[sector]["q"].loc[intersect_index].\
+                    mean(axis=1).values*1000
+            #Moisture Advection (v* nabla_q)
+            sector_adv_q_calc=sector_div_q_calc.loc[intersect_index]*\
+                self.sector_sonde_values[sector]["wind"].loc[intersect_index].\
+                    mean(axis=1).values*1000
+            self.div_scalar_mass[sector]=sector_div_scalar_mass
+            self.adv_q_calc[sector]=sector_adv_q_calc
 class Moisture_Budget_Plots(Moisture_Convergence):
     #def __init__(self,Moisture_Convergence):
     def __init__(self,cmpgn_cls,flight,config_file,
