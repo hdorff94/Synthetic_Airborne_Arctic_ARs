@@ -1763,18 +1763,18 @@ class ICON_on_HALO(ICON):
                 interp_icon_q_file="Synthetic_"+interp_icon_q_file
             
             if not with_hydrometeors:
-                variables=[#"Pressure",
-                       #"Specific_Humidity",
-                       #"U_Wind",
+                variables=["Pressure",
+                       "Specific_Humidity",
+                       "U_Wind",
                        "V_Wind",
                        "Z_Height"]
-                halo_icon_keys=[#"pres",
-                                #"qv",
-                                #"u",
+                halo_icon_keys=["pres",
+                                "qv",
+                                "u",
                                 "v",
                                 "Z_Height"]
-                dataset_var=[#"pres",
-                             #"qv"#,
+                dataset_var=["pres",
+                             "qv"#,
                              "u"
                              "v",
                              "z_mc"]
