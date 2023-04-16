@@ -394,10 +394,8 @@ class FlightMaps(flight_campaign):
                 pass
             # Mean surface level pressure
             if meteo_var.startswith("IVT"):
-                #pressure_color="royalblue"
-                #sea_ice_colors=["mediumslateblue", "indigo"]
                 pressure_color="purple"##"royalblue"
-                sea_ice_colors=["darkorange","saddlebrown"]#["mediumslateblue", "indigo"]
+                sea_ice_colors=["darkorange","saddlebrown"]
    
             else:
                 pressure_color="green"

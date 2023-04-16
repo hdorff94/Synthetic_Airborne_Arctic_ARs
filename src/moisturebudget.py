@@ -65,7 +65,7 @@ class Moisture_Convergence(Moisture_Budgets):
             # get mean pressure values
             p_grid=self.sector_sonde_values[sector]["pres"].mean(axis=1)
             pres_index=pd.Series(p_grid*100)
-            print(pres_index)
+            #print(pres_index)
             pres_index=pres_index.loc[self.div_scalar_mass[sector].index]
             g=9.82
             ###################################################################
@@ -1015,6 +1015,7 @@ class Moisture_Convergence(Moisture_Budgets):
     #@staticmethod
     def get_sector_sonde_values(self,Dropsondes,relevant_sector_sondes):
         relevant_times=[*Dropsondes["reference_time"].keys()]
+        print(relevant_times)
         
         sondes_pos_all={}
         sector_sonde_values={}

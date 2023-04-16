@@ -361,7 +361,7 @@ class ERA5_Downloader(ERA5):
                                 '2009', '2010', '2011',
                                 '2012', '2013', '2014',
                                 '2015', '2016', '2017',
-                                '2018', '2019','2020','2021','2022'],
+                                '2018', '2019','2020','2021','2022','2023'],
                             'month': month,
                             'area': data_area,
                             'time': time_list,
@@ -1171,7 +1171,7 @@ def main(campaign="NAWDEX"):
         synthetic_campaign=False
         analysing_campaign=False
         flights=[]
-        dates=["20210727"]
+        dates=["20230222"]
     elif campaign=="HALO_AC3":
         synthetic_campaign=False
         analysing_campaign=True
@@ -1266,13 +1266,14 @@ def main(campaign="NAWDEX"):
     #%% Download_Handler
     # HMP Profile data
     if era_is_desired:
-        era5_downloader.download_handler(do_total_columns=True,do_levels=False,
+        era5_downloader.download_handler(do_total_columns=False,do_levels=False,
                                          do_daily_average_single_levels=False,
-                                         do_temp_850hPa=True)
+                                         do_temp_850hPa=False,
+                                         do_monthly_averages=True)
     if carra_is_desired:
         carra_downloader.download_handler(do_total_columns=True,do_levels=True,
                                           do_hydrometeors=False)
 if __name__=="__main__":
     #main(campaign="NA_February_Run")
     #main(campaign="NA_February_Run")
-    main(campaign="PAMTRA_Retrieval")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")
+    main(campaign="Weather_Course")#"PAMTRA_Retrieval")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")
