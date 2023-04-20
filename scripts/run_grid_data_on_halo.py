@@ -444,19 +444,16 @@ def main(config_file_path=os.getcwd(),
         
         # Load Dropsonde datasets
     
-#        if not flight[0]=="RF08":
         if not campaign=="HALO_AC3":#try:
-                Dropsondes,Upsampled_Dropsondes=cmpgn_cls.load_ar_processed_dropsondes(
+            Dropsondes,Upsampled_Dropsondes=cmpgn_cls.load_ar_processed_dropsondes(
                                                     ERA5_on_HALO,date,
                                                     radar,halo_df,flight,
                                                     with_upsampling=True,
                                                     ar_of_day=ar_of_day)
         else:
-                Sondes_cls=Instruments.Dropsondes(HALO_cls)
-                Sondes_cls.calc_integral_variables(integral_var_list=["IWV","IVT"])
-                Dropsondes=Sondes_cls.sonde_dict
-
-                #Dropsondes={}
+            Sondes_cls=Instruments.Dropsondes(HALO_cls)
+            Sondes_cls.calc_integral_variables(integral_var_list=["IWV","IVT"])
+            Dropsondes=Sondes_cls.sonde_dict
     else:
         Dropsondes={}
         radar={}
