@@ -922,7 +922,10 @@ class Moisture_Convergence(Moisture_Budgets):
         sector_div_vars["sector_name"]=sector_type
         return sector_div_vars
     @staticmethod
-    def run_haloac3_sondes_regression(geo_domain,domain_values,parameter):
+    def run_haloac3_sondes_regression(geo_domain,domain_values,parameter,
+                                      with_uncertainty=False):
+        if with_uncertainty==True:
+           import statsmodels.api as sm 
         # similar to run_regression but with inverted values
         # for pressure values
         from sklearn import linear_model
@@ -936,7 +939,9 @@ class Moisture_Convergence(Moisture_Budgets):
                         index=nonnan_values.index.astype(float)) 
         dy_parameter = pd.Series(data=np.nan,
                         index=nonnan_values.index.astype(float)) 
-        
+        if with_uncertainty:
+            unc_dx_parameter=dx_parameter.copy()
+            unc_dy_parameter=dy_parameter.copy()
         # number of sondes available for regression
         #Ns = pd.Series(data=np.nan,index=domain_values[parameter].index.astype(float)) 
 
@@ -948,12 +953,33 @@ class Moisture_Convergence(Moisture_Budgets):
             X = list(zip(X_dx, X_dy))
             
             Y_parameter = nonnan_values.iloc[k,:].values
+            #-----------------------------------------------------------------#
+            if with_uncertainty:
+            ### for uncertainty estimates
+                N = len(X)
+                p= 2+1  # plus one because LinearRegression adds an intercept term
+                X_with_intercept = np.empty(shape=(N, p), dtype=np.float)
+                X_with_intercept[:, 0] = 1
+                X_with_intercept[:, 1] = X_dx[:]
+                X_with_intercept[:, 2] = X_dy[:]
+                ols = sm.OLS(Y_parameter,X_with_intercept)
+                ols_result = ols.fit()
+                ols_result.summary()
+                unc_dx_parameter.iloc[k]= ols_result.bse[1]
+                unc_dy_parameter.iloc[k]= ols_result.bse[2]
+
+            #-----------------------------------------------------------------#
+            
             regr.fit(X, Y_parameter)
 
             mean_parameter.iloc[k] = regr.intercept_
             dx_parameter.iloc[k], dy_parameter.iloc[k] = regr.coef_
 
-        
+        if with_uncertainty:
+            dx_parameter=dx_parameter.to_frame()
+            dx_parameter["unc"]=unc_dx_parameter.values
+            dy_parameter=dy_parameter.to_frame()
+            dy_parameter["unc"]=unc_dy_parameter.values
         return mean_parameter, dx_parameter, dy_parameter
     @staticmethod
     def run_regression(geo_domain,domain_values, parameter):
@@ -1065,7 +1091,7 @@ class Moisture_Convergence(Moisture_Budgets):
         return sector_sonde_values
     
     def perform_entire_sonde_ac3_divergence_calcs(self,
-        Dropsondes,relevant_sector_sondes):
+        Dropsondes,relevant_sector_sondes,with_uncertainty=False):
         
         if not hasattr(self,"sector_sonde_values"):
             self.sector_sonde_values=self.get_sector_sonde_values(
@@ -1077,16 +1103,17 @@ class Moisture_Convergence(Moisture_Budgets):
             sector_mean_qv,sector_dx_qv,sector_dy_qv=\
                 self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
                                                    self.sector_sonde_values[sector],
-                                                    "transport")
+                                "transport",with_uncertainty=with_uncertainty)
 
             sector_q,sector_dx_q_calc,sector_dy_q_calc=\
                 self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
-                                                self.sector_sonde_values[sector],"q")          
+                                                self.sector_sonde_values[sector],"q",
+                                                with_uncertainty=with_uncertainty)          
 
             sector_mean_scalar_wind,sector_dx_scalar_wind,sector_dy_scalar_wind=\
                 self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
-                                                self.sector_sonde_values[sector],
-                                                "wind")
+                                    self.sector_sonde_values[sector],"wind",
+                                    with_uncertainty=with_uncertainty)
             
             sector_div_qv=(sector_dx_qv+sector_dy_qv)*1000
             sector_div_scalar_wind = (sector_dx_scalar_wind+\
