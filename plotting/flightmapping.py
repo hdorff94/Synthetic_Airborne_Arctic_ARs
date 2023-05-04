@@ -1675,9 +1675,9 @@ class FlightMaps(flight_campaign):
         met_var_dict["colormap"]    = {"EV":"Blues","IVT_conv":"BrBG_r",
                                        "TP":"Blues","IVT":"speed"}
         met_var_dict["levels"]      = {"IWV":np.linspace(10,50,51),
-                                       "EV":np.linspace(0,1.5,51),
-                                       "TP":np.linspace(0,1.5,51),
-                                       "IVT_conv":np.linspace(-2,2,101),
+                                       "EV":np.linspace(0,1,51),
+                                       "TP":np.linspace(0,1,51),
+                                       "IVT_conv":np.linspace(-1,1,101),
                                        "IVT":np.linspace(50,600,61)}
         met_var_dict["units"]       = {"EV":"(kg$\mathrm{m}^{-2}$)",
                                        "TP":"(kg$\mathrm{m}^{-2}$)",
@@ -1981,7 +1981,7 @@ class FlightMaps(flight_campaign):
             
         cb2=map_fig.colorbar(C2,cax=axins2)
         cb2.set_label("EV"+" "+met_var_dict["units"]["EV"])
-        cb2.set_ticks([0,0.5,1.0,1.5])
+        cb2.set_ticks([0,0.5,1.0])
             
         C3=ax3.contourf(ds["longitude"],ds["latitude"],
                         ds[met_var_dict["ERA_name"]["TP"]][last_hour,:,:],
@@ -1997,7 +1997,7 @@ class FlightMaps(flight_campaign):
         
         cb3=map_fig.colorbar(C3,cax=axins3)
         cb3.set_label("TP"+" "+met_var_dict["units"]["TP"])
-        cb3.set_ticks([0,0.5,1.0,1.5])
+        cb3.set_ticks([0,0.5,1.0])
         print("Total precipitation mapped")
             
         dIWV_dt=(ds["tcwv"][last_hour+1,:,:]-ds["tcwv"][last_hour-1,:,:])/2
@@ -2016,7 +2016,7 @@ class FlightMaps(flight_campaign):
         cb4=map_fig.colorbar(C4,cax=axins4)
         cb4.set_label("$\delta \mathrm{IWV}/ \delta \mathrm{t} $"+" "+
                           met_var_dict["units"]["IWV"])
-        cb4.set_ticks([-1.5,-1.0,-0.5,0,0.5,1.0,1.5])
+        cb4.set_ticks([-1.0,-0.5,0,0.5,1.0])
       
         budget_epsilon=ds[met_var_dict["ERA_name"]["TP"]]-\
                 ds[met_var_dict["ERA_name"]["EV"]]+\

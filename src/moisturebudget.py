@@ -28,13 +28,14 @@ class Moisture_Convergence(Moisture_Budgets):
     
     def __init__(self,cmpgn_cls,flight,config_file,flight_dates={},
                  sonde_no=3,sector_types=["warm","core","cold"],
-                 grid_name="ERA5",do_instantan=False):
+                 ar_of_day="AR",grid_name="ERA5",do_instantan=False):
         
         self.cmpgn_cls=cmpgn_cls
         self.grid_name=grid_name
         self.do_instantan=do_instantan
         self.flight=flight
         self.config_file=config_file
+        self.ar_of_day=ar_of_day
         if flight_dates=={}:
             
             self.flight_dates={"North_Atlantic_Run":
@@ -71,12 +72,24 @@ class Moisture_Convergence(Moisture_Budgets):
             ###################################################################
             # 
             integrated_divergence[sector]={}
-            integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
+            
+            if isinstance(self.div_scalar_mass,pd.Series):
+                integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
                 self.div_scalar_mass[sector].values[::-1]*pres_index[::-1])/\
                     1000*3600
-            integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
+            else:
+                integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
+                self.div_scalar_mass[sector]["val"].values[::-1]*\
+                    pres_index[::-1])/1000*3600
+            if isinstance(self.adv_q_calc,pd.Series):
+                integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
                 self.adv_q_calc[sector].values[::-1]*pres_index[::-1])/\
                     1000*3600
+            else:
+                integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
+                self.adv_q_calc[sector]["val"].values[::-1]*\
+                    pres_index[::-1])/1000*3600
+                
             #for term in ["ADV","CONV","TRANSP"]:
             #        if term=="ADV":
             #            series_term=term+"_calc"
@@ -923,7 +936,10 @@ class Moisture_Convergence(Moisture_Budgets):
         return sector_div_vars
     @staticmethod
     def run_haloac3_sondes_regression(geo_domain,domain_values,parameter,
-                                      with_uncertainty=False):
+                                      with_uncertainty=False,
+                                      regression_method="least-squared"):
+        
+        print("Perform divergence via regression method:",regression_method)
         if with_uncertainty==True:
            import statsmodels.api as sm 
         # similar to run_regression but with inverted values
@@ -944,7 +960,7 @@ class Moisture_Convergence(Moisture_Budgets):
             unc_dy_parameter=dy_parameter.copy()
         # number of sondes available for regression
         #Ns = pd.Series(data=np.nan,index=domain_values[parameter].index.astype(float)) 
-
+        
         for k in range(mean_parameter.shape[0]):
             #Ns[k] = id_[:, k].sum()
             X_dx = geo_domain["dx"].values
@@ -1102,13 +1118,13 @@ class Moisture_Convergence(Moisture_Budgets):
         for sector in self.sector_types:
             sector_mean_qv,sector_dx_qv,sector_dy_qv=\
                 self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
-                                                   self.sector_sonde_values[sector],
+                                self.sector_sonde_values[sector],
                                 "transport",with_uncertainty=with_uncertainty)
 
             sector_q,sector_dx_q_calc,sector_dy_q_calc=\
                 self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
-                                                self.sector_sonde_values[sector],"q",
-                                                with_uncertainty=with_uncertainty)          
+                                        self.sector_sonde_values[sector],"q",
+                                        with_uncertainty=with_uncertainty)          
 
             sector_mean_scalar_wind,sector_dx_scalar_wind,sector_dy_scalar_wind=\
                 self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
@@ -1116,26 +1132,99 @@ class Moisture_Convergence(Moisture_Budgets):
                                     with_uncertainty=with_uncertainty)
             
             sector_div_qv=(sector_dx_qv+sector_dy_qv)*1000
-            sector_div_scalar_wind = (sector_dx_scalar_wind+\
-                                      sector_dy_scalar_wind)
             
-            sector_div_q_calc      = (sector_dx_q_calc+sector_dy_q_calc)
+            # combine specific humidity
+            if isinstance(sector_dx_q_calc,pd.Series):
+                sector_div_q_calc       = (sector_dx_q_calc+sector_dy_q_calc)
+            elif isinstance(sector_dx_q_calc,pd.DataFrame):
+                sector_div_q_calc       = pd.DataFrame()
+                sector_div_q_calc["val"]= sector_dx_q_calc[0]+sector_dy_q_calc[0]
+                sector_div_q_calc["unc"]=\
+                   np.sqrt(sector_dx_q_calc["unc"]**2+\
+                           sector_dy_q_calc["unc"]**2) 
+            else:
+                Exception("Something went completely wrong in the regression")
+            # combine wind
+            if isinstance(sector_dx_scalar_wind,pd.Series):
+                sector_div_scalar_wind = (sector_dx_scalar_wind+\
+                                      sector_dy_scalar_wind)
+            elif isinstance(sector_dx_scalar_wind,pd.DataFrame):
+                sector_div_scalar_wind=pd.DataFrame()
+                sector_div_scalar_wind["val"] = (sector_dx_scalar_wind[0]+\
+                                      sector_dy_scalar_wind[0])
+                #Gaussian uncertainty
+                sector_div_scalar_wind["unc"]=\
+                    np.sqrt(sector_dx_scalar_wind["unc"]**2+\
+                            sector_dy_scalar_wind["unc"]**2)
+            else:
+                Exception("Something went completely wrong in the regression")
+            
             # Intersection checks for products needed
             intersect_index=sector_div_qv.index.intersection(
                                     sector_div_scalar_wind.index)
             intersect_index=intersect_index.intersection(
                             sector_div_q_calc.index)
+            #-----------------------------------------------------------------#
             # Both Divergence terms
+            
             # Mass Divergence (q * nabla_v)
-            sector_div_scalar_mass=sector_div_scalar_wind.loc[intersect_index]*\
-                self.sector_sonde_values[sector]["q"].loc[intersect_index].\
-                    mean(axis=1).values*1000
+            if isinstance(sector_div_scalar_wind,pd.Series):
+                sector_div_scalar_mass=\
+                    sector_div_scalar_wind.loc[intersect_index]*\
+                        self.sector_sonde_values[sector]["q"].loc[\
+                            intersect_index].mean(axis=1).values*1000
+            elif isinstance(sector_div_scalar_wind,pd.DataFrame):
+                sector_div_scalar_mass=pd.DataFrame()
+                sector_div_scalar_mass["val"]=\
+                    sector_div_scalar_wind["val"].loc[intersect_index]*\
+                        self.sector_sonde_values[sector]["q"].loc[\
+                            intersect_index].mean(axis=1).values*1000
+                sector_div_scalar_mass["unc"]=\
+                    sector_div_scalar_wind["unc"].loc[intersect_index]*\
+                        self.sector_sonde_values[sector]["q"].loc[\
+                            intersect_index].mean(axis=1).values*1000
+                    
+            else:
+                Exception("Something went completely wrong")
+            
             #Moisture Advection (v* nabla_q)
-            sector_adv_q_calc=sector_div_q_calc.loc[intersect_index]*\
+            if isinstance(sector_div_q_calc,pd.Series):
+                sector_adv_q_calc=sector_div_q_calc.loc[intersect_index]*\
                 self.sector_sonde_values[sector]["wind"].loc[intersect_index].\
                     mean(axis=1).values*1000
-            self.div_scalar_mass[sector]=sector_div_scalar_mass
-            self.adv_q_calc[sector]=sector_adv_q_calc
+            
+            elif isinstance(sector_div_q_calc,pd.DataFrame):
+                sector_adv_q_calc=pd.DataFrame()
+                sector_adv_q_calc["val"]=\
+                    sector_div_q_calc["val"].loc[intersect_index]*\
+                        self.sector_sonde_values[sector]["wind"].loc[\
+                            intersect_index].mean(axis=1).values*1000
+                sector_adv_q_calc["unc"]=\
+                    sector_div_q_calc["unc"].loc[intersect_index]*\
+                        self.sector_sonde_values[sector]["wind"].loc[intersect_index].\
+                            mean(axis=1).values*1000
+                
+            self.div_scalar_mass[sector] = sector_div_scalar_mass
+            self.adv_q_calc[sector]      = sector_adv_q_calc
+            self.save_moisture_transport_divergence(sector)
+    
+    def save_moisture_transport_divergence(self,sector):
+        print("Save mass convergence")
+        save_data_path=self.cmpgn_cls.campaign_data_path+"/data/budgets/"
+        if not os.path.exists(save_data_path):
+            os.mkdir(save_data_path)
+        mass_conv_file_name=self.flight[0]+"_"+self.ar_of_day+"_"+sector+"_"+\
+                                    self.grid_name+"_mass_convergence.csv"
+        adv_q_file_name    =self.flight[0]+"_"+self.ar_of_day+"_"+sector+"_"+\
+                                    self.grid_name+"_adv_q.csv"
+        self.div_scalar_mass[sector].to_csv(save_data_path+mass_conv_file_name)    
+        print("mass convergence saved as: ",
+                              save_data_path+mass_conv_file_name)
+                        
+        self.adv_q_calc[sector].to_csv(save_data_path+adv_q_file_name)
+        print("moisture advection saved as: ",
+              save_data_path+adv_q_file_name)
+            #-----------------------------------------------------------------#
 class Moisture_Budget_Plots(Moisture_Convergence):
     #def __init__(self,Moisture_Convergence):
     def __init__(self,cmpgn_cls,flight,config_file,
