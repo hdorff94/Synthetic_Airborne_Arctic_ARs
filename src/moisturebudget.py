@@ -81,6 +81,15 @@ class Moisture_Convergence(Moisture_Budgets):
                 integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
                 self.div_scalar_mass[sector]["val"].values[::-1]*\
                     pres_index[::-1])/1000*3600
+                integrated_divergence[sector]["mass_div_min"]=1/(g*997)*np.trapz(\
+                (self.div_scalar_mass[sector]["val"].values[::-1]-
+                 self.div_scalar_mass[sector]["unc"].values[::-1])*\
+                    pres_index[::-1])/1000*3600
+                integrated_divergence[sector]["mass_div_max"]=1/(g*997)*np.trapz(\
+                (self.div_scalar_mass[sector]["val"].values[::-1]+
+                 self.div_scalar_mass[sector]["unc"].values[::-1])*\
+                    pres_index[::-1])/1000*3600
+                    
             if isinstance(self.adv_q_calc,pd.Series):
                 integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
                 self.adv_q_calc[sector].values[::-1]*pres_index[::-1])/\
@@ -88,6 +97,14 @@ class Moisture_Convergence(Moisture_Budgets):
             else:
                 integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
                 self.adv_q_calc[sector]["val"].values[::-1]*\
+                    pres_index[::-1])/1000*3600
+                integrated_divergence[sector]["q_ADV_min"]=1/(g*997)*np.trapz(\
+                (self.adv_q_calc[sector]["val"].values[::-1]-
+                 self.adv_q_calc[sector]["unc"].values[::-1])*\
+                    pres_index[::-1])/1000*3600
+                integrated_divergence[sector]["q_ADV_max"]=1/(g*997)*np.trapz(\
+                (self.adv_q_calc[sector]["val"].values[::-1]+
+                 self.adv_q_calc[sector]["unc"].values[::-1])*\
                     pres_index[::-1])/1000*3600
                 
             #for term in ["ADV","CONV","TRANSP"]:
