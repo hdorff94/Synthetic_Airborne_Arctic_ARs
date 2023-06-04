@@ -56,6 +56,7 @@ def main(config_file_path=os.getcwd(),
          track_type="internal",
          merge_all_legs=False,
          pick_legs=["inflow","internal","outflow"],
+         include_hydrometeors=False,
          do_instantaneous=False):
     # real campaigns
     if campaign=="NAWDEX":
@@ -562,7 +563,8 @@ def main(config_file_path=os.getcwd(),
             pass
        else:
            #Get vertical profiles of moisture/ hydrometeors
-           halo_icon_hmc=ICON_on_HALO.load_hwc(with_hydrometeors=False)
+           halo_icon_hmc=ICON_on_HALO.load_hwc(
+               with_hydrometeors=include_hydrometeors)
        #----------------------------------------------------------------------#    
        # Retrieval
        if flight==["RF10"]:

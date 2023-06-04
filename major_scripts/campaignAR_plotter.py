@@ -14,7 +14,7 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
                                                 "SRF05","SRF06"],
          ar_of_days=["AR_internal"],do_daily_plots=True,calc_hmp=True,calc_hmc=True,
          era_is_desired=True,carra_is_desired=False,icon_is_desired=False,
-         do_instantaneous=False):
+         do_instantaneous=False, include_hydrometeors=False):
     #%% Predefining all paths to take scripts and data from and where to store
     actual_working_path=os.getcwd()+"/../"
     os.chdir(actual_working_path+"/config/")
@@ -132,7 +132,8 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
                             icon_is_desired=icon_is_desired,
                             synthetic_campaign=synthetic_campaign,
                             synthetic_flight=synthetic_flight,
-                            do_instantaneous=do_instantaneous)
+                            do_instantaneous=do_instantaneous,
+                            include_hydrometeors=include_hydrometeors)
                 
             #if 'Reflectivity' in ar_rf_radar.keys():
             #    if i==0:
@@ -162,7 +163,7 @@ if __name__=="__main__":
     calc_hmc=True
     do_plotting=True
     synthetic_campaign=False
-    ar_of_day=["AR4"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
+    ar_of_day=["AR_entire_1"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
     campaign_name="HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"
     #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
     
@@ -197,7 +198,7 @@ if __name__=="__main__":
     use_icon=True
     flights=[*flights_to_analyse.keys()]
     do_instantaneous=False
-
+    include_hydrometeors=True
     Hydrometeors,HALO_Dict,cmpgn_cls=main(campaign=campaign_name,flights=flights,
                                           ar_of_days=ar_of_day,
                                           era_is_desired=use_era, 
@@ -205,7 +206,8 @@ if __name__=="__main__":
                                           carra_is_desired=use_carra,
                                           do_daily_plots=do_plotting,
                                           calc_hmp=calc_hmp,calc_hmc=calc_hmc,
-                                          do_instantaneous=do_instantaneous)
+                                          do_instantaneous=do_instantaneous,
+                                          include_hydrometeors=include_hydrometeors)
     if do_instantaneous:
         import sys
         sys.exit()

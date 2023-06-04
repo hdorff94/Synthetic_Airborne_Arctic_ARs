@@ -1625,11 +1625,11 @@ class ICON_HALO_Plotting(ICON):
             high_dbZ=radar["Reflectivity"].loc[high_dbZ_index]
         # Specific humidity
         q_min=0
-        q_max=6
+        q_max=5
         
         if low_level:
             q_min=0
-            q_max=6
+            q_max=5
         
         # Add wind 
         
@@ -1641,7 +1641,7 @@ class ICON_HALO_Plotting(ICON):
         y,x=np.meshgrid(y_temp,x_temp)
         
         #levels=np.linspace(q_min,q_max,50)
-        y=halo_icon["Z_Height"].loc[start:end]
+        y=halo_icon["Z_Height"].iloc[:,10:].loc[start:end]
         y.fillna(method='ffill',axis=0,inplace=True)
         y.fillna(method='bfill',axis=0,inplace=True)
         y=np.array(y)

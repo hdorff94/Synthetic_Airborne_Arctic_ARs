@@ -1633,7 +1633,8 @@ class FlightMaps(flight_campaign):
     def plot_AR_moisture_components_map(self,era_on_halo_cls,cut_radar,
                                     Dropsondes,campaign_cls,
                                     opt_plot_path=os.getcwd(),
-                                    invert_flight=False,do_sector_based=False):
+                                    invert_flight=False,do_sector_based=False,
+                                    only_warm_sector=False):
         """
         
 
@@ -1905,35 +1906,37 @@ class FlightMaps(flight_campaign):
             AR_inflow,AR_outflow=Atmospheric_Rivers.locate_AR_cross_section_sectors(
                                     new_halo_dict,era_on_halo_cls.halo_era5,
                                     self.flight)
-            # Two sondes per sector
-            number_of_sondes=2
-            sondes_selection={}
-            for sector in ["warm_sector","core","cold_sector"]:
-                add_sonde=1
-                #if sector=="core":
-                #    add_sonde=1
-                sondes_selection["ind_inflow_"+sector]=np.linspace(0,
+            if not only_warm_sector:
+                ### Select two sondes to define borders. Synthetic sondes
+                # Two sondes per sector
+                number_of_sondes=2
+                sondes_selection={}
+                for sector in ["warm_sector","core","cold_sector"]:
+                    add_sonde=1
+                    #if sector=="core":
+                        #    add_sonde=1
+                    sondes_selection["ind_inflow_"+sector]=np.linspace(0,
                                     AR_inflow["AR_inflow_"+sector].shape[0]-1,
                                     num=number_of_sondes+add_sonde).astype(int)
-                sondes_selection["ind_outflow_"+sector]=np.linspace(0,
+                    sondes_selection["ind_outflow_"+sector]=np.linspace(0,
                                     AR_outflow["AR_outflow_"+sector].shape[0]-1,
                                     num=number_of_sondes+add_sonde).astype(int)
-                sondes_selection["time_inflow_"+sector]=\
-                    AR_inflow["AR_inflow_"+sector].index[\
+                    sondes_selection["time_inflow_"+sector]=\
+                        AR_inflow["AR_inflow_"+sector].index[\
                                     sondes_selection["ind_inflow_"+sector]]
-                sondes_selection["time_outflow_"+sector]=\
-                    AR_outflow["AR_outflow_"+sector].index[\
+                    sondes_selection["time_outflow_"+sector]=\
+                        AR_outflow["AR_outflow_"+sector].index[\
                                     sondes_selection["ind_outflow_"+sector]]
-                sondes_selection["pos_inflow_"+sector]=\
-                    AR_inflow["AR_inflow_"+sector][\
+                    sondes_selection["pos_inflow_"+sector]=\
+                        AR_inflow["AR_inflow_"+sector][\
                             ["Halo_Lat","Halo_Lon"]].loc[\
                                     sondes_selection["time_inflow_"+sector]]
-                sondes_selection["pos_outflow_"+sector]=\
-                    AR_outflow["AR_outflow_"+sector][\
+                    sondes_selection["pos_outflow_"+sector]=\
+                        AR_outflow["AR_outflow_"+sector][\
                                 ["Halo_Lat","Halo_Lon"]].loc[\
                                     sondes_selection["time_outflow_"+sector]]
 
-                sondes_selection["pos_all_"+sector]=pd.concat(\
+                    sondes_selection["pos_all_"+sector]=pd.concat(\
                                     [sondes_selection["pos_inflow_"+sector],
                                      sondes_selection["pos_outflow_"+sector]])
 
@@ -2022,7 +2025,7 @@ class FlightMaps(flight_campaign):
                 ds[met_var_dict["ERA_name"]["EV"]]+\
                     ds[met_var_dict["ERA_name"]["IVT_conv"]]
             
-            
+        #%%    
         #Identify periods of strong radar reflectivity
         if not self.synthetic_campaign:
             temporary_cut_radar=cut_radar["Reflectivity"].iloc[:,6::]
@@ -2033,6 +2036,7 @@ class FlightMaps(flight_campaign):
             # Just for not creating coding mess-up, no radar data is given
             cut_radar=dict()
             cut_radar["Reflectivity"]=halo_df.copy()
+        
         start_pos=halo_df.loc[cut_radar["Reflectivity"].index[0]]
         end_pos=halo_df.loc[cut_radar["Reflectivity"].index[-1]]
         ax1.scatter(halo_df["longitude"].loc[cut_radar["Reflectivity"].index[0]:\
@@ -2061,7 +2065,7 @@ class FlightMaps(flight_campaign):
                     transform=ccrs.PlateCarree(),marker='.',s=10,
                     color="purple",alpha=0.95,zorder=1)    
         axes_list=[ax1,ax2,ax3,ax4]
-        
+        #%%
         for axis in axes_list:
             # warm sector
             axis.plot(AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"],
@@ -2091,62 +2095,219 @@ class FlightMaps(flight_campaign):
                       ls="--",color="lightblue",lw=4,zorder=2,
                       transform=ccrs.PlateCarree())
             #connecting lines
-            axis.plot([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].iloc[0],
+            if not only_warm_sector:
+                axis.plot([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].iloc[0],
                        AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].iloc[0]],
                        [AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].iloc[0],
                        AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].iloc[0]],
                        color="k",ls="--",transform=ccrs.PlateCarree(),zorder=10)
-            axis.plot([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].iloc[-1],
+                axis.plot([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].iloc[-1],
                        AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].iloc[-1]],
                        [AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].iloc[-1],
                        AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].iloc[-1]],
                        color="k",ls="--",transform=ccrs.PlateCarree(),zorder=10)
-            axis.plot([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].iloc[0],
+                axis.plot([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].iloc[0],
                        AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].iloc[0]],
                        [AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].iloc[0],
                        AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].iloc[0]],
                        color="k",ls="--",transform=ccrs.PlateCarree(),zorder=10)
-            axis.plot([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].iloc[-1],
+                axis.plot([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].iloc[-1],
                        AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].iloc[-1]],
                        [AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].iloc[-1],
                        AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].iloc[-1]],
                        color="k",ls="--",transform=ccrs.PlateCarree(),zorder=10)
-        
+            else:
+                # Predefined hard coded sectors
+                sonde_times_series=pd.Series(
+                            index=Dropsondes["IWV"].index.values,
+                            data=range(Dropsondes["IWV"].shape[0]))
+                relevant_sondes_dict={}
+                if self.flight=="RF05":
+                    if self.ar_of_day=="AR_entire_1":
+                        relevant_warm_sector_sondes=[0,1,2,3,9,10,11,12]
+                        relevant_cold_sector_sondes=[4,5,6]
+                        relevant_internal_sondes=[7,8,13,14]
+                        relevant_sondes_dict["warm_sector"]        = {}
+                        relevant_sondes_dict["warm_sector"]["in"]  = \
+                            sonde_times_series.iloc[relevant_warm_sector_sondes[0:4]]
+                        relevant_sondes_dict["warm_sector"]["out"] = \
+                            sonde_times_series.iloc[relevant_warm_sector_sondes[4::]]
+                        relevant_sondes_dict["cold_sector"]        = {}
+                        relevant_sondes_dict["cold_sector"]["in"]  = \
+                            sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                        relevant_sondes_dict["cold_sector"]["out"] = \
+                            sonde_times_series.iloc[relevant_cold_sector_sondes[3::]]
+                        relevant_sondes_dict["internal"]           = \
+                            sonde_times_series.iloc[relevant_internal_sondes]
+                    
+                    elif self.ar_of_day=="AR_entire_2":
+                        relevant_warm_sector_sondes=[9,10,11,12,15,16,17,18]
+                        relevant_cold_sector_sondes=[19,20,21]
+                        relevant_sondes_dict["warm_sector"]        = {}
+                        relevant_sondes_dict["warm_sector"]["in"]  = \
+                            sonde_times_series.iloc[relevant_warm_sector_sondes[4::]]
+                        relevant_sondes_dict["warm_sector"]["out"] = \
+                            sonde_times_series.iloc[relevant_warm_sector_sondes[0:4]]
+                        relevant_sondes_dict["cold_sector"]        = {}
+                        relevant_sondes_dict["cold_sector"]["in"]  = pd.Series()#sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                        relevant_sondes_dict["cold_sector"]["out"] = \
+                            sonde_times_series.iloc[relevant_cold_sector_sondes]
+    
+                if self.flight=="RF06":
+                    if self.ar_of_day=="AR_entire_1":
+                        relevant_warm_sector_sondes=[0,1,2,8,9]
+                        relevant_cold_sector_sondes=[3,4,5,10,11,12]
+                        relevant_warm_internal_sondes=[7,22]
+                        relevant_sondes_dict["warm_sector"]        = {}
+                        relevant_sondes_dict["warm_sector"]["in"]  = \
+                            sonde_times_series.iloc[relevant_warm_sector_sondes[0:3]]
+                        relevant_sondes_dict["warm_sector"]["out"] = \
+                            sonde_times_series.iloc[relevant_warm_sector_sondes[3:]]
+                        relevant_sondes_dict["cold_sector"]        = {}
+                        relevant_sondes_dict["cold_sector"]["in"]  = \
+                            sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                        relevant_sondes_dict["cold_sector"]["out"] = \
+                            sonde_times_series.iloc[relevant_cold_sector_sondes[3:]]
+                        relevant_sondes_dict["internal"]           = \
+                            sonde_times_series.iloc[relevant_warm_internal_sondes]
+                    elif self.ar_of_day=="AR_entire_2":
+                        relevant_warm_sector_sondes=[8,9,16,17]
+                        relevant_cold_sector_sondes=[10,11,12,18,19]
+                        relevant_warm_internal_sondes=[]
+                        relevant_sondes_dict["warm_sector"]        = {}
+                        relevant_sondes_dict["warm_sector"]["in"]  = \
+                            sonde_times_series.iloc[relevant_warm_sector_sondes[0:2]]
+                        relevant_sondes_dict["warm_sector"]["out"] = \
+                            sonde_times_series.iloc[relevant_warm_sector_sondes[2::]]
+                        relevant_sondes_dict["cold_sector"]        = {}
+                        relevant_sondes_dict["cold_sector"]["in"]  = \
+                            sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                        relevant_sondes_dict["cold_sector"]["out"] = \
+                            sonde_times_series.iloc[relevant_cold_sector_sondes[3::]]
+                        
         #calc sector ERA5 means
-        #warm pre-frontal
-        w_lon_max=np.max([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].max(),
-                          AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].max()])
-        w_lon_min=np.min([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].min(),
-                          AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].min()])
-        w_lat_max=np.max([AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].max(),
-                          AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].max()])
-        w_lat_min=np.min([AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].min(),
-                          AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].min()])
-        #core
-        core_lon_max=np.max([AR_inflow["AR_inflow_core"]["Halo_Lon"].max(),
-                          AR_outflow["AR_outflow_core"]["Halo_Lon"].max()])
-        core_lon_min=np.min([AR_inflow["AR_inflow_core"]["Halo_Lon"].min(),
-                          AR_outflow["AR_outflow_core"]["Halo_Lon"].min()])
-        core_lat_max=np.max([AR_inflow["AR_inflow_core"]["Halo_Lat"].max(),
-                          AR_outflow["AR_outflow_core"]["Halo_Lat"].max()])
-        core_lat_min=np.min([AR_inflow["AR_inflow_core"]["Halo_Lat"].min(),
-                          AR_outflow["AR_outflow_core"]["Halo_Lat"].min()])
-        #cold post-frontal
-        c_lon_max=np.max([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].max(),
-                          AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].max()])
-        c_lon_min=np.min([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].min(),
-                          AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].min()])
-        c_lat_max=np.max([AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].max(),
-                          AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].max()])
-        c_lat_min=np.min([AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].min(),
-                          AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].min()])
-        
+        if not only_warm_sector:
+            #warm pre-frontal
+            w_lon_max=np.max([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].max(),
+                              AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].max()])
+            w_lon_min=np.min([AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"].min(),
+                              AR_outflow["AR_outflow_warm_sector"]["Halo_Lon"].min()])
+            w_lat_max=np.max([AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].max(),
+                              AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].max()])
+            w_lat_min=np.min([AR_inflow["AR_inflow_warm_sector"]["Halo_Lat"].min(),
+                              AR_outflow["AR_outflow_warm_sector"]["Halo_Lat"].min()])
+            #core
+            core_lon_max=np.max([AR_inflow["AR_inflow_core"]["Halo_Lon"].max(),
+                                 AR_outflow["AR_outflow_core"]["Halo_Lon"].max()])
+            core_lon_min=np.min([AR_inflow["AR_inflow_core"]["Halo_Lon"].min(),
+                                 AR_outflow["AR_outflow_core"]["Halo_Lon"].min()])
+            core_lat_max=np.max([AR_inflow["AR_inflow_core"]["Halo_Lat"].max(),
+                                 AR_outflow["AR_outflow_core"]["Halo_Lat"].max()])
+            core_lat_min=np.min([AR_inflow["AR_inflow_core"]["Halo_Lat"].min(),
+                                 AR_outflow["AR_outflow_core"]["Halo_Lat"].min()])
+            #cold post-frontal
+            c_lon_max=np.max([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].max(),
+                              AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].max()])
+            c_lon_min=np.min([AR_inflow["AR_inflow_cold_sector"]["Halo_Lon"].min(),
+                              AR_outflow["AR_outflow_cold_sector"]["Halo_Lon"].min()])
+            c_lat_max=np.max([AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].max(),
+                              AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].max()])
+            c_lat_min=np.min([AR_inflow["AR_inflow_cold_sector"]["Halo_Lat"].min(),
+                              AR_outflow["AR_outflow_cold_sector"]["Halo_Lat"].min()])
+               
+        else:
+            if self.flight=="RF05":
+                if self.ar_of_day=="AR_entire_1":
+                    w_lat_min=71.412415
+                    w_lat_max=76.510696
+                    w_lon_max=8.080936
+                    w_lon_min=-6.153736
+                elif self.ar_of_day=="AR_entire_2":
+                    w_lat_min=72.850830
+                    w_lat_max=76.510696
+                    w_lon_min=-4.379189
+                    w_lon_max=8.080936
+            elif self.flight=="RF06":
+                if self.ar_of_day=="AR_entire_1":
+                    w_lat_min=71.144676
+                    w_lat_max=73.430244
+                    w_lon_min=11.011759
+                    w_lon_max=21.382162
+                elif self.ar_of_day=="AR_entire_2":
+                    w_lat_min=72.973465
+                    w_lat_max=75.811005
+                    w_lon_min=18.015015
+                    w_lon_max=25.683155
+            
+            for axis in axes_list:
+                if self.flight=="RF05":
+                    #{'warm':                       Halo_Lat  Halo_Lon             dx             dy
+                    #2022-03-15 10:19:22  71.412415  2.119259   57426.540578 -294932.867661
+                    #2022-03-15 10:28:33  71.809677 -1.153413  -57855.149678 -251019.462814
+                    #2022-03-15 10:34:37  72.042000 -3.403830 -134599.374441 -225338.512344
+                    #2022-03-15 10:41:45  72.284691 -6.153736 -226219.905006 -198511.444778
+                    #2022-03-15 12:28:34  75.933517  8.080936  200865.746408  204829.847488
+                    #2022-03-15 12:36:29  76.259956  4.442734   99695.073834  240914.403915
+                    #2022-03-15 12:40:08  76.391243  2.720047   53472.408266  255426.827011
+                    #2022-03-15 12:43:47  76.510696  0.962272    7214.660040  268631.209183}
+                    if self.ar_of_day=="AR_entire_1":
+                        axis.plot([2.119259,8.080936],[71.412415,75.933517],
+                              color="k",ls="--",transform=ccrs.PlateCarree(),
+                              zorder=10)
+                        axis.plot([-6.153736,0.962272],[72.284691,76.510696],
+                              color="k",ls="--",
+                              transform=ccrs.PlateCarree(),zorder=10)
+                    elif self.ar_of_day=="AR_entire_2":
+                        #2022-03-15 12:28:34  75.933517  8.080936  170763.323747  149143.020134
+                        #2022-03-15 12:36:29  76.259956  4.442734   69592.651173  185227.576561
+                        #2022-03-15 12:40:08  76.391243  2.720047   23369.985605  199739.999657
+                        #2022-03-15 12:43:47  76.510696  0.962272  -22887.762621  212944.381828
+                        #2022-03-15 14:34:01  72.903633  3.733636   74311.319315 -185780.394630
+                        #2022-03-15 14:40:56  72.921944  0.966556  -16276.539813 -183756.346779
+                        #2022-03-15 14:47:58  72.902542 -1.814389 -107256.063537 -185900.994148
+                        #2022-03-15 14:54:30  72.850830 -4.379189 -191616.913869 -191617.242622}
+                        axis.plot([8.080936,3.733636],[75.933517,72.903633],
+                                  color="k",ls="--",transform=ccrs.PlateCarree(),
+                                  zorder=10)
+                        axis.plot([0.962272,-4.379189],[76.510696,72.850830],
+                                  color="k",ls="--",transform=ccrs.PlateCarree(),
+                                  zorder=10)
+                        
+                elif self.flight=="RF06":
+                    if self.ar_of_day=="AR_entire_1":
+                        # 71.144676  17.200075   90276.849633 -115494.138234
+                        # 71.200279  13.740361  -35595.821300 -109347.779592
+                        # 71.197830  11.011759 -133432.507410 -109618.495992
+                        # 72.973465  21.382162  168456.503395   86660.171000
+                        # 73.190468  18.015015   51433.721131  110647.668101
+                        # 73.430244  12.202295 -141138.745448  137152.574717}
+                        axis.plot([17.200075,21.382162],[71.144676,72.973465],
+                                  color="k",ls="--",transform=ccrs.PlateCarree(),
+                                  zorder=10)
+                        axis.plot([11.011759,12.202295],[71.197830,73.430244],
+                                  color="k",ls="--",transform=ccrs.PlateCarree(),
+                                  zorder=10)
+                        
+                    elif self.ar_of_day=="AR_entire_2":
+                        
+                        #2022-03-16 12:13:00  72.973465  21.382162  56448.627054 -154883.515015
+                        #2022-03-16 12:21:11  73.190468  18.015015 -60574.155210 -130896.017914
+                        #2022-03-16 13:48:06  75.523537  25.683155  74184.428649  127001.412506
+                        #2022-03-16 13:58:21  75.811005  20.906301 -70058.900493  158778.120422}
+                        axis.plot([21.382162,25.683155],[72.973465,75.523537],
+                              color="k",ls="--",transform=ccrs.PlateCarree(),
+                              zorder=10)
+                        axis.plot([18.015015,20.906301],[73.190468,75.811005],
+                              color="k",ls="--",
+                              transform=ccrs.PlateCarree(),zorder=10)
+             
         # subsample ds
         warm_ds=ds.sel({"longitude":slice(w_lon_min,w_lon_max),
                         "latitude":slice(w_lat_max,w_lat_min)})
-        core_ds=ds.sel({"longitude":slice(core_lon_min,core_lon_max),
+        if not only_warm_sector:
+            core_ds=ds.sel({"longitude":slice(core_lon_min,core_lon_max),
                         "latitude":slice(core_lat_max,core_lat_min)})
-        cold_ds=ds.sel({"longitude":slice(c_lon_min,c_lon_max),
+            cold_ds=ds.sel({"longitude":slice(c_lon_min,c_lon_max),
                         "latitude":slice(c_lat_max,c_lat_min)})
         
         mean_divIVT_warm_ds=warm_ds["IVT_conv"][last_hour,:,:].mean()
@@ -2158,28 +2319,30 @@ class FlightMaps(flight_campaign):
         mean_p_warm_ds=warm_ds["tp"][last_hour,:,:].mean()
         warm_center_lon=warm_ds.longitude.mean()
         warm_center_lat=warm_ds.latitude.mean()
-        # core
-        mean_divIVT_core_ds=core_ds["IVT_conv"][last_hour,:,:].mean()
-        mean_IWV_dt_core_ds=dIWV_dt.sel(
-            {"longitude":slice(core_lon_min,core_lon_max),
-             "latitude":slice(core_lat_max,core_lat_min)})[:,:].mean()                                                     
         
-        mean_e_core_ds=core_ds["e"][last_hour,:,:].mean()
-        mean_p_core_ds=core_ds["tp"][last_hour,:,:].mean()
-        core_center_lon=core_ds.longitude.mean()
-        core_center_lat=core_ds.latitude.mean()
-        # cold sector
-        # core
-        mean_divIVT_cold_ds=cold_ds["IVT_conv"][last_hour,:,:].mean()
-        mean_IWV_dt_cold_ds=dIWV_dt.sel(
-            {"longitude":slice(c_lon_min,c_lon_max),
-             "latitude":slice(c_lat_max,c_lat_min)})[:,:].mean()                                                     
+        if not only_warm_sector:
+            # core
+            mean_divIVT_core_ds=core_ds["IVT_conv"][last_hour,:,:].mean()
+            mean_IWV_dt_core_ds=dIWV_dt.sel(
+                {"longitude":slice(core_lon_min,core_lon_max),
+                 "latitude":slice(core_lat_max,core_lat_min)})[:,:].mean()                                                     
         
-        mean_e_cold_ds=cold_ds["e"][last_hour,:,:].mean()
-        mean_p_cold_ds=cold_ds["tp"][last_hour,:,:].mean()
-        cold_center_lon=cold_ds.longitude.mean()
-        cold_center_lat=cold_ds.latitude.mean()
-        #------------------------------------------------------------------#
+            mean_e_core_ds=core_ds["e"][last_hour,:,:].mean()
+            mean_p_core_ds=core_ds["tp"][last_hour,:,:].mean()
+            core_center_lon=core_ds.longitude.mean()
+            core_center_lat=core_ds.latitude.mean()
+            # cold sector
+            mean_divIVT_cold_ds=cold_ds["IVT_conv"][last_hour,:,:].mean()
+            mean_IWV_dt_cold_ds=dIWV_dt.sel(
+                {"longitude":slice(c_lon_min,c_lon_max),
+                 "latitude":slice(c_lat_max,c_lat_min)})[:,:].mean()                                                     
+        
+            mean_e_cold_ds=cold_ds["e"][last_hour,:,:].mean()
+            mean_p_cold_ds=cold_ds["tp"][last_hour,:,:].mean()
+            cold_center_lon=cold_ds.longitude.mean()
+            cold_center_lat=cold_ds.latitude.mean()
+            #------------------------------------------------------------------#
+        
         ## Add quiver
         step=15
         quiver_lon=np.array(ds["longitude"][::step])
@@ -2233,51 +2396,53 @@ class FlightMaps(flight_campaign):
                  bbox=dict(facecolor='lightgrey',edgecolor="k",
                  boxstyle="round",alpha=0.8),
                  transform=ccrs.PlateCarree(),zorder=12)
-        #core sector quantities
-        ax1.text(core_center_lon,core_center_lat,
+        if not only_warm_sector:
+            #core sector quantities
+            ax1.text(core_center_lon,core_center_lat,
                  s=str(np.round(float(mean_divIVT_core_ds),2)),
                  color="darkgreen",
                  bbox=dict(facecolor='lightgrey',edgecolor="k",
                  boxstyle="round",alpha=0.8),
                  transform=ccrs.PlateCarree(),zorder=12)
-        ax2.text(core_center_lon,core_center_lat,
+            ax2.text(core_center_lon,core_center_lat,
                  s=str(np.round(float(mean_e_core_ds),2)),
                  color="darkgreen",
                  bbox=dict(facecolor='lightgrey',edgecolor="k",
                  boxstyle="round",alpha=0.8),
                  transform=ccrs.PlateCarree(),zorder=12)
-        ax3.text(core_center_lon,core_center_lat,
+            ax3.text(core_center_lon,core_center_lat,
                  s=str(np.round(float(mean_p_core_ds),2)),
                  color="darkgreen",
                  bbox=dict(facecolor='lightgrey',edgecolor="k",
                  boxstyle="round",alpha=0.8),
                  transform=ccrs.PlateCarree(),zorder=12)
-        ax4.text(core_center_lon,core_center_lat,
+            ax4.text(core_center_lon,core_center_lat,
                  s=str(np.round(float(mean_IWV_dt_core_ds),2)),
                  color="darkgreen",
                  bbox=dict(facecolor='lightgrey',edgecolor="k",
                  boxstyle="round",alpha=0.8),
                  transform=ccrs.PlateCarree(),zorder=12)
-        #cold sector quantities
-        ax1.text(cold_center_lon,cold_center_lat,
+        if not only_warm_sector:
+            #cold sector quantities
+            ax1.text(cold_center_lon,cold_center_lat,
                  s=str(np.round(float(mean_divIVT_cold_ds),2)),
                  color="blue",
                  bbox=dict(facecolor='lightgrey',edgecolor="k",
                  boxstyle="round",alpha=0.8),
                  transform=ccrs.PlateCarree(),zorder=12)
-        ax2.text(cold_center_lon,cold_center_lat,
+            ax2.text(cold_center_lon,cold_center_lat,
                  s=str(np.round(float(mean_e_cold_ds),2)),
                  color="blue",
                  bbox=dict(facecolor='lightgrey',edgecolor="k",
                  boxstyle="round",alpha=0.8),
                  transform=ccrs.PlateCarree(),zorder=12)
-        ax3.text(cold_center_lon,cold_center_lat,
+            ax3.text(cold_center_lon,cold_center_lat,
                  s=str(np.round(float(mean_p_cold_ds),2)),
                  color="blue",
                  bbox=dict(facecolor='lightgrey',edgecolor="k",
                  boxstyle="round",alpha=0.8),
                  transform=ccrs.PlateCarree(),zorder=12)
-        ax4.text(cold_center_lon,cold_center_lat,
+            ax4.text(cold_center_lon,cold_center_lat,
                  s=str(np.round(float(mean_IWV_dt_cold_ds),2)),
                  color="blue",
                  bbox=dict(facecolor='lightgrey',edgecolor="k",

@@ -1607,10 +1607,12 @@ class ICON_on_HALO(ICON):
             varname="qi"
         elif var=="Snow_Content":
             varname="qs"
-        elif var=="Liquid_Content":
+        elif var=="Liquid_Content" or var=="Cloud_Content":
             varname="qc"
         elif var=="Rain_Content":
             varname="qr"
+        elif var=="Graupel_Content":
+            varname="qg"
         else:
             raise Exception("This is a wrong var name given")
         
@@ -1780,19 +1782,17 @@ class ICON_on_HALO(ICON):
                              "z_mc"]
             else:
                 variables=["Ice_Content","Snow_Content",
-                           "Liquid_Content",
-                           "Rain_Content"]#,
-                           #"Pressure","Specific_Humidity",
-                           #"U_Wind","V_Wind","Z_Height"]
+                           "Cloud_Content",
+                           "Rain_Content","Graupel_Content",
+                           "Pressure","Specific_Humidity",
+                           "U_Wind","V_Wind","Z_Height",]#,
+                           
                 
+                halo_icon_keys=["qi","qs","qc","qr","qg",
+                                "p","qv","u","v","Z_Height"]
                 
-                halo_icon_keys=["qi","qs",
-                                "qc","qr"]
-                #,"p","qv","u","v","Z_Height"]
-                
-                dataset_var=["qi","qs",
-                             "qc","qr"]
-                #,"pres","qv","u","v","z_mc"]
+                dataset_var=["qi","qs","qc","qr","qg",
+                             "pres","qv","u","v","z_mc"]
                 
             
             #Preallocate
