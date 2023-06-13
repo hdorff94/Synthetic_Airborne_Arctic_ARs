@@ -1781,17 +1781,24 @@ class ICON_on_HALO(ICON):
                              "v",
                              "z_mc"]
             else:
-                variables=["Ice_Content","Snow_Content",
+                variables=["Ice_Content",
+                           "Snow_Content",
                            "Cloud_Content",
                            "Rain_Content","Graupel_Content",
                            "Pressure","Specific_Humidity",
                            "U_Wind","V_Wind","Z_Height",]#,
                            
                 
-                halo_icon_keys=["qi","qs","qc","qr","qg",
+                halo_icon_keys=["qi",
+                                "qs",
+                                "qc",
+                                "qr","qg",
                                 "p","qv","u","v","Z_Height"]
                 
-                dataset_var=["qi","qs","qc","qr","qg",
+                dataset_var=["qi",
+                             "qs",
+                             "qc",
+                             "qr","qg",
                              "pres","qv","u","v","z_mc"]
                 
             
@@ -1914,7 +1921,7 @@ class ICON_on_HALO(ICON):
                     csv_icon_keys=["Pressure","Specific_Humidity",
                                "U_Wind","V_Wind","Z_Height",
                                "Ice_Content","Snow_Content",
-                               "Rain_Content","Liquid_Content"]
+                               "Rain_Content","Cloud_Content"]
                 k=0
                 
                 for halo_key in halo_icon_keys:

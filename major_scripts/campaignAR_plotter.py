@@ -163,7 +163,7 @@ if __name__=="__main__":
     calc_hmc=True
     do_plotting=True
     synthetic_campaign=False
-    ar_of_day=["AR_entire_1"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
+    ar_of_day=["AR_entire_2"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
     campaign_name="HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"
     #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
     
@@ -187,8 +187,8 @@ if __name__=="__main__":
         flights_to_analyse={#"RF02":"20220312",
                             #"RF03":"20220313",
                             #"RF04":"20220314",
-                            "RF05":"20220315",
-                           # "RF06":"20220316",
+                            #"RF05":"20220315",
+                            "RF06":"20220316",
                             #"RF07":"20220320"
                             
                             #"RF10":"20161013"
