@@ -507,15 +507,11 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
                    "2020-04-19":"grey"}        
     # Plotting
     snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",
-                          s=20,alpha=0.5,color="teal",#"mediumseagreen",
+                          s=20,alpha=0.5,color="teal",
                           space=1.2,height=10)
-    
-    #snsplot=sns.jointplot(data=combined_AR_df,x="ivt",y="clat",hue="season",
-    #                      s=3,alpha=0.3,space=1.2,height=8)
-    #    snsplot.plot_joint(sns.kdeplot, zorder=1, levels=3)
         
     snsplot.plot_joint(sns.kdeplot, zorder=1, levels=[0.25,0.75],
-                       color="teal")#"green")
+                       color="teal")
     #AR_campaign_df
     # get legend entries depending on available indices and flights
     legend_label=[str(AR_campaign_df.index[i]) \
@@ -547,18 +543,18 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
                 flight=flight_dates[legend_label[i]][1]
                 centered_halo_lat=get_centered_halo_lat(campaign_name, flight)
                 #centered_halo_lat=75+i
-            snsplot.ax_joint.axhline(centered_halo_lat,xmin=0.,
-                                     xmax=0.02,lw=2,
-                                     color="k")
-            snsplot.ax_joint.text(120,centered_halo_lat-0.3,s="AR"+str(i+1),
-                                  fontsize=10)
+                snsplot.ax_joint.axhline(centered_halo_lat,xmin=0.95,
+                                     xmax=0.99,lw=3,
+                                     color=flight_colors[legend_label[i]])
+                #snsplot.ax_joint.text(120,centered_halo_lat-0.3,s="AR"+str(i+1),
+                #                  fontsize=10)
     snsplot.ax_joint.set_xlabel("$\overline{IVT}$"+\
                                     " ($\mathrm{kgm}^{-1}\mathrm{s}^{-1})$")
     snsplot.ax_joint.set_ylabel("AR Centre Latitude in $^{\circ}$N")
     snsplot.ax_joint.set_ylim([lower_lat,upper_lat])
     snsplot.ax_joint.set_xlim([100,500])
     snsplot.ax_joint.set_xticks([100,200,300,400,500])
-    snsplot.ax_joint.legend(loc="best",fontsize=16)
+    snsplot.ax_joint.legend(loc="upper left",fontsize=15,ncol=3)
     sns.despine(offset=5)
     output_path=cmpgn_cls.plot_path
     snsplot.fig.set_figwidth(12)
