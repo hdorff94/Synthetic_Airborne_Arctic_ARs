@@ -1786,7 +1786,8 @@ class ICON_on_HALO(ICON):
                            "Cloud_Content",
                            "Rain_Content","Graupel_Content",
                            "Pressure","Specific_Humidity",
-                           "U_Wind","V_Wind","Z_Height",]#,
+                           "U_Wind",
+                           "V_Wind","Z_Height",]#,
                            
                 
                 halo_icon_keys=["qi",
@@ -1794,14 +1795,16 @@ class ICON_on_HALO(ICON):
                                 "qc",
                                 "qr","qg",
                                 "p","qv",
-                                "u","v","Z_Height"]
+                                "u",
+                                "v","Z_Height"]
                 
                 dataset_var=["qi",
                              "qs",
                              "qc",
                              "qr","qg",
                              "pres","qv",
-                             "u","v","z_mc"]
+                             "u",
+                             "v","z_mc"]
                 
             
             #Preallocate

@@ -159,8 +159,8 @@ if __name__=="__main__":
     # too much. 
     
     # Relevant specifications for running , those are default values
-    calc_hmp=False
-    calc_hmc=True
+    calc_hmp=True
+    calc_hmc=False
     do_plotting=True
     synthetic_campaign=False
     ar_of_day=["AR_entire_2"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
@@ -169,7 +169,7 @@ if __name__=="__main__":
     
     if synthetic_campaign:
         flights_to_analyse={#"SRF02":"20180224",#,#,
-                        #"SRF04":"20190319",#}#,#,
+                        #"SRF04":"20190319",#}#,#,m,
                         #"SRF07":"20200416",#}#,#,#}#,#}#,
                         #"SRF08":"20200419"#,}
         #Second Synthetic Study
