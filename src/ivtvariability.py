@@ -1491,6 +1491,29 @@ class IVT_Variability_Plotter(IVT_variability):
     def plot_IVT_vertical_variability(self,subsample_day="",save_figure=True,
                                       undefault_path="default",
                                       manuscript_figure=True):
+        
+        """
+        This function plots the vertical profiles (mean +- std)
+        of wind moisture and moisture transport for the entirety 
+        of selected AR events. One AR is explicitly depicted.
+        
+        Arguments:
+            subsample day : str
+                YYYY-MM-DD of AR to depict as single case. Default is empty str
+            save_figure : boolean
+                specifies if figure should be saved. Default is True
+            undefault_path: str
+                gives another path if not the default path for figure output.
+                If manuscript_figure is True. The manuscript path is used.
+            manuscript_figure: boolean
+                if True the figure is stored as manuscript figure to be 
+                directly included into the manuscript.
+                Default is True.
+                
+                
+        Returns:
+            None
+        """
         # start plotting
         with_sondes=False
         #if not hasattr(self,"icon_p_quantile"):
@@ -1602,6 +1625,10 @@ class IVT_Variability_Plotter(IVT_variability):
         #---------------------------------------------------------------------#
         # Plot specifications
         # ax1
+        ax1.text(-2,365,"a)")#transform=ax1.transAxes)
+        ax2.text(-1,365,"b)")#,transform=ax1.transAxes)
+        ax3.text(-2,365,"c)")#,transform=ax1.transAxes)
+        
         xlim_wind_max=self.grid_mean["wind"].max()//10*10+10
         ax1.invert_yaxis()
         plt.yscale("log")
@@ -1791,7 +1818,7 @@ class IVT_Variability_Plotter(IVT_variability):
         #difference to consider: will be asserted in AR.calc_TIVT
         difference_referred="AR_"    
         import matplotlib
-        matplotlib.rcParams.update({"font.size":16})
+        matplotlib.rcParams.update({"font.size":20})
         import atmospheric_rivers as AR
         Flights_inflow_dict={}
         Flights_outflow_dict={}
@@ -1814,7 +1841,7 @@ class IVT_Variability_Plotter(IVT_variability):
             Flights_inflow_dict[flight], Flights_outflow_dict[flight]=\
                 AR.Atmospheric_Rivers.locate_AR_cross_section_sectors(
                     HALO_dict,HMP_dict,flight)
-            print("Flights_inflow_dict:",Flights_inflow_dict[flight])
+            #print("Flights_inflow_dict:",Flights_inflow_dict[flight])
             Flights_TIVT_inflow[flight],Flights_TIVT_outflow[flight]=\
                 AR.Atmospheric_Rivers.calc_TIVT_of_sectors(
                     Flights_inflow_dict[flight],Flights_outflow_dict[flight],
@@ -1824,7 +1851,7 @@ class IVT_Variability_Plotter(IVT_variability):
         f,ax=plt.subplots(nrows=row_number,ncols=col_number,
                           figsize=(18,12),sharex=True,sharey=True)
         i=0
-        print(ax)
+        #print(ax)
         import seaborn as sns
         
         if not grid_name=="ERA5":
@@ -1855,7 +1882,9 @@ class IVT_Variability_Plotter(IVT_variability):
             TIVT_outflow_core=Flights_TIVT_outflow[flight]["core"]
             
             TIVT_diff=TIVT_inflow_total-TIVT_outflow_total
-            
+            subplot_labels=["a)","b)","c)",
+                            "d)","e)","f)",
+                            "g)","h)","i)"]
             if len(ax.shape)>=2:
                 if i<col_number:
                     horizontal_field=i
@@ -1907,10 +1936,10 @@ class IVT_Variability_Plotter(IVT_variability):
             plot_ax.plot(ar_outflow_cold_sector["IVT_max_distance"]/1000,
                  ar_outflow_cold_sector[ivt_var_arg],
                  lw=3,ls="-.",color="darkred")
-            print(TIVT_diff/1e6)
+            #print(TIVT_diff/1e6)
             scale_factor=round(abs(30/(TIVT_diff/1e6))+1)
             arrow_length=280/scale_factor
-            print(scale_factor, "Scale factor")
+            #print(scale_factor, "Scale factor")
             if TIVT_diff>0: 
                 plot_ax.arrow(-300,500,0,arrow_length,
                               facecolor="mediumseagreen",
@@ -1922,7 +1951,7 @@ class IVT_Variability_Plotter(IVT_variability):
                               linewidth=3/scale_factor,width=28/scale_factor,
                               linestyle="-")
                 
-            print("ARROW plotted")
+            #print("ARROW plotted")
             plot_ax.text(0.015,0.8,"AR"+str(i+1),color="k",
                      transform=plot_ax.transAxes,
                      bbox=dict(facecolor='lightgrey', edgecolor='black', 
@@ -1938,26 +1967,26 @@ class IVT_Variability_Plotter(IVT_variability):
             from matplotlib.lines import Line2D
 
             legend_patches = [Patch(facecolor='darkblue', edgecolor='k',
-                                    label='TIVT (in)='+\
+                                    label='$TIVT_{\mathrm{in}}$='+\
                                     str((TIVT_inflow_total/1e6).round(1))+\
-                                    "$\cdot 1\mathrm{e}6\,\mathrm{kgs}^{-1}$"),
+                                    "$\cdot 10^{6}\,\mathrm{kgs}^{-1}$"),
                               Patch(facecolor='darkred', edgecolor='k',
-                                    label='TIVT (out)='+\
+                                    label='$TIVT_{\mathrm{out}}$='+\
                                     str((TIVT_outflow_total/1e6).round(1))+\
-                                    "$\cdot 1\mathrm{e}6\,\mathrm{kgs}^{-1}$")]
+                                    "$\cdot 10^{6}\,\mathrm{kgs}^{-1}$")]
             legend_loc="upper right"
             ivt_max=hmp_inflow[ivt_var_arg].max()
-            print(ivt_max)
+            #print(ivt_max)
             if ivt_max>450:
                 legend_loc="lower center"
             #line_core_in[0],line_core_out[0],
             lgd = plot_ax.legend(handles=[\
                                       legend_patches[0],legend_patches[1]],
-                             loc=legend_loc,fontsize=10,ncol=1)
+                             loc=legend_loc,fontsize=13,ncol=1)
                 
             i+=1
         sns.despine(offset=10)
-        fig_name="Fig10_"+grid_name+"_AR_TIVT_cases_overview.pdf"
+        fig_name="fig11_"+grid_name+"_AR_TIVT_cases_overview.pdf"
         if plot_path=="":
             plt_path=cmpn_cls.plot_path
         else:
