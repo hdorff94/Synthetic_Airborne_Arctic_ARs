@@ -140,7 +140,6 @@ run.moisture_budget_closure_regression_method.main(instantan=True)
 This script itself calls ```Moisture_Convergence.calc_moisture_convergence_from_regression_method```
 or alternatively, you run the notebook ```AR_Stationarity.ipynb``` 
 #### Figure 14 (Daily Contribution Comparison: Instantan, Time Propagating Error Divergence) 
-%#### Figure 14 (Daily Contribution to Moisture Budget Divergence Non Instantan - Instantan)
 %To create the multiplot with comparing non-instantan minus instantan as a vertical profile just run:
 This figure compares the daily contribution of IVT divergence to daily moisture budget for flight duration with instantan values.
 The comparison refers to the continuous cross-frontal section and is similar built as Fig. 12. Using the same data for the flight
