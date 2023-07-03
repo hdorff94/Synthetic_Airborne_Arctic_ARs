@@ -338,4 +338,4 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         raise Exception("You have given the wrong figure name.",
                         " No figure created")
 if __name__=="__main__":
-    main(save_in_manuscript_path=True,figure_to_create="fig01_")
+    main(save_in_manuscript_path=True,figure_to_create="fig10_")

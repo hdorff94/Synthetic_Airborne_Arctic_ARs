@@ -1657,7 +1657,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         else:
             fig_plot_path=self.cmpgn_cls.plot_path+"/../../../"+\
                     "Synthetic_AR_Paper/"+"/Manuscript/Paper_Plots/"
-            fig_name="Fig11_"+fig_name
+            fig_name="fig12_"+fig_name
         profile.savefig(fig_plot_path+fig_name,dpi=300,bbox_inches="tight")
         print("Figure saved as:",fig_plot_path+fig_name)
     
@@ -2090,7 +2090,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             plot_path=self.plot_path+\
                 "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
             if not instantan_comparison:
-                fig_name="Fig12_"+fig_name
+                fig_name="fig13_"+fig_name
             else:
                 fig_name="Fig16_"+fig_name
         budget_boxplot.savefig(plot_path+fig_name,
@@ -2102,13 +2102,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         Campaign_Inst_Budgets={},Campaign_Inst_Ideal_Budgets={},
         save_as_manuscript_figure=False,plot_mean_error=False,
         use_flight_tracks=False):
-        #,instantan_comparison=False
-        #Campaign_Budgets=Campaign_Budgets,
-        #Campaign_Ideal_Budgets=Campaign_Ideal_Budgets,
-        #Campaign_Inst_Budgets={},
-        #Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
-        #instantan_comparison=True,
-        #save_as_manuscript_figure=False)
+        
         # Allocate variables and calc budget contributions in mm/h
         self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
                               Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets)
@@ -2124,14 +2118,12 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.axhline(0,color="grey",ls="--",lw=2,zorder=1)
     
         budget_continuous_regions=self.budget_ideal_regions
-        #budget_ideal_regions=self.budget_ideal_regions
-        #else:
+        
         budget_ideal_regions=self.budget_inst_ideal_regions
         if self.grid_name=="CARRA":
             budget_ideal_regions=-1*budget_ideal_regions
             budget_continuous_regions=-1*budget_continuous_regions
-        #sns.boxplot(data=24*budget_ideal_regions,notch=False,
-        #               zorder=0,linewidth=3.5,palette=color_palette)
+        
         budget_continuous_regions["Time"]="flight duration"
         budget_continuous_regions["Sector_Term"]=budget_continuous_regions.index.copy()
         budget_continuous_regions.index=np.arange(9)
@@ -2152,15 +2144,13 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                     hue="Time",zorder=0,linewidth=2,color="k",
                     palette=["k","grey"],
                     medianprops=dict(color="yellow", alpha=0.7,linewidth=4,
-                                     zorder=2),
-                    #boxprops={"linestyle": ["-","--"]},
-                    width=0.4)
+                                     zorder=2),width=0.4)
         for axis in ["left","bottom"]:
             ax1.spines[axis].set_linewidth(3.0)
         
             ax1.xaxis.set_tick_params(width=2,length=10)
             ax1.yaxis.set_tick_params(width=2,length=10)
-                        #ax1.xaxis.spines(width=3)
+
         ax1.set_ylabel("Contribution to \nMoisture Budget ($\mathrm{mmd}^{-1}$)")
         ax1.set_xlabel("Frontal Sector and Component")
         ax1.set_ylim([-10,10])
@@ -2178,25 +2168,19 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         else:
             plot_path=self.plot_path+\
                 "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
-            #if not instantan_comparison:
         if plot_mean_error:
             sector_divergence_inst_errors=\
                 24*(budget_continuous_regions.iloc[:,0:6]-\
                     budget_ideal_regions.iloc[:,0:6])
-            #sector_divergence_errors=budget_regions-budget_ideal_regions
             mean_sector_divergence_inst_errors=sector_divergence_inst_errors.mean()
-            #mean_sector_divergence_errors=sector_divergence_errors.mean()
-        
             
-            #inst_mean_error_fig=plt.figure(figsize=(12,9))
-            ax12=ax1.twinx()#inst_mean_error_fig.add_subplot(111)
+            ax12=ax1.twinx()
             ax12.scatter(mean_sector_divergence_inst_errors.index,
                          mean_sector_divergence_inst_errors,marker="o",s=100,
                          color="red",edgecolor="k")
             ax12.set_ylim([-2,2])
             #for axis in ["right"]:
             ax12.spines["right"].set_linewidth(3.0)
-            #ax12.set_xticklabels(color="darkred")
             ax12.tick_params(axis='y', colors='darkred')
             ax12.xaxis.set_tick_params(width=2,length=10)
             ax12.yaxis.set_tick_params(width=2,length=10)
@@ -2206,10 +2190,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             ax12.spines["top"].set_visible(False)
             ax12.spines["bottom"].set_visible(False)
         sns.despine(ax=ax1,offset=10)
-        #sns.despine(ax=ax12,offset=10)
-        fig_name="Fig14_"+fig_name
-        #    else:
-        #        fig_name="Fig18_"+fig_name
+        fig_name="fig14_"+fig_name
         budget_boxplot.savefig(plot_path+fig_name,
                        dpi=200,bbox_inches="tight")
         print("Figure saved as:",plot_path+fig_name)

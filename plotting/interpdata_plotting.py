@@ -52,8 +52,6 @@ def ar_cross_sections_overview_flights_vertical_profile(
                                         calc_hmp=False,calc_hmc=True,
                                         do_instantaneous=False)
             
-    #Hydrometeors_list= {**NA_Hydrometeors, **SND_Hydrometeors}
-    #if analyse_all_flights:
     key_list=[*NA_Hydrometeors.keys()]
     for key in key_list:
         new_dict_entry=int(flight_dates["North_Atlantic_Run"][key])
@@ -218,7 +216,7 @@ def ar_cross_sections_overview_flights_vertical_profile(
     # add a overall colorbar for specific humidity    
     supplement_path=SND_cmpgn_cls.plot_path+\
                 "/../../../Synthetic_AR_Paper/Manuscript/Paper_Plots/"
-    fig_name="Fig09_"+grid_name+"AR_inflow_cross_sections_overview.png"
+    fig_name="fig10_"+grid_name+"AR_inflow_cross_sections_overview.png"
     cross_section_fig.savefig(supplement_path+fig_name,
                               dpi=300,bbox_inches="tight")
     print("Figure saved as: ",supplement_path+fig_name)
