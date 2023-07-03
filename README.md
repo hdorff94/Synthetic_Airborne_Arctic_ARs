@@ -1,5 +1,5 @@
 # Synthetic_Airborne_Arctic_ARs 🌊 ❄️ 💦
-This is the GIT repository used to investigate the divergence of moisture transport in nine exemplaric Atmospheric River (AR) cases using ERA5 and CARRA. By that, we want to assess the feasibility of deriving moisture transport divergence from sporadic airborne soundings. At the current state, this is done using synthetic sondes that are created within the reanalysis grid datasets for synthetically created zig-zag flight pattern.
+This is the git repository used to investigate the divergence of moisture transport in nine exemplaric Atmospheric River (AR) cases using ERA5 and CARRA. By that, we want to assess the feasibility of deriving moisture transport divergence from sporadic airborne soundings. At the current state, this is done using synthetic sondes that are created within the reanalysis grid datasets for synthetically created zig-zag flight pattern.
  
 # List what needed to run and import for recreating all the manuscript data and figures:
 ## Create Major AR cross-section data 💻
@@ -12,6 +12,9 @@ import campaignAR_plotter
 
 campaignAR_plotter.main()
 # inside main you can specify the flights that are commented out and the subcampaign for variable campaign_name
+
+# Current dates used:
+# "20110317","20110423","20150314","20160311","20180224","20180225","20190319","20200416","20200419"
 ```
 
 ## Figures in Chapters 🌐
