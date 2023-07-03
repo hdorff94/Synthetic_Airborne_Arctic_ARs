@@ -482,9 +482,7 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
         
                 
     plot_AR_statistics=True
-    #flight_colors={"RF10":"salmon","SRF02":"purple","SRF03":"darkgreen",
-    #               "SRF04":"lightpink","SRF05":"orange","SRF06":"skyblue",
-    #               "SRF07":"navy","SRF08":"teal"}   
+  
     flight_dates={"2016-10-13":["NAWDEX","RF10"],
                   "2011-03-17":["Second_Synthetic_Study","SRF02"],
                   "2011-04-23":["Second_Synthetic_Study","SRF03"],
@@ -512,7 +510,7 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
         
     snsplot.plot_joint(sns.kdeplot, zorder=1, levels=[0.25,0.75],
                        color="teal")
-    #AR_campaign_df
+    
     # get legend entries depending on available indices and flights
     legend_label=[str(AR_campaign_df.index[i]) \
                   for i in range(AR_campaign_df.shape[0])]    
@@ -533,8 +531,6 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
             snsplot.ax_joint.spines["left"].set_linewidth(3.0)
             snsplot.ax_joint.spines["bottom"].set_linewidth(3.0)
             
-            #ax12.set_xticklabels(color="darkred")
-            #snsplot.ax_joint.axis.tick_params(axis='y', colors='darkred')
             snsplot.ax_joint.xaxis.set_tick_params(width=2,length=6)
             snsplot.ax_joint.yaxis.set_tick_params(width=2,length=6)
             
@@ -546,8 +542,7 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
                 snsplot.ax_joint.axhline(centered_halo_lat,xmin=0.95,
                                      xmax=0.99,lw=3,
                                      color=flight_colors[legend_label[i]])
-                #snsplot.ax_joint.text(120,centered_halo_lat-0.3,s="AR"+str(i+1),
-                #                  fontsize=10)
+
     snsplot.ax_joint.set_xlabel("$\overline{IVT}$"+\
                                     " ($\mathrm{kgm}^{-1}\mathrm{s}^{-1})$")
     snsplot.ax_joint.set_ylabel("AR Centre Latitude in $^{\circ}$N")
@@ -558,9 +553,9 @@ def plot_IVT_long_term_characteristics(cmpgn_cls,AR_df,AR_campaign_df,
     sns.despine(offset=5)
     output_path=cmpgn_cls.plot_path
     snsplot.fig.set_figwidth(12)
-    snsplot.savefig(output_path+"Fig02_Seasonal_AR_statistics.png",
+    snsplot.savefig(output_path+"fig02_Seasonal_AR_statistics.png",
                         dpi=300,bbox_inches="tight")
-    print("Statistics saved as:",output_path+"Fig02_Seasonal_AR_statistics.png")
+    print("Statistics saved as:",output_path+"fig02_Seasonal_AR_statistics.png")
     return None    
 
 def run_plot_IVT_long_term_stats(cmpgn_cls,HMPs,

@@ -1737,7 +1737,7 @@ class IVT_Variability_Plotter(IVT_variability):
                 major_name=self.ar_of_day+"_"+self.flight+\
                         "_IVT_lateral_variability_"
             else:
-                major_name="Fig07_IVT_lateral_variability"
+                major_name="fig07_IVT_lateral_variability"
             file_format=".pdf"
             if self.sounding_frequency=="standard":
                 if not self.grid_sounding_profiles:

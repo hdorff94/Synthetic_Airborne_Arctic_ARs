@@ -28,7 +28,8 @@ def importer():
     paths_dict["airborne_plotting_module_path"]     =\
         paths_dict["actual_working_path"]+"/plotting/"
     paths_dict["manuscript_path"]                   =\
-        paths_dict["working_path"]+"Work/Synthetic_AR_Paper/Manuscript/Paper_Plots/"
+        paths_dict["working_path"]+\
+            "Work/Synthetic_AR_Paper/Manuscript/Paper_Plots/"
     paths_dict["scripts_path"]                      =\
         paths_dict["actual_working_path"]+"/major_scripts/"
                             
@@ -41,6 +42,33 @@ def importer():
     return paths_dict
 
 def main(save_in_manuscript_path=False,figure_to_create="fig01"):
+    """
+    This routine creates overview plots for the ARs depicted (nine cases).
+    
+    Two different manuscript multiplots can be provided (Fig01, AR IVT maps,
+                                    and Fig10, moisture transport contours)
+    
+    Parameters
+    ----------
+    save_in_manuscript_path : boolean, optional
+        Specifies if the figure should be saved as ready for the manuscript.
+        The default is False.
+    
+    figure_to_create : str, optional
+        String that specifies with figure to be created. Two opportunities as
+        specified above. The default is "fig01". Other possible is "fig10".
+
+    Raises
+    ------
+    Exception
+        if another Figure name than "fig01" or "fig10" are given.
+
+    Returns
+    -------
+    None.
+
+    """
+    
     paths_dict=importer()
     #%% Define the flight campaign classes
     import flightcampaign
@@ -53,21 +81,17 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
     
 
     na_run=flightcampaign.North_Atlantic_February_Run(
-                                        is_flight_campaign=True,
-                                        major_path=config_file["Data_Paths"]\
-                                                    ["campaign_path"],
-                                        aircraft="HALO",
-                                        interested_flights=["SRF02","SRF04",
-                                                            "SRF07","SRF08"],
-                                        instruments=["radar","radiometer","sonde"])
+                    is_flight_campaign=True,
+                    major_path=config_file["Data_Paths"]["campaign_path"],
+                    aircraft="HALO",interested_flights=["SRF02","SRF04",
+                                                        "SRF07","SRF08"],
+                    instruments=["radar","radiometer","sonde"])
     snd_run=flightcampaign.Second_Synthetic_Study(
-                                        is_flight_campaign=True,
-                                        major_path=config_file["Data_Paths"]\
-                                            ["campaign_path"],aircraft="HALO",
-                                        interested_flights=["SRF02","SRF03",
-                                                            "SRF08","SRF09",
-                                                            "SRF12"],
-                                        instruments=["radar","radiometer","sonde"])
+                    is_flight_campaign=True,
+                    major_path=config_file["Data_Paths"]["campaign_path"],
+                    aircraft="HALO",interested_flights=["SRF02","SRF03",
+                                        "SRF08","SRF09","SRF12"],
+                    instruments=["radar","radiometer","sonde"])
     
     #%% Get the flight data    
     import flight_track_creator
@@ -129,15 +153,17 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                                        "IVT_v":np.linspace(0,500,101),
                                        "IVT_u":np.linspace(0,500,101)}
         met_var_dict["units"]       = {"IWV":"(kg$\mathrm{m}^{-2}$)",
-                                       "IVT":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)",
-                                       "IVT_v":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)",
-                                       "IVT_u":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)"}
+                                "IVT":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)",
+                                "IVT_v":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)",
+                                "IVT_u":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)"}
                 
         
         col_no=3
         row_no=3
-        projection=ccrs.AzimuthalEquidistant(central_longitude=-5.0,central_latitude=70)
-        fig,axs=plt.subplots(row_no,col_no,sharex=True,sharey=True,figsize=(12,16),
+        projection=ccrs.AzimuthalEquidistant(central_longitude=-5.0,
+                                             central_latitude=70)
+        fig,axs=plt.subplots(row_no,col_no,sharex=True,sharey=True,
+                             figsize=(12,16),
                              subplot_kw={'projection': projection})
         key=0
         era_index_dict={"20110317":15,
@@ -156,8 +182,8 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                   "20150314":"AR3","20180225":"AR6",
                   "20200419":"AR9"}
         meteo_var="IVT"
-        pressure_color="purple"##"royalblue"
-        sea_ice_colors=["gold","saddlebrown"]#["mediumslateblue", "indigo"]
+        pressure_color="purple"                 #"royalblue"
+        sea_ice_colors=["gold","saddlebrown"]   #["mediumslateblue", "indigo"]
         
         for col in range(col_no):
             for row in range(row_no):
@@ -183,57 +209,51 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                era_ds["IVT_v"]=era_ds["p72.162"]
                era_ds["IVT_u"]=era_ds["p71.162"]
                era_ds["IVT"]=np.sqrt(era_ds["IVT_u"]**2+era_ds["IVT_v"]**2)
+               
                # Plot IVT
                C1=axs[row,col].contourf(era_ds["longitude"],era_ds["latitude"],
-                            era_ds[met_var_dict["ERA_name"][meteo_var]][era_index,:,:],
-                            levels=met_var_dict["levels"][meteo_var],extend="max",
-                            transform=ccrs.PlateCarree(),
-                            cmap=met_var_dict["colormap"][meteo_var],alpha=0.95)
+                    era_ds[met_var_dict["ERA_name"][meteo_var]][era_index,:,:],
+                    levels=met_var_dict["levels"][meteo_var],extend="max",
+                    transform=ccrs.PlateCarree(),
+                    cmap=met_var_dict["colormap"][meteo_var],alpha=0.95)
+               
                # Plot surface presure
                C_p=axs[row,col].contour(era_ds["longitude"],era_ds["latitude"],
-                                    era_ds["msl"][era_index,:,:]/100,
-                                    levels=np.linspace(950,1050,11),
-                                    linestyles="-.",linewidths=2,
-                                    colors="grey",transform=ccrs.PlateCarree())
+                    era_ds["msl"][era_index,:,:]/100,
+                    levels=np.linspace(950,1050,11),linestyles="-.",
+                    linewidths=2,colors="grey",transform=ccrs.PlateCarree())
                axs[row,col].clabel(C_p, inline=1, fmt='%03d hPa',fontsize=12)
+               
                # mean sea ice cover
                C_i=axs[row,col].contour(era_ds["longitude"],era_ds["latitude"],
-                                    era_ds["siconc"][era_index,:,:]*100,levels=[15,85],
-                                    linestyles="-",linewidths=[1.5,2],
-                                    colors=sea_ice_colors,
-                                    transform=ccrs.PlateCarree())
+                        era_ds["siconc"][era_index,:,:]*100,levels=[15,85],
+                        linestyles="-",linewidths=[1.5,2],
+                        colors=sea_ice_colors,
+                        transform=ccrs.PlateCarree())
                axs[row,col].clabel(C_i, inline=1, fmt='%02d %%',fontsize=14)
                     
-                    
-               #cb=map_fig.colorbar(C1,ax=ax)
-               #     cb.set_label(meteo_var+" "+met_var_dict["units"][meteo_var])
-               #     if meteo_var=="IWV":
-               #         cb.set_ticks([10,15,20,25,30])
-               #cb.set_ticks([50,100,200,300,400,500,600])
                            
                halo_df=flight_tracks_dict[flight_date]
                axs[row,col].coastlines(resolution="50m",zorder=0)
                axs[row,col].set_extent([-20,25,60,90])
-               #axs[row,col].gridlines()
-               # Date and Timestep
-               axs[row,col].text(-12, 62, str(flight_date)+" "+str(era_index)+" UTC",
-                                 fontsize=15,transform=ccrs.PlateCarree(),
-                                 color="darkblue",bbox=dict(
-                                     facecolor='lightgrey',edgecolor="black"))
                
-               axs[row,col].plot(halo_df["longitude"],
-                                 halo_df["latitude"],
-                                 color="white",lw=4,
-                                 transform=ccrs.PlateCarree())
-               axs[row,col].plot(halo_df["longitude"],
-                                 halo_df["latitude"],
-                                 color="indianred",lw=2,
-                                 transform=ccrs.PlateCarree())
+               # Date and Timestep
+               axs[row,col].text(-12, 62, str(flight_date)+" "+\
+                                 str(era_index)+" UTC",
+                    fontsize=15,transform=ccrs.PlateCarree(),color="darkblue",
+                    bbox=dict(facecolor='lightgrey',edgecolor="black"))
+               
+               axs[row,col].plot(halo_df["longitude"],halo_df["latitude"],
+                        color="white",lw=4,transform=ccrs.PlateCarree())
+               
+               axs[row,col].plot(halo_df["longitude"],halo_df["latitude"],
+                        color="indianred",lw=2,transform=ccrs.PlateCarree())
                
                # AR label (AR1)
-               axs[row,col].text(-60,82,ar_label[flight_date],transform=ccrs.PlateCarree(),
+               axs[row,col].text(-60,82,ar_label[flight_date],
+                                 transform=ccrs.PlateCarree(),
                                  color="k",bbox=dict(facecolor="lightgrey",
-                                                     edgecolor="black"),zorder=10)
+                                                edgecolor="black"),zorder=10)
                
                step=20
                quiver_lon=np.array(era_ds["longitude"][::step])
@@ -256,26 +276,21 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                    qk=axs[row, col].quiverkey(quiver,0.4,0.13,q_typ,
                     label=str(q_typ)+' $\mathrm{kgm}^{-1}\mathrm{s}^{-1}$',
                     coordinates="axes",labelpos="E",fontproperties={"size":12},
-                    #bbox=dict(facecolor='lightgrey',edgecolor="black")
-                    #fancybox={"facecolor":"grey",
-                    #          "edgecolor":"k"}
                     zorder=10)
                    qk.text.set_zorder(50)
                    qk.Q.set_zorder(50)#
                    
-                   #ax.add_patch(patches.Polygon(xy=list(zip(x,y))
                    rect = axs[row,col].add_patch(
                            patches.Polygon(xy=list(zip(x,y)),fill=True,
                            linewidth=1, edgecolor='k', facecolor='lightgrey',
                            transform=ccrs.Geodetic(),zorder=1,alpha=0.8))
-                   #qk.vector.set_zorder(6)
-                   #qk.text.set_backgroundcolor('w')
                    # Create a Rectangle patch
                    
                key+=1
-        # Adjust the location of the subplots on the page to make room for the colorbar
-        fig.subplots_adjust(#
-                            bottom=0.15,top=0.9, left=0.15, right=0.9,
+        
+        # Adjust the location of the subplots on the page
+        # to make room for the colorbar
+        fig.subplots_adjust(bottom=0.15,top=0.9, left=0.15, right=0.9,
                             wspace=0.05, hspace=0.05)
         # Add a colorbar axis at the bottom of the graph
         cbar_ax = fig.add_axes([0.905, 0.225, 0.02, 0.6])
@@ -287,25 +302,24 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
             fig_path=paths_dict["airborne_plotting_module_path"]
         else:
             fig_path=paths_dict["manuscript_path"]
-        fig_name="Fig01_AR_cases_overview.pdf"
+        fig_name="fig01_AR_cases_overview.pdf"
         fig.savefig(fig_path+fig_name,dpi=300,bbox_inches="tight")
         print("Figure saved as:",fig_path+fig_name)
-        #plt.adjust_subplots(hspace=0.1,vspace=0.1)
+        
         return None
-    elif figure_to_create.startswith("fig09"):
-        ar_of_day=["AR_internal"]
-        #campaign_name="Second_Synthetic_Study"##"HALO_AC3"
-        #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
     
-        NA_flights_to_analyse={"SRF02":"20180224",#,#,
-                               "SRF04":"20190319",#}#,#,
-                               "SRF07":"20200416",#}#,#,#}#,#}#,
+    elif figure_to_create.startswith("fig10"):
+        ar_of_day=["AR_internal"]
+        
+        NA_flights_to_analyse={"SRF02":"20180224",
+                               "SRF04":"20190319",
+                               "SRF07":"20200416",
                                "SRF08":"20200419"}
         #Second Synthetic Study
         SND_flights_to_analyse={"SRF02":"20110317",
-                                "SRF03":"20110423",#,
-                                "SRF08":"20150314",#,
-                                "SRF09":"20160311",#,
+                                "SRF03":"20110423",
+                                "SRF08":"20150314",
+                                "SRF09":"20160311",
                                 "SRF12":"20180225"}
         use_era=True
         use_carra=True
@@ -316,9 +330,10 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         do_instantaneous=True
         
         import interpdata_plotting
-        interpdata_plotting.ar_cross_sections_overview_flights_vertical_profile(
-            flight_dates,use_era,use_carra,use_icon,na_flights,snd_flights,
-            do_meshing=False)
+        interpdata_plotting.\
+            ar_cross_sections_overview_flights_vertical_profile(
+                flight_dates,use_era,use_carra,use_icon,
+                na_flights,snd_flights,do_meshing=False)
     else:
         raise Exception("You have given the wrong figure name.",
                         " No figure created")

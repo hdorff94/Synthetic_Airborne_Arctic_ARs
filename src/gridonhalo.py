@@ -1145,11 +1145,11 @@ class CARRA_on_HALO(CARRA):
     # HMC DATA    
     def check_if_hmc_data_is_interpolated(self):
         self.carra_hmc_is_interpolated=False
-        interp_hmc_file=self.flight+"_"+self.ar_of_day+"_z_"+\
+        self.interp_hmc_file=self.flight+"_"+self.ar_of_day+"_z_"+\
             self.date+".csv"
         if self.synthetic_flight:
-                interp_hmc_file="Synthetic_"+interp_hmc_file
-        if os.path.exists(self.carra_lvls_path+interp_hmc_file):
+                self.interp_hmc_file="Synthetic_"+self.interp_hmc_file
+        if os.path.exists(self.carra_lvls_path+self.interp_hmc_file):
            self.carra_hmc_is_interpolated=True
         else:
             pass
@@ -1157,12 +1157,13 @@ class CARRA_on_HALO(CARRA):
     def load_interp_hmc_data(self):        
         self.carra_halo_hmc={}
         for hmc in self.HMCs:
-            interp_hmc_file=self.flight+"_"+self.ar_of_day+"_"+hmc+"_"+\
+            self.interp_hmc_file=self.flight+"_"+self.ar_of_day+"_"+hmc+"_"+\
                 self.date+".csv"
             if self.synthetic_flight:
-                interp_hmc_file="Synthetic_"+interp_hmc_file
+                if not self.interp_hmc_file.startswith("Synthetic"):
+                    self.interp_hmc_file="Synthetic_"+self.interp_hmc_file
             self.carra_halo_hmc[hmc]=pd.read_csv(self.carra_lvls_path+\
-                                      interp_hmc_file,index_col=0)
+                                      self.interp_hmc_file,index_col=0)
             self.carra_halo_hmc[hmc].index=pd.DatetimeIndex(
                                         self.carra_halo_hmc[hmc].index)
         
