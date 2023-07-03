@@ -29,8 +29,8 @@ no figures or data are explicitly presented in Sect. 1.
 ### Data
 #### Figure 1 (AR Cases) 
 ```python 
-import plot_ar_cases_overview()
-plot_ar_cases_overview(figure_to_create="fig01")
+import plot_ar_cases_overview
+plot_ar_cases_overview(figure_to_create="fig01_")
 # this creates the AR overview maps showing IVT and flight track with sea-ice edge and isobars for all nine AR events.
 # Note it is important to choose "fig01" as figure_to_create
 ```
@@ -79,20 +79,28 @@ wind_moisture_dominance_analysis.main(figures_to_create="fig07")
 ```
 
 #### Figure 08 (Variability Dominating Quantity) 
-This depicts the vertical distribution of the variability components (cov_norm, s_v & s_q) for all inflow cross-sections with the intercase average. 
-Since this was part of the ancient fig11, it has be called "updated_fig11" in the main plotting routine
+This depicts the vertical distribution of the variability components (s_v & s_q) for all inflow cross-sections with the intercase average. 
+It has to be called by "fig08" in the main plotting routine
 ```python 
 import wind_moisture_dominance_analysis
 
-wind_moisture_dominance_analysis.main(figures_to_create="updated_fig11")
+wind_moisture_dominance_analysis.main(figures_to_create="fig08")
+```
+#### Figure 09 (Correlation and Coherence Q-V)
+This depicts the vertical distribution of the correlation and covaraince between q and v for all inflow cross-sections with the intercase average.
+It has be called by "fig09" in the main plotting routine
+```python 
+import wind_moisture_dominance_analysis
+
+wind_moisture_dominance_analysis.main(figures_to_create="fig09")
 ```
 
-#### Figure 09 (Vertical cross-section AR event comparison)
+#### Figure 10 (Vertical cross-section AR event comparison)
 This contour multiplot illustrates the vertical cross-section curtains of all ARs in terms of moisture transport distribution and its components.
 ```python 
 import plot_ar_cases_overview
 
-plot_ar_cases_overview.main(figure_to_create="fig09")
+plot_ar_cases_overview.main(figure_to_create="fig10")
 ```
 
 ### IVT Divergence
