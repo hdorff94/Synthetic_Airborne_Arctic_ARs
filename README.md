@@ -110,23 +110,23 @@ import run_moisture_budget_closure_regression_method
 ```
 This script itself calls ```Moisture_Convergence.calc_moisture_convergence_from_regression_method```
 the divergence values are then stored in the airborne data folder under budgets. Some additional figures are created and stored under "plots/budget/supplementary/"
-#### Figure 10 (Frontal-specific IVT in- and outflow)
+#### Figure 11 (Frontal-specific IVT in- and outflow)
 This shows the frontal sector based AR cross-sections for in- and outflow corridor in multiplot. 
 It is created by running the notebook **AR_sector_multiplot_in-outflow.ipynb**  
 This notebook basically runs multiplot_inflow_outflow_IVT sectors from ```python class IVT_Variability_Plotter```.
-#### Figure 11 (Case Sector-Based Vertical Profiles of Divergence)
+#### Figure 12 (Case Sector-Based Vertical Profiles of Divergence)
 To create the single case values just run:
 ```python 
 import plot_moisture_budget_results
-figure_to_create="Fig11_single_case_sector_profiles"
+figure_to_create="fig12_single_case_sector_profiles"
 plot_moisture_budget_results.main(figure_to_create=figure_to_create)
 ```
 Inside the plot routine defines ```save_for_manuscript=True```
-#### Figure 12 (AR events averaged Sector-Based Divergence, Campaign Overview)
+#### Figure 13 (AR events averaged Sector-Based Divergence, Campaign Overview)
 This creates a boxplot showing the sector-based divergence statistics for the nine events intercomparing continuous and sonde-based divegence calculations.
 ```python 
 import plot_moisture_budget_results
-figure_to_create="fig12_campaign_divergence_overviews"
+figure_to_create="fig13_campaign_divergence_overviews"
 plot_moisture_budget_results.main(figure_to_create=figure_to_create)
 ```
 ### Instationarity
@@ -138,20 +138,12 @@ import run_moisture_budget_closure_regression_method
 run.moisture_budget_closure_regression_method.main(instantan=True)
 ```
 This script itself calls ```Moisture_Convergence.calc_moisture_convergence_from_regression_method```
-
-#### Figure 13 (Instantan In- and Outflow)
-To create the multiplot of in- and outflow comparison (IVT) you have two choices:
-```python 
-import instantan
-figure_to_create="fig13_in_outflow_instantan"
-instantan.main(figure_to_create=figure_to_create)
-```
 or alternatively, you run the notebook ```AR_Stationarity.ipynb``` 
 #### Figure 14 (Daily Contribution Comparison: Instantan, Time Propagating Error Divergence) 
 %#### Figure 14 (Daily Contribution to Moisture Budget Divergence Non Instantan - Instantan)
 %To create the multiplot with comparing non-instantan minus instantan as a vertical profile just run:
 This figure compares the daily contribution of IVT divergence to daily moisture budget for flight duration with instantan values.
-The comparison refers to the cross-frontal section and is similar built as Fig. 12. Using the same data for the flight
+The comparison refers to the continuous cross-frontal section and is similar built as Fig. 12. Using the same data for the flight
 ```python 
 import plot_moisture_budgets
 figure_to_create="fig14_divergence_instantan_errorbars""
@@ -159,9 +151,9 @@ plot_moisture_budgets.main(figure_to_create=figure_to_create)
 ```
 This routine internally runs Budgets.Moisture_Budget_Plots.moisture_convergence_time_instantan_comparison() comparing both ideal-based (continuous) 
 frontal-specific divergence components. 
-
 For detailed flight specific information, check for **Figure S4,S5**
-#### Figure 15 (IVT Convergence Error Sounding Error and Instantaneous)
+
+#### Figure 15 (RMSE IVT Divergence Error Sounding Error and Instantaneous)
 So far this the partioned comparison for sounding frequency and instantaneous error arising comparing both magnitudes.
 It is called as:
 ```python 
@@ -198,7 +190,13 @@ this runs two fcts with the first being Inst_Budget_plots.compare_inst_sonde_pos
 and illustrates the sonde positioning for the instantan and continuous representation. 
 If the sounding locations change is specified in the Instantan & Budget class (default on_flight_tracks=True). 
 This argument has to be given for Budgets.get_overall_budgets()
-    
+##### Figure S5 (Instantan In- and Outflow)
+To create the multiplot of in- and outflow comparison (IVT) you have two choices:
+```python 
+import instantan
+figure_to_create="fig13_in_outflow_instantan"
+instantan.main(figure_to_create=figure_to_create)
+```    
 #### Figure S5 (Daily comparison of Moisture Budget contribution for Continuous and Instantan)
 Runned by:
 ```python 
