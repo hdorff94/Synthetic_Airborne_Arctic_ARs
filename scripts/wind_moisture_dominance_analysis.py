@@ -222,10 +222,10 @@ def prepare_data(paths_dict,config_file,flight_dates,reanalysis_to_use,
     extra_output["inflow"]=inflow_df
     extra_output["cmpgn_cls"]=cmpgn_cls
     return merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output
-    
+ 
+# Figure 7  
 def create_fig_q_v_vertical_variability(paths_dict,config_file,flight_dates,
                                           reanalysis_to_use):
-    #campaigns=[*flight_dates.keys()]
     merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
         prepare_data(paths_dict,config_file,flight_dates,reanalysis_to_use)
     
@@ -258,6 +258,391 @@ def create_fig_q_v_vertical_variability(paths_dict,config_file,flight_dates,
     IVT_var_Plotter.plot_IVT_vertical_variability(subsample_day="2015-03-14",
             save_figure=True,undefault_path=paths_dict["plot_figures_path"])
 
+
+# Figure 8
+def create_fig08_normalised_standard_deviation_q_v(paths_dict,config_file,
+                                       flight_dates,reanalysis_to_use):
+    """
+    This routines plots the vertical profiles of relative standard deviation 
+    for moisture (sq) and wind speed (sv) for all AR events and the inter-event
+    average
+
+    Parameters
+    ----------
+    paths_dict : dict
+        Dictionary containing all informations for paths.
+    config_file : dict
+        Config file as dict.
+    flight_dates : dict
+        Dictionary specifying all dates of AR events to be used.
+    reanalysis_to_use : str
+        either CARRA or ERA5. Default should be CARRA
+
+    Returns
+    -------
+    None.
+
+    """
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    matplotlib.rcParams.update({"font.size":22})
+    g=9.82
+    merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
+        prepare_data(paths_dict,config_file,
+                     flight_dates,reanalysis_to_use)
+    
+    #Figure 08 of Manuscript
+    std_fig=plt.figure(figsize=(12,9))#
+    ax1=std_fig.add_subplot(111)
+    pres_index=moisture_transport_flights_dict[\
+                [*moisture_transport_flights_dict.keys()][-1]]["pres_index"]/100
+
+    moisture_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
+                        columns=pres_index)
+    wind_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
+                        columns=pres_index)
+    
+    for date in wind_df.index:
+        relative_v_std=moisture_transport_flights_dict[date]["stats"]["wind_std"]/\
+                        moisture_transport_flights_dict[date]["stats"]["wind_mean"]
+        relative_q_std=moisture_transport_flights_dict[date]["stats"]["q_std"]/\
+                        moisture_transport_flights_dict[date]["stats"]["q_mean"]
+        
+        moisture_df.loc[date,:]=relative_q_std.values
+        wind_df.loc[date,:]=relative_v_std.values
+        
+        ax1.plot(wind_df.loc[date,:].values,wind_df.columns,
+                 marker="v",markersize=2,ls="--",color="thistle")
+        ax1.plot(moisture_df.loc[date,:].values,moisture_df.columns,
+                 marker="s",markersize=2,ls="--",color="powderblue")
+    
+    # Mean variability
+    mean_moisture_df=moisture_df.mean(axis=0)
+    std_moisture_df=moisture_df.std(axis=0)
+    mean_wind_df=wind_df.mean(axis=0)
+    std_wind_df=wind_df.std(axis=0)
+    
+    # Relative Wind variability
+    ax1.plot(mean_wind_df.values,
+            mean_wind_df.index,
+            marker="o",markersize=2,ls="-",lw=2,color="purple",label="$s_{v}$")
+
+    ax1.scatter(mean_wind_df.values,mean_wind_df.index,
+                s=moisture_transport_flights_dict[date]["stats"]["wind_mean"]/\
+                moisture_transport_flights_dict[date]\
+                       ["stats"]["wind_mean"].max()*100,
+                marker="v",
+                color="purple",zorder=5)
+    # Relative moisture variability
+    ax1.plot(mean_moisture_df.values,
+            mean_moisture_df.index,
+            marker="o",markersize=2,ls="-",lw=2,color="darkblue",
+            label="$s_{q}$")
+    ax1.scatter(mean_moisture_df.values,mean_moisture_df.index,
+                s=moisture_transport_flights_dict[date]["stats"]["q_mean"]/\
+                moisture_transport_flights_dict[date]\
+                       ["stats"]["q_mean"].max()*100,
+                        color="darkblue",zorder=5)
+    
+    ax1.set_xlim([0,1.2])
+    ax1.set_ylim([150,1020])
+    ax1.set_yticks([200,400,600,800,1000])
+    ax1.invert_yaxis()
+    ax1.set_ylabel("Pressure (hPa)")
+    ax1.set_xlabel("Relative standard deviation")
+    
+    for axis in ["left","bottom"]:
+        ax1.spines[axis].set_linewidth(2)
+        ax1.tick_params(length=6,width=2)#
+
+    sns.despine(offset=10)
+    ax1.legend(loc="upper right")
+    
+    fig_name="fig08_summarized_std_Q_V_Variability.pdf"
+    std_fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
+                bbox_inches="tight")
+    print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
+# Figure 9
+def create_summarized_fig09_coherence(paths_dict,config_file,
+                                       flight_dates,reanalysis_to_use):
+    """
+    This routines plots the vertical profiles of coherence and correlation 
+    for moisture (sq) and wind speed (sv) for all AR events and the inter-event
+    average
+
+    Parameters
+    ----------
+    paths_dict : dict
+        Dictionary containing all informations for paths.
+    config_file : dict
+        Config file as dict.
+    flight_dates : dict
+        Dictionary specifying all dates of AR events to be used.
+    reanalysis_to_use : str
+        either CARRA or ERA5. Default should be CARRA
+
+    Returns
+    -------
+    None.
+
+    """
+    
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    matplotlib.rcParams.update({"font.size":22})
+    g=9.82
+    merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
+        prepare_data(paths_dict,config_file,
+                     flight_dates,reanalysis_to_use)
+    
+    #Figure 09 of Manuscript
+    cov_fig=plt.figure(figsize=(12,9))#
+    ax1=cov_fig.add_subplot(111)
+    pres_index=moisture_transport_flights_dict[\
+            [*moisture_transport_flights_dict.keys()][-1]]["pres_index"]/100
+
+    cov_df=pd.DataFrame(data=np.nan,
+                        index=moisture_transport_flights_dict.keys(),
+                        columns=pres_index)
+    corr_df=pd.DataFrame(data=np.nan,
+                         index=moisture_transport_flights_dict.keys(),
+                         columns=pres_index)
+    
+    for date in cov_df.index:
+        relative_v_std=moisture_transport_flights_dict[date]\
+                            ["stats"]["wind_std"]/\
+                        moisture_transport_flights_dict[date]\
+                            ["stats"]["wind_mean"]
+        relative_q_std=moisture_transport_flights_dict[date]["stats"]\
+                            ["q_std"]/moisture_transport_flights_dict[date]\
+                                ["stats"]["q_mean"]
+        
+        cov_df.loc[date,:]=(moisture_transport_flights_dict[date]["stats"]\
+                            ["qv_corr"]*relative_v_std*relative_q_std).values
+        corr_df.loc[date,:]=moisture_transport_flights_dict[date]["stats"]\
+                            ["qv_corr"].values
+
+        ax1.plot(cov_df.loc[date,:].values, cov_df.columns,
+                         marker="o",markersize=2, ls="--", color="orange")
+        ax1.plot(corr_df.loc[date,:].values,corr_df.columns,
+                 marker="v",markersize=2,ls="--",color="lightgrey")
+    
+    mean_cov_df=cov_df.mean(axis=0)
+    std_cov_df=cov_df.std(axis=0)
+    mean_corr_df=corr_df.mean(axis=0)
+    std_corr_df=corr_df.std(axis=0)
+
+    # Variability term
+    ax1.plot(mean_cov_df.values,
+                mean_cov_df.index,
+                marker="o",markersize=2,ls="-",lw=2,color="brown",
+                label="$cov_{norm}$")
+    ax1.scatter(mean_cov_df.values,mean_cov_df.index,
+                 s=moisture_transport_flights_dict[date]\
+                     ["stats"]["transport_mean"]/\
+                         moisture_transport_flights_dict[date]\
+                             ["stats"]["transport_mean"].max()*100,
+                             color="saddlebrown",zorder=5)
+    
+    # Correlation term
+    ax1.plot(mean_corr_df.values,
+            mean_corr_df.index,
+            marker="o",markersize=2,ls="-",lw=2,color="k",
+            label="$r_{\mathrm{coeff}}$")
+    
+    ax1.scatter(mean_corr_df.values,mean_corr_df.index,
+                s=moisture_transport_flights_dict[date]["stats"]\
+                    ["transport_mean"]/moisture_transport_flights_dict[date]\
+                       ["stats"]["transport_mean"].max()*100,
+                        color="k",zorder=5)
+    
+    ax1.axvline(x=0,ls="-.",color="k",lw=2)
+    ax1.set_ylabel("Pressure (hPa)")
+    ax1.set_xlabel("Variability relative value")
+    ax1.set_xlim([-1,1])
+    for axis in ["left","bottom"]:
+        ax1.spines[axis].set_linewidth(2)
+        ax1.tick_params(length=6,width=2)#
+
+    sns.despine(offset=10)
+    ax1.legend(loc="upper right")
+    ax1.set_ylim([150,1020])
+    ax1.set_yticks([200,400,600,800,1000])
+    #if not reanalysis_to_use=="ERA-5":
+    ax1.invert_yaxis()
+    
+    fig_name="fig09_summarized_IVT_Q_V_Coherence.pdf"
+    cov_fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
+                bbox_inches="tight")
+    print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
+    sys.exit()    
+
+    
+def plotter(figures_to_create,flight_dates,reanalysis_to_use):
+    paths_dict,config_file=importer()
+    
+    #import matplotlib.pyplot as plt
+    #import seaborn as sns
+    plot_fct_dict={"fig07":[create_fig_q_v_vertical_variability],
+                   "fig08":[create_fig08_normalised_standard_deviation_q_v],
+                   "fig09":[create_summarized_fig09_coherence],
+                   #"fig11":[create_fig11_q_v_flavor], --> old figure 11
+                   "updated_fig11":[create_summarized_fig08_q_v_flavor,
+                                    create_pre_fig11_q_v_flavor,
+                                    create_updated_fig11_q_v_flavor],
+                   "both":[create_fig_q_v_vertical_variability,
+                           create_fig11_q_v_flavor]}
+    plot_fct_list=plot_fct_dict[figures_to_create]
+    for fct in plot_fct_list:
+        fct(paths_dict,config_file,flight_dates,reanalysis_to_use)
+         
+#%%
+def main(reanalysis_to_use="CARRA",figures_to_create="updated_fig11"):#"updated_fig11"):
+    #plot_fct_kwargs={"fig10":[paths_dict,config_file,
+    #                          flight_dates,reanalysis_to_use],
+    #                 "fig11":[],
+    #                 "both":[]}
+    
+    analyse_all_flights=False
+    flight_dates={"North_Atlantic_Run":
+              {"SRF02":"20180224",
+               "SRF04":"20190319",#},
+               "SRF07":"20200416",#},
+               "SRF08":"20200419"
+              },
+              "Second_Synthetic_Study":
+              {"SRF02":"20110317",
+               "SRF03":"20110423",
+               "SRF08":"20150314",
+               "SRF09":"20160311",
+               "SRF12":"20180225"
+               }}
+    
+    flight_tracks_dict={}
+    # Dummy definitions needed for initiating the campaign classes
+    plotter(figures_to_create,flight_dates,reanalysis_to_use)    
+
+#%%% Partially also old
+#%%% Appendix plots
+def create_summarized_fig08_q_v_flavor(paths_dict,config_file,
+                                       flight_dates,reanalysis_to_use):
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    matplotlib.rcParams.update({"font.size":18})
+    g=9.82#campaigns=[*flight_dates.keys()]
+    merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
+        prepare_data(paths_dict,config_file,
+                     flight_dates,reanalysis_to_use)
+    
+    cov_fig=plt.figure(figsize=(12,9))#
+    ax1=cov_fig.add_subplot(111)
+    pres_index=moisture_transport_flights_dict[\
+                [*moisture_transport_flights_dict.keys()][-1]]["pres_index"]/100
+
+    cov_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
+                        columns=pres_index)
+    corr_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
+                         columns=pres_index)
+    moisture_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
+                        columns=pres_index)
+    
+    wind_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
+                        columns=pres_index)
+    
+    for date in cov_df.index:
+        relative_v_std=moisture_transport_flights_dict[date]["stats"]["wind_std"]/\
+                        moisture_transport_flights_dict[date]["stats"]["wind_mean"]
+        relative_q_std=moisture_transport_flights_dict[date]["stats"]["q_std"]/\
+                        moisture_transport_flights_dict[date]["stats"]["q_mean"]
+        
+        cov_df.loc[date,:]=(moisture_transport_flights_dict[date]["stats"]["qv_corr"]*\
+                            relative_v_std*relative_q_std).values
+        corr_df.loc[date,:]=moisture_transport_flights_dict[date]["stats"]["qv_corr"].values
+        moisture_df.loc[date,:]=relative_q_std.values
+        wind_df.loc[date,:]=relative_v_std.values
+        
+        ax1.plot(cov_df.loc[date,:].values, cov_df.columns,
+                         marker="o",markersize=2, ls="--", color="lightgrey")
+        ax1.plot(wind_df.loc[date,:].values,wind_df.columns,
+                 marker="v",markersize=2,ls="--",color="thistle")
+        ax1.plot(moisture_df.loc[date,:].values,moisture_df.columns,
+                 marker="s",markersize=2,ls="--",color="powderblue")
+        #ax1.plot(corr_df.loc[date,:].values,corr_df.columns,
+        #         marker="^",markersize=2,ls="--",color="peachpuff")
+    mean_moisture_df=moisture_df.mean(axis=0)
+    std_moisture_df=moisture_df.std(axis=0)
+    mean_corr_df=corr_df.mean(axis=0)
+    std_corr_df=corr_df.std(axis=0)
+    mean_wind_df=wind_df.mean(axis=0)
+    std_wind_df=wind_df.std(axis=0)
+    mean_cov_df=cov_df.mean(axis=0)
+    std_cov_df=cov_df.std(axis=0)
+
+    # Variability term
+    ax1.plot(mean_cov_df.values,
+                mean_cov_df.index,
+                marker="o",markersize=2,ls="-",lw=2,color="k",
+                label="$cov_{norm}$")
+    ax1.scatter(mean_cov_df.values,mean_cov_df.index,
+                 s=moisture_transport_flights_dict[date]["stats"]["transport_mean"]/\
+                     moisture_transport_flights_dict[date]\
+                        ["stats"]["transport_mean"].max()*100,
+                        color="k",zorder=5)
+    
+    # Relative Wind variability
+    ax1.plot(mean_wind_df.values,
+            mean_wind_df.index,
+            marker="o",markersize=2,ls="-",lw=2,color="purple",label="$s_{v}$")
+
+    ax1.scatter(mean_wind_df.values,mean_wind_df.index,
+                s=moisture_transport_flights_dict[date]["stats"]["wind_mean"]/\
+                moisture_transport_flights_dict[date]\
+                       ["stats"]["wind_mean"].max()*100,
+                marker="v",
+                color="purple",zorder=5)
+#    # Relative moisture variability
+    ax1.plot(mean_moisture_df.values,
+            mean_moisture_df.index,
+            marker="o",markersize=2,ls="-",lw=2,color="darkblue",
+            label="$s_{q}$")
+    ax1.scatter(mean_moisture_df.values,mean_moisture_df.index,
+                s=moisture_transport_flights_dict[date]["stats"]["q_mean"]/\
+                moisture_transport_flights_dict[date]\
+                       ["stats"]["q_mean"].max()*100,
+                        color="darkblue",zorder=5)
+    # Correlation term
+    #ax1.plot(mean_corr_df.values,
+    #        mean_corr_df.index,
+    #        marker="o",markersize=2,ls="-",lw=2,color="saddlebrown",
+    #        label="$s_{q}$")
+    
+    #ax1.scatter(mean_corr_df.values,mean_corr_df.index,
+    #            s=moisture_transport_flights_dict[date]["stats"]["qv_corr"]/\
+    #            moisture_transport_flights_dict[date]\
+    #                   ["stats"]["qv_corr"].max()*100,
+    #                    color="saddlebrown",zorder=5)
+    
+    ax1.axvline(x=0,ls="-.",color="k",lw=2)
+    ax1.invert_yaxis()
+    ax1.set_ylabel("Pressure (hPa)")
+    ax1.set_xlabel("Variability relative value")
+    
+    for axis in ["left","bottom"]:
+        ax1.spines[axis].set_linewidth(2)
+        ax1.tick_params(length=6,width=2)#
+
+    sns.despine(offset=10)
+    ax1.legend(loc="upper right")
+    
+    fig_name="fig08_summarized_IVT_Q_V_Variability.pdf"
+    cov_fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
+                bbox_inches="tight")
+    print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
+
+#%% Old or supplementary    
 def create_fig11_q_v_flavor(paths_dict,config_file,flight_dates,
                                           reanalysis_to_use):
     
@@ -266,7 +651,8 @@ def create_fig11_q_v_flavor(paths_dict,config_file,flight_dates,
     import matplotlib.pyplot as plt
     import seaborn as sns
     matplotlib.rcParams.update({"font.size":15})
-    g=9.82#campaigns=[*flight_dates.keys()]
+    g=9.82
+    
     merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
         prepare_data(paths_dict,config_file,flight_dates,reanalysis_to_use)
     
@@ -409,345 +795,6 @@ def create_pre_fig11_q_v_flavor(paths_dict,config_file,
                 bbox_inches="tight")
     print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)
 
-def create_fig08_normalised_standard_deviation_q_v(paths_dict,config_file,
-                                       flight_dates,reanalysis_to_use):
-    """
-    This routines plots the vertical profiles of relative standard deviation 
-    for moisture (sq) and wind speed (sv) for all AR events and the inter-event
-    average
-
-    Parameters
-    ----------
-    paths_dict : dict
-        Dictionary containing all informations for paths.
-    config_file : dict
-        Config file as dict.
-    flight_dates : dict
-        Dictionary specifying all dates of AR events to be used.
-    reanalysis_to_use : str
-        either CARRA or ERA5. Default should be CARRA
-
-    Returns
-    -------
-    None.
-
-    """
-    import matplotlib
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    matplotlib.rcParams.update({"font.size":22})
-    g=9.82#campaigns=[*flight_dates.keys()]
-    merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
-        prepare_data(paths_dict,config_file,
-                     flight_dates,reanalysis_to_use)
-    
-    #Figure 08 of Manuscript
-    std_fig=plt.figure(figsize=(12,9))#
-    ax1=std_fig.add_subplot(111)
-    pres_index=moisture_transport_flights_dict[\
-                [*moisture_transport_flights_dict.keys()][-1]]["pres_index"]/100
-
-    moisture_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
-                        columns=pres_index)
-    wind_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
-                        columns=pres_index)
-    
-    for date in wind_df.index:
-        relative_v_std=moisture_transport_flights_dict[date]["stats"]["wind_std"]/\
-                        moisture_transport_flights_dict[date]["stats"]["wind_mean"]
-        relative_q_std=moisture_transport_flights_dict[date]["stats"]["q_std"]/\
-                        moisture_transport_flights_dict[date]["stats"]["q_mean"]
-        
-        moisture_df.loc[date,:]=relative_q_std.values
-        wind_df.loc[date,:]=relative_v_std.values
-        
-        ax1.plot(wind_df.loc[date,:].values,wind_df.columns,
-                 marker="v",markersize=2,ls="--",color="thistle")
-        ax1.plot(moisture_df.loc[date,:].values,moisture_df.columns,
-                 marker="s",markersize=2,ls="--",color="powderblue")
-    
-    # Mean variability
-    mean_moisture_df=moisture_df.mean(axis=0)
-    std_moisture_df=moisture_df.std(axis=0)
-    mean_wind_df=wind_df.mean(axis=0)
-    std_wind_df=wind_df.std(axis=0)
-    
-    # Relative Wind variability
-    ax1.plot(mean_wind_df.values,
-            mean_wind_df.index,
-            marker="o",markersize=2,ls="-",lw=2,color="purple",label="$s_{v}$")
-
-    ax1.scatter(mean_wind_df.values,mean_wind_df.index,
-                s=moisture_transport_flights_dict[date]["stats"]["wind_mean"]/\
-                moisture_transport_flights_dict[date]\
-                       ["stats"]["wind_mean"].max()*100,
-                marker="v",
-                color="purple",zorder=5)
-    # Relative moisture variability
-    ax1.plot(mean_moisture_df.values,
-            mean_moisture_df.index,
-            marker="o",markersize=2,ls="-",lw=2,color="darkblue",
-            label="$s_{q}$")
-    ax1.scatter(mean_moisture_df.values,mean_moisture_df.index,
-                s=moisture_transport_flights_dict[date]["stats"]["q_mean"]/\
-                moisture_transport_flights_dict[date]\
-                       ["stats"]["q_mean"].max()*100,
-                        color="darkblue",zorder=5)
-    
-    ax1.set_xlim([0,1.2])
-    ax1.set_ylim([150,1020])
-    ax1.set_yticks([200,400,600,800,1000])
-    ax1.invert_yaxis()
-    ax1.set_ylabel("Pressure (hPa)")
-    ax1.set_xlabel("Variability relative value")
-    
-    for axis in ["left","bottom"]:
-        ax1.spines[axis].set_linewidth(2)
-        ax1.tick_params(length=6,width=2)#
-
-    sns.despine(offset=10)
-    ax1.legend(loc="upper right")
-    
-    fig_name="fig08_summarized_std_Q_V_Variability.pdf"
-    std_fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
-                bbox_inches="tight")
-    print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
-
-def create_summarized_fig09_coherence(paths_dict,config_file,
-                                       flight_dates,reanalysis_to_use):
-    """
-    This routines plots the vertical profiles of coherence and correlation 
-    for moisture (sq) and wind speed (sv) for all AR events and the inter-event
-    average
-
-    Parameters
-    ----------
-    paths_dict : dict
-        Dictionary containing all informations for paths.
-    config_file : dict
-        Config file as dict.
-    flight_dates : dict
-        Dictionary specifying all dates of AR events to be used.
-    reanalysis_to_use : str
-        either CARRA or ERA5. Default should be CARRA
-
-    Returns
-    -------
-    None.
-
-    """
-    
-    import matplotlib
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    matplotlib.rcParams.update({"font.size":22})
-    g=9.82
-    merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
-        prepare_data(paths_dict,config_file,
-                     flight_dates,reanalysis_to_use)
-    
-    #Figure 09 of Manuscript
-    cov_fig=plt.figure(figsize=(12,9))#
-    ax1=cov_fig.add_subplot(111)
-    pres_index=moisture_transport_flights_dict[\
-            [*moisture_transport_flights_dict.keys()][-1]]["pres_index"]/100
-
-    cov_df=pd.DataFrame(data=np.nan,
-                        index=moisture_transport_flights_dict.keys(),
-                        columns=pres_index)
-    corr_df=pd.DataFrame(data=np.nan,
-                         index=moisture_transport_flights_dict.keys(),
-                         columns=pres_index)
-    
-    for date in cov_df.index:
-        relative_v_std=moisture_transport_flights_dict[date]\
-                            ["stats"]["wind_std"]/\
-                        moisture_transport_flights_dict[date]\
-                            ["stats"]["wind_mean"]
-        relative_q_std=moisture_transport_flights_dict[date]["stats"]\
-                            ["q_std"]/moisture_transport_flights_dict[date]\
-                                ["stats"]["q_mean"]
-        
-        cov_df.loc[date,:]=(moisture_transport_flights_dict[date]["stats"]\
-                            ["qv_corr"]*relative_v_std*relative_q_std).values
-        corr_df.loc[date,:]=moisture_transport_flights_dict[date]["stats"]\
-                            ["qv_corr"].values
-
-        ax1.plot(cov_df.loc[date,:].values, cov_df.columns,
-                         marker="o",markersize=2, ls="--", color="orange")
-        ax1.plot(corr_df.loc[date,:].values,corr_df.columns,
-                 marker="v",markersize=2,ls="--",color="lightgrey")
-    
-    mean_cov_df=cov_df.mean(axis=0)
-    std_cov_df=cov_df.std(axis=0)
-    mean_corr_df=corr_df.mean(axis=0)
-    std_corr_df=corr_df.std(axis=0)
-
-    # Variability term
-    ax1.plot(mean_cov_df.values,
-                mean_cov_df.index,
-                marker="o",markersize=2,ls="-",lw=2,color="brown",
-                label="$cov_{norm}$")
-    ax1.scatter(mean_cov_df.values,mean_cov_df.index,
-                 s=moisture_transport_flights_dict[date]\
-                     ["stats"]["transport_mean"]/\
-                         moisture_transport_flights_dict[date]\
-                             ["stats"]["transport_mean"].max()*100,
-                             color="saddlebrown",zorder=5)
-    
-    # Correlation term
-    ax1.plot(mean_corr_df.values,
-            mean_corr_df.index,
-            marker="o",markersize=2,ls="-",lw=2,color="k",
-            label="$r_{\mathrm{coeff}}$")
-    
-    ax1.scatter(mean_corr_df.values,mean_corr_df.index,
-                s=moisture_transport_flights_dict[date]["stats"]\
-                    ["transport_mean"]/moisture_transport_flights_dict[date]\
-                       ["stats"]["transport_mean"].max()*100,
-                        color="k",zorder=5)
-    
-    ax1.axvline(x=0,ls="-.",color="k",lw=2)
-    ax1.set_ylabel("Pressure (hPa)")
-    ax1.set_xlabel("Variability relative value")
-    ax1.set_xlim([-1,1])
-    for axis in ["left","bottom"]:
-        ax1.spines[axis].set_linewidth(2)
-        ax1.tick_params(length=6,width=2)#
-
-    sns.despine(offset=10)
-    ax1.legend(loc="upper right")
-    ax1.set_ylim([150,1020])
-    ax1.set_yticks([200,400,600,800,1000])
-    #if not reanalysis_to_use=="ERA-5":
-    ax1.invert_yaxis()
-    
-    fig_name="fig09_summarized_IVT_Q_V_Coherence.pdf"
-    cov_fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
-                bbox_inches="tight")
-    print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
-    sys.exit()    
-
-#%%% Partially also old
-#%%% Appendix plots
-def create_summarized_fig08_q_v_flavor(paths_dict,config_file,
-                                       flight_dates,reanalysis_to_use):
-    import matplotlib
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    matplotlib.rcParams.update({"font.size":18})
-    g=9.82#campaigns=[*flight_dates.keys()]
-    merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
-        prepare_data(paths_dict,config_file,
-                     flight_dates,reanalysis_to_use)
-    
-    #Figure 11 of Manuscript
-    cov_fig=plt.figure(figsize=(12,9))#
-    ax1=cov_fig.add_subplot(111)
-    pres_index=moisture_transport_flights_dict[\
-                [*moisture_transport_flights_dict.keys()][-1]]["pres_index"]/100
-
-    cov_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
-                        columns=pres_index)
-    corr_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
-                         columns=pres_index)
-    moisture_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
-                        columns=pres_index)
-    
-    wind_df=pd.DataFrame(data=np.nan,index=moisture_transport_flights_dict.keys(),
-                        columns=pres_index)
-    
-    for date in cov_df.index:
-        relative_v_std=moisture_transport_flights_dict[date]["stats"]["wind_std"]/\
-                        moisture_transport_flights_dict[date]["stats"]["wind_mean"]
-        relative_q_std=moisture_transport_flights_dict[date]["stats"]["q_std"]/\
-                        moisture_transport_flights_dict[date]["stats"]["q_mean"]
-        
-        cov_df.loc[date,:]=(moisture_transport_flights_dict[date]["stats"]["qv_corr"]*\
-                            relative_v_std*relative_q_std).values
-        corr_df.loc[date,:]=moisture_transport_flights_dict[date]["stats"]["qv_corr"].values
-        moisture_df.loc[date,:]=relative_q_std.values
-        wind_df.loc[date,:]=relative_v_std.values
-        
-        ax1.plot(cov_df.loc[date,:].values, cov_df.columns,
-                         marker="o",markersize=2, ls="--", color="lightgrey")
-        ax1.plot(wind_df.loc[date,:].values,wind_df.columns,
-                 marker="v",markersize=2,ls="--",color="thistle")
-        ax1.plot(moisture_df.loc[date,:].values,moisture_df.columns,
-                 marker="s",markersize=2,ls="--",color="powderblue")
-        #ax1.plot(corr_df.loc[date,:].values,corr_df.columns,
-        #         marker="^",markersize=2,ls="--",color="peachpuff")
-    mean_moisture_df=moisture_df.mean(axis=0)
-    std_moisture_df=moisture_df.std(axis=0)
-    mean_corr_df=corr_df.mean(axis=0)
-    std_corr_df=corr_df.std(axis=0)
-    mean_wind_df=wind_df.mean(axis=0)
-    std_wind_df=wind_df.std(axis=0)
-    mean_cov_df=cov_df.mean(axis=0)
-    std_cov_df=cov_df.std(axis=0)
-
-    # Variability term
-    ax1.plot(mean_cov_df.values,
-                mean_cov_df.index,
-                marker="o",markersize=2,ls="-",lw=2,color="k",
-                label="$cov_{norm}$")
-    ax1.scatter(mean_cov_df.values,mean_cov_df.index,
-                 s=moisture_transport_flights_dict[date]["stats"]["transport_mean"]/\
-                     moisture_transport_flights_dict[date]\
-                        ["stats"]["transport_mean"].max()*100,
-                        color="k",zorder=5)
-    
-    # Relative Wind variability
-    ax1.plot(mean_wind_df.values,
-            mean_wind_df.index,
-            marker="o",markersize=2,ls="-",lw=2,color="purple",label="$s_{v}$")
-
-    ax1.scatter(mean_wind_df.values,mean_wind_df.index,
-                s=moisture_transport_flights_dict[date]["stats"]["wind_mean"]/\
-                moisture_transport_flights_dict[date]\
-                       ["stats"]["wind_mean"].max()*100,
-                marker="v",
-                color="purple",zorder=5)
-#    # Relative moisture variability
-    ax1.plot(mean_moisture_df.values,
-            mean_moisture_df.index,
-            marker="o",markersize=2,ls="-",lw=2,color="darkblue",
-            label="$s_{q}$")
-    ax1.scatter(mean_moisture_df.values,mean_moisture_df.index,
-                s=moisture_transport_flights_dict[date]["stats"]["q_mean"]/\
-                moisture_transport_flights_dict[date]\
-                       ["stats"]["q_mean"].max()*100,
-                        color="darkblue",zorder=5)
-    # Correlation term
-    #ax1.plot(mean_corr_df.values,
-    #        mean_corr_df.index,
-    #        marker="o",markersize=2,ls="-",lw=2,color="saddlebrown",
-    #        label="$s_{q}$")
-    
-    #ax1.scatter(mean_corr_df.values,mean_corr_df.index,
-    #            s=moisture_transport_flights_dict[date]["stats"]["qv_corr"]/\
-    #            moisture_transport_flights_dict[date]\
-    #                   ["stats"]["qv_corr"].max()*100,
-    #                    color="saddlebrown",zorder=5)
-    
-    ax1.axvline(x=0,ls="-.",color="k",lw=2)
-    ax1.invert_yaxis()
-    ax1.set_ylabel("Pressure (hPa)")
-    ax1.set_xlabel("Variability relative value")
-    
-    for axis in ["left","bottom"]:
-        ax1.spines[axis].set_linewidth(2)
-        ax1.tick_params(length=6,width=2)#
-
-    sns.despine(offset=10)
-    ax1.legend(loc="upper right")
-    
-    fig_name="fig08_summarized_IVT_Q_V_Variability.pdf"
-    cov_fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
-                bbox_inches="tight")
-    print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
-    sys.exit()    
-    
 def create_updated_fig11_q_v_flavor(paths_dict,config_file,
                                     flight_dates,reanalysis_to_use):
     import matplotlib
@@ -835,50 +882,6 @@ def create_updated_fig11_q_v_flavor(paths_dict,config_file,
     fig.savefig(paths_dict["plot_figures_path"]+fig_name,dpi=200,
                 bbox_inches="tight")
     print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
-    
-def plotter(figures_to_create,flight_dates,reanalysis_to_use):
-    paths_dict,config_file=importer()
-    
-    #import matplotlib.pyplot as plt
-    #import seaborn as sns
-    plot_fct_dict={"fig07":[create_fig_q_v_vertical_variability],
-                   "fig08":[create_fig08_normalised_standard_deviation_q_v],
-                   "fig09":[create_summarized_fig09_coherence],
-                   #"fig11":[create_fig11_q_v_flavor], --> old figure 11
-                   "updated_fig11":[create_summarized_fig08_q_v_flavor,
-                                    create_pre_fig11_q_v_flavor,
-                                    create_updated_fig11_q_v_flavor],
-                   "both":[create_fig_q_v_vertical_variability,
-                           create_fig11_q_v_flavor]}
-    plot_fct_list=plot_fct_dict[figures_to_create]
-    for fct in plot_fct_list:
-        fct(paths_dict,config_file,flight_dates,reanalysis_to_use)
-         
-#%%
-def main(reanalysis_to_use="CARRA",figures_to_create="updated_fig11"):#"updated_fig11"):
-    #plot_fct_kwargs={"fig10":[paths_dict,config_file,
-    #                          flight_dates,reanalysis_to_use],
-    #                 "fig11":[],
-    #                 "both":[]}
-    
-    analyse_all_flights=False
-    flight_dates={"North_Atlantic_Run":
-              {"SRF02":"20180224",
-               "SRF04":"20190319",#},
-               "SRF07":"20200416",#},
-               "SRF08":"20200419"
-              },
-              "Second_Synthetic_Study":
-              {"SRF02":"20110317",
-               "SRF03":"20110423",
-               "SRF08":"20150314",
-               "SRF09":"20160311",
-               "SRF12":"20180225"
-               }}
-    
-    flight_tracks_dict={}
-    # Dummy definitions needed for initiating the campaign classes
-    plotter(figures_to_create,flight_dates,reanalysis_to_use)    
 
 if __name__=="__main__":
-    main(figures_to_create="fig09")
+    main(figures_to_create="fig08")
