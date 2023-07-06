@@ -87,7 +87,10 @@ def ar_cross_sections_overview_flights_vertical_profile(
     cross_section_fig,ax=plt.subplots(figsize=(18,12),nrows=3,ncols=3)
     axes=ax.flatten()
     p=0
-        
+    plot_labels=["a)","b)","c)",
+                     "d)","e)","f)",
+                     "g)","h)","i)"]
+            
     for date in campaign_Hydrometeors.keys():
         print("Plotting Moisture Transport components for date ",date)
         center_int_idx=int(campaign_HALO[date]["inflow"].shape[0]/2)
@@ -179,6 +182,8 @@ def ar_cross_sections_overview_flights_vertical_profile(
                      transform=axes[p].transAxes,
                      bbox=dict(facecolor='lightgrey', edgecolor='black', 
                                boxstyle='round,pad=0.2'))
+        axes[p].text(0.015,0.9,plot_labels[p],color="k",
+                     transform=axes[p].transAxes)
         #axes[p].text(0.015,0.1,"$\overline{r_{corr}}="+\
         #             str(np.round(corr_levels.mean()),2),
         #             transform=axes[p].transAxes,

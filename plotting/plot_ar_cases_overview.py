@@ -184,7 +184,9 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         meteo_var="IVT"
         pressure_color="purple"                 #"royalblue"
         sea_ice_colors=["gold","saddlebrown"]   #["mediumslateblue", "indigo"]
-        
+        plot_labels=["a)","b)","c)",
+                     "d)","e)","f)",
+                     "g)","h)","i)"]
         for col in range(col_no):
             for row in range(row_no):
                
@@ -254,6 +256,10 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                                  transform=ccrs.PlateCarree(),
                                  color="k",bbox=dict(facecolor="lightgrey",
                                                 edgecolor="black"),zorder=10)
+               
+               axs[row,col].text(-76,83,plot_labels[key],
+                                 transform=ccrs.PlateCarree(),
+                                 color="k",fontsize=14,zorder=10)
                
                step=20
                quiver_lon=np.array(era_ds["longitude"][::step])
@@ -338,4 +344,4 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         raise Exception("You have given the wrong figure name.",
                         " No figure created")
 if __name__=="__main__":
-    main(save_in_manuscript_path=True,figure_to_create="fig10_")
+    main(save_in_manuscript_path=True,figure_to_create="fig01_")
