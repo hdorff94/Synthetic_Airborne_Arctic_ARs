@@ -184,9 +184,9 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         meteo_var="IVT"
         pressure_color="purple"                 #"royalblue"
         sea_ice_colors=["gold","saddlebrown"]   #["mediumslateblue", "indigo"]
-        plot_labels=["a)","b)","c)",
-                     "d)","e)","f)",
-                     "g)","h)","i)"]
+        plot_labels=["(a)","(d)","(g)",
+                     "(b)","(e)","(h)",
+                     "(c)","(f)","(i)"]
         for col in range(col_no):
             for row in range(row_no):
                
@@ -308,8 +308,8 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
             fig_path=paths_dict["airborne_plotting_module_path"]
         else:
             fig_path=paths_dict["manuscript_path"]
-        fig_name="fig01_AR_cases_overview.pdf"
-        fig.savefig(fig_path+fig_name,dpi=300,bbox_inches="tight")
+        fig_name="fig01_AR_cases_overview.png"
+        fig.savefig(fig_path+fig_name,dpi=600,bbox_inches="tight")
         print("Figure saved as:",fig_path+fig_name)
         
         return None
@@ -344,4 +344,4 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         raise Exception("You have given the wrong figure name.",
                         " No figure created")
 if __name__=="__main__":
-    main(save_in_manuscript_path=True,figure_to_create="fig01_")
+    main(save_in_manuscript_path=True,figure_to_create="fig10_")

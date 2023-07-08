@@ -1525,7 +1525,9 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         #ax1.plot(.mean()*1000,pressure,label="q-outflow")
         #ax1.plot(mean_trpz_moist_transport*1000,pressure,label="transport")
         """
-        
+        ax1.text(-4.5e-4,250,"(a)",fontsize=18)#transform=ax1.transAxes)
+        ax2.text(-4.5e-4,250,"(b)",fontsize=18)#,transform=ax1.transAxes)
+        ax3.text(-4.5e-4,250,"(c)",fontsize=18)#,transform=ax1.transAxes)
         ax1.set_ylabel("Pressure in hPa")
         ax1.set_yticks([300,500,700,850,1000])
         ax1.set_yticklabels(["300","500","700","850","1000"])
@@ -1885,7 +1887,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                 alpha=0.9,label="Instationarity &\nSonde")
         ax1.bar(np.arange(rmse_inst.shape[0])+1.15,
                 rmse_pure_sonde,facecolor="lightgreen",width=0.15,linestyle="--",
-                edgecolor="darkgreen",linewidth=3,alpha=0.9,label="Pure Sonde")
+                edgecolor="darkgreen",linewidth=3,alpha=0.9,label="Discrete Sondes")
         
         ax1.set_xticks(np.arange(rmse_inst.shape[0])+1)
         ax1.set_xticklabels(rmse_inst.index,fontsize=10)

@@ -87,9 +87,9 @@ def ar_cross_sections_overview_flights_vertical_profile(
     cross_section_fig,ax=plt.subplots(figsize=(18,12),nrows=3,ncols=3)
     axes=ax.flatten()
     p=0
-    plot_labels=["a)","b)","c)",
-                     "d)","e)","f)",
-                     "g)","h)","i)"]
+    plot_labels=["(a)","(b)","(c)",
+                 "(d)","(e)","(f)",
+                 "(g)","(h)","(i)"]
             
     for date in campaign_Hydrometeors.keys():
         print("Plotting Moisture Transport components for date ",date)
@@ -172,7 +172,7 @@ def ar_cross_sections_overview_flights_vertical_profile(
         if p<6:
             axes[p].set_xticklabels("")
         if p==1:
-            upper_axes.set_xlabel("Correlation coefficient $r_{coeff}$",
+            upper_axes.set_xlabel("Correlation coefficient $r_{corr}$",
                                   fontsize=font_size+4)
         if p==3:
             axes[p].set_ylabel("Pressure (hPa)",fontsize=font_size+4)

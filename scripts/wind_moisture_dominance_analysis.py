@@ -438,7 +438,7 @@ def create_summarized_fig09_coherence(paths_dict,config_file,
     ax1.plot(mean_cov_df.values,
                 mean_cov_df.index,
                 marker="o",markersize=2,ls="-",lw=2,color="brown",
-                label="$cov_{norm}$")
+                label="$cov_{\mathrm{norm}}$")
     ax1.scatter(mean_cov_df.values,mean_cov_df.index,
                  s=moisture_transport_flights_dict[date]\
                      ["stats"]["transport_mean"]/\
@@ -450,7 +450,7 @@ def create_summarized_fig09_coherence(paths_dict,config_file,
     ax1.plot(mean_corr_df.values,
             mean_corr_df.index,
             marker="o",markersize=2,ls="-",lw=2,color="k",
-            label="$r_{\mathrm{coeff}}$")
+            label="$r_{\mathrm{corr}}$")
     
     ax1.scatter(mean_corr_df.values,mean_corr_df.index,
                 s=moisture_transport_flights_dict[date]["stats"]\
@@ -884,4 +884,4 @@ def create_updated_fig11_q_v_flavor(paths_dict,config_file,
     print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
 
 if __name__=="__main__":
-    main(figures_to_create="fig08")
+    main(figures_to_create="fig09")
