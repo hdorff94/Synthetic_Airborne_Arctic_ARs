@@ -172,7 +172,7 @@ def ar_cross_sections_overview_flights_vertical_profile(
         if p<6:
             axes[p].set_xticklabels("")
         if p==1:
-            upper_axes.set_xlabel("Correlation coefficient $r_{corr}$",
+            upper_axes.set_xlabel("Correlation coefficient $r_{\mathrm{corr}}$",
                                   fontsize=font_size+4)
         if p==3:
             axes[p].set_ylabel("Pressure (hPa)",fontsize=font_size+4)
