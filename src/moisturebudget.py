@@ -23,6 +23,7 @@ if not "flightcampaign" in sys.modules:
 class Moisture_Budgets():
     def __init__(self):
         pass
+    
 class Moisture_Convergence(Moisture_Budgets):
     
     def __init__(self,cmpgn_cls,flight,config_file,flight_dates={},
@@ -1226,6 +1227,7 @@ class Moisture_Convergence(Moisture_Budgets):
     
     def save_moisture_transport_divergence(self,sector):
         print("Save mass convergence")
+        print(self.ar_of_day)
         save_data_path=self.cmpgn_cls.campaign_data_path+"/data/budgets/"
         if not os.path.exists(save_data_path):
             os.mkdir(save_data_path)

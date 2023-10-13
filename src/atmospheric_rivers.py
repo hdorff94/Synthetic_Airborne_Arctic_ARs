@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 
 class Atmospheric_Rivers():
     def __init__(self,reanalysis,use_era5=False):
-        self.catalogue_path="C:/Users/u300737/Desktop/PhD_UHH_WIMI/"+\
-                            "Overall_Data/AR_Catalogues/"
+        self.catalogue_path="C:/Users/u300737/Desktop/Desktop_alter_Rechner/"+\
+            "PhD_UHH_WIMI/Overall_Data/AR_Catalogues/"
         self.era5_catalogue_path=self.catalogue_path+"ARcatalog_ERA5_march_1979-2022/"
         self.reanalysis=reanalysis
         #os.chdir(self.catalogue_path)

@@ -2025,7 +2025,7 @@ class FlightMaps(flight_campaign):
                 ds[met_var_dict["ERA_name"]["EV"]]+\
                     ds[met_var_dict["ERA_name"]["IVT_conv"]]
             
-        #%%    
+           
         #Identify periods of strong radar reflectivity
         if not self.synthetic_campaign:
             temporary_cut_radar=cut_radar["Reflectivity"].iloc[:,6::]
@@ -2065,7 +2065,7 @@ class FlightMaps(flight_campaign):
                     transform=ccrs.PlateCarree(),marker='.',s=10,
                     color="purple",alpha=0.95,zorder=1)    
         axes_list=[ax1,ax2,ax3,ax4]
-        #%%
+    
         for axis in axes_list:
             # warm sector
             axis.plot(AR_inflow["AR_inflow_warm_sector"]["Halo_Lon"],

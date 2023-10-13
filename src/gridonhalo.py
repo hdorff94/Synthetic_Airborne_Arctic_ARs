@@ -579,6 +579,7 @@ class ERA_on_HALO(ERA5):
             #if campaign=="HALO_AC3" :   
             cut_start   = ARs[flight][AR_of_day]["start"]
             cut_end     = ARs[flight][AR_of_day]["end"]
+            
             #if not halo in locals():
             #    import flight_track_creator
             #    Flight_Tracker=flight_track_creator.Flighttracker(
