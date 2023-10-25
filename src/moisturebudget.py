@@ -28,7 +28,8 @@ class Moisture_Convergence(Moisture_Budgets):
     
     def __init__(self,cmpgn_cls,flight,config_file,flight_dates={},
                  sonde_no=3,sector_types=["warm","core","cold"],
-                 ar_of_day="AR",grid_name="ERA5",do_instantan=False):
+                 ar_of_day="AR",grid_name="ERA5",do_instantan=False,
+                 calc_from_scalar_values=True):
         
         self.cmpgn_cls=cmpgn_cls
         self.grid_name=grid_name
@@ -36,6 +37,7 @@ class Moisture_Convergence(Moisture_Budgets):
         self.flight=flight
         self.config_file=config_file
         self.ar_of_day=ar_of_day
+        self.calc_from_scalar_values=calc_from_scalar_values
         if flight_dates=={}:
             
             self.flight_dates={"North_Atlantic_Run":
@@ -58,7 +60,8 @@ class Moisture_Convergence(Moisture_Budgets):
                             "core":"darkgreen",
                             "cold_sector":"darkblue"}            
     
-    def vertically_integrated_divergence(self,):
+    def vertically_integrated_divergence(self):
+        scalar_based_div=self.calc_from_scalar_values
         integrated_divergence={}
         
         for sector in self.sector_types:
@@ -67,46 +70,83 @@ class Moisture_Convergence(Moisture_Budgets):
             p_grid=self.sector_sonde_values[sector]["pres"].mean(axis=1)
             pres_index=pd.Series(p_grid*100)
             #print(pres_index)
-            pres_index=pres_index.loc[self.div_scalar_mass[sector].index]
+            try:
+                pres_index=pres_index.loc[self.div_scalar_mass[sector].index]
+            except:
+                pres_index=pres_index.loc[self.div_vector_mass[sector].index]
             g=9.82
             ###################################################################
             # 
             integrated_divergence[sector]={}
-            
-            if isinstance(self.div_scalar_mass,pd.Series):
-                integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
-                self.div_scalar_mass[sector].values[::-1]*pres_index[::-1])/\
-                    1000*3600
-            else:
-                integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
-                self.div_scalar_mass[sector]["val"].values[::-1]*\
-                    pres_index[::-1])/1000*3600
-                integrated_divergence[sector]["mass_div_min"]=1/(g*997)*np.trapz(\
-                (self.div_scalar_mass[sector]["val"].values[::-1]-
-                 self.div_scalar_mass[sector]["unc"].values[::-1])*\
-                    pres_index[::-1])/1000*3600
-                integrated_divergence[sector]["mass_div_max"]=1/(g*997)*np.trapz(\
-                (self.div_scalar_mass[sector]["val"].values[::-1]+
-                 self.div_scalar_mass[sector]["unc"].values[::-1])*\
-                    pres_index[::-1])/1000*3600
+            if scalar_based_div:
+                if isinstance(self.div_scalar_mass,pd.Series):
+                    integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
+                        self.div_scalar_mass[sector].values[::-1]*pres_index[::-1])/\
+                        1000*3600
+                else:
+                    integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
+                        self.div_scalar_mass[sector]["val"].values[::-1]*\
+                            pres_index[::-1])/1000*3600
+                    integrated_divergence[sector]["mass_div_min"]=1/(g*997)*np.trapz(\
+                        (self.div_scalar_mass[sector]["val"].values[::-1]-
+                         self.div_scalar_mass[sector]["unc"].values[::-1])*\
+                            pres_index[::-1])/1000*3600
+                    integrated_divergence[sector]["mass_div_max"]=1/(g*997)*np.trapz(\
+                        (self.div_scalar_mass[sector]["val"].values[::-1]+
+                         self.div_scalar_mass[sector]["unc"].values[::-1])*\
+                            pres_index[::-1])/1000*3600
                     
-            if isinstance(self.adv_q_calc,pd.Series):
-                integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
-                self.adv_q_calc[sector].values[::-1]*pres_index[::-1])/\
-                    1000*3600
+                if isinstance(self.adv_q_calc,pd.Series):
+                    integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
+                        self.adv_q_calc[sector].values[::-1]*pres_index[::-1])/\
+                        1000*3600
+                else:
+                    integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
+                        self.adv_q_calc[sector]["val"].values[::-1]*\
+                            pres_index[::-1])/1000*3600
+                    integrated_divergence[sector]["q_ADV_min"]=1/(g*997)*np.trapz(\
+                        (self.adv_q_calc[sector]["val"].values[::-1]-
+                         self.adv_q_calc[sector]["unc"].values[::-1])*\
+                            pres_index[::-1])/1000*3600
+                    integrated_divergence[sector]["q_ADV_max"]=1/(g*997)*np.trapz(\
+                        (self.adv_q_calc[sector]["val"].values[::-1]+
+                         self.adv_q_calc[sector]["unc"].values[::-1])*\
+                    pres_index[::-1])/1000*3600
             else:
-                integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
-                self.adv_q_calc[sector]["val"].values[::-1]*\
-                    pres_index[::-1])/1000*3600
-                integrated_divergence[sector]["q_ADV_min"]=1/(g*997)*np.trapz(\
-                (self.adv_q_calc[sector]["val"].values[::-1]-
-                 self.adv_q_calc[sector]["unc"].values[::-1])*\
-                    pres_index[::-1])/1000*3600
-                integrated_divergence[sector]["q_ADV_max"]=1/(g*997)*np.trapz(\
-                (self.adv_q_calc[sector]["val"].values[::-1]+
-                 self.adv_q_calc[sector]["unc"].values[::-1])*\
-                    pres_index[::-1])/1000*3600
-                
+                # Values are vector based
+                if isinstance(self.div_vector_mass,pd.Series):
+                    integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
+                        self.div_vector_mass[sector].values*pres_index)/\
+                        1000*3600
+                else:
+                    integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
+                        self.div_vector_mass[sector]["val"].values*\
+                            pres_index)/1000*3600
+                    integrated_divergence[sector]["mass_div_min"]=1/(g*997)*np.trapz(\
+                        (self.div_vector_mass[sector]["val"].values-
+                         self.div_vector_mass[sector]["unc"].values)*\
+                            pres_index[::-1])/1000*3600
+                    integrated_divergence[sector]["mass_div_max"]=1/(g*997)*np.trapz(\
+                        (self.div_vector_mass[sector]["val"].values+
+                         self.div_vector_mass[sector]["unc"].values)*\
+                            pres_index[::-1])/1000*3600
+                    
+                if isinstance(self.adv_q_vector,pd.Series):
+                    integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
+                        self.adv_q_vector[sector].values*pres_index)/\
+                        1000*3600
+                else:
+                    integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
+                        self.adv_q_vector[sector]["val"].values*\
+                            pres_index)/1000*3600
+                    integrated_divergence[sector]["q_ADV_min"]=1/(g*997)*np.trapz(\
+                        (self.adv_q_vector[sector]["val"].values-
+                         self.adv_q_vector[sector]["unc"].values)*\
+                            pres_index)/1000*3600
+                    integrated_divergence[sector]["q_ADV_max"]=1/(g*997)*np.trapz(\
+                        (self.adv_q_vector[sector]["val"].values+
+                         self.adv_q_vector[sector]["unc"].values)*\
+                    pres_index)/1000*3600
             #for term in ["ADV","CONV","TRANSP"]:
             #        if term=="ADV":
             #            series_term=term+"_calc"
@@ -123,7 +163,7 @@ class Moisture_Convergence(Moisture_Budgets):
                 
             #integrated_divergence[sector]["q_ADV"]=
             #integrated_divergence[sector]["mass_div"]=
-    #%% Budget functions
+    
     def run_rough_budget_closure(self,wind_field,q_field,moisture_transport,
                                  wind_sector_inflow,wind_sector_outflow,
                                  q_sector_inflow,q_sector_outflow,
@@ -559,7 +599,7 @@ class Moisture_Convergence(Moisture_Budgets):
                             continue
                     for number_of_sondes in [self.sonde_no,100]:    
                         print(flight)
-                        #%%
+                        #-----------------------------------------------------#
                         # Sonde number
                         sondes_selection={}
                         sondes_selection["inflow_"+sector]=np.linspace(
@@ -568,7 +608,7 @@ class Moisture_Convergence(Moisture_Budgets):
                         sondes_selection["outflow_"+sector]=np.linspace(
                                 0,AR_outflow["AR_outflow_"+sector].shape[0]-1,
                                 num=number_of_sondes).astype(int)
-                        #%% Loc and locate sondes for regression method
+                        #-- Loc and locate sondes for regression method ------#
                         inflow_sondes_times=\
                                 AR_inflow["AR_inflow_"+sector].index[\
                                     sondes_selection["inflow_"+sector]]
@@ -601,7 +641,7 @@ class Moisture_Convergence(Moisture_Budgets):
                                         outflow_sondes_times]
                         sondes_pos_all=pd.concat(
                                 [sondes_pos_inflow,sondes_pos_outflow])
-                #%%
+                #-------------------------------------------------------------#
                         if not "q" in HMCs[analysed_flight]["AR_internal"].keys():
                             HMCs[analysed_flight]["AR_internal"]["q"]=\
                                     HMCs[analysed_flight]["AR_internal"]\
@@ -696,7 +736,7 @@ class Moisture_Convergence(Moisture_Budgets):
                                     moist_transport_sector_outflow,pressure,
                                     AR_inflow,AR_outflow,sector=sector)
                         #######################################################
-                        #%%
+                        #-----------------------------------------------------#
                         ### Prepare the pattern for regression method
                 
                         sondes_pos_all=self.get_xy_coords_for_domain(
@@ -1122,8 +1162,104 @@ class Moisture_Convergence(Moisture_Budgets):
                     relevant_times=sector_relevant_times[sector],
                     sector_type=sector)#
         return sector_sonde_values
-    
-    def perform_entire_sonde_ac3_divergence_calcs(self,
+    def perform_entire_sonde_ac3_divergence_vector_calcs(self,
+        Dropsondes,relevant_sector_sondes,with_uncertainty=False):
+        if not hasattr(self,"sector_sonde_values"):
+            self.sector_sonde_values=self.get_sector_sonde_values(
+                        Dropsondes,relevant_sector_sondes)
+        self.div_vector_mass={}
+        self.adv_q_vector={}
+        for sector in self.sector_types:
+            sector_mean_qv,sector_dx_qv,sector_dy_qv=\
+                self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
+                                self.sector_sonde_values[sector],
+                                "transport",with_uncertainty=with_uncertainty)
+
+            sector_q,sector_dx_q_vector,sector_dy_q_vector=\
+                self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
+                                        self.sector_sonde_values[sector],"q",
+                                        with_uncertainty=with_uncertainty)          
+
+            sector_mean_scalar_wind,sector_dx_scalar_wind,sector_dy_scalar_wind=\
+                self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
+                                    self.sector_sonde_values[sector],"wind",
+                                    with_uncertainty=with_uncertainty)
+            sector_mean_u,sector_dx_u_wind,sector_dy_u_wind=\
+                self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
+                                        self.sector_sonde_values[sector],"u",
+                                        with_uncertainty=with_uncertainty)
+            sector_mean_v,sector_dx_v_wind,sector_dy_v_wind=\
+                self.run_haloac3_sondes_regression(self.sondes_pos_all[sector],
+                                        self.sector_sonde_values[sector],"v",
+                                        with_uncertainty=with_uncertainty)
+            sector_div_qv=(sector_dx_qv+sector_dy_qv)*1000
+            
+            # combine specific humidity
+            if isinstance(sector_dx_q_vector,pd.Series):
+                sector_div_q_vector       = (sector_dx_q_vector+\
+                                             sector_dy_q_vector)
+            elif isinstance(sector_dx_q_vector,pd.DataFrame):
+                sector_div_q_calc       = pd.DataFrame()
+                sector_div_q_calc["val"]= sector_dx_q_vector[0]+\
+                                            sector_dy_q_vector[0]
+                sector_div_q_calc["unc"]=\
+                   np.sqrt(sector_dx_q_vector["unc"]**2+\
+                           sector_dy_q_vector["unc"]**2) 
+            else:
+                Exception("Something went completely wrong in the regression")
+            # combine wind
+            if isinstance(sector_dx_scalar_wind,pd.Series):
+                sector_div_scalar_wind = (sector_dx_scalar_wind+\
+                                      sector_dy_scalar_wind)
+            elif isinstance(sector_dx_scalar_wind,pd.DataFrame):
+                sector_div_scalar_wind=pd.DataFrame()
+                sector_div_scalar_wind["val"] = (sector_dx_scalar_wind[0]+\
+                                      sector_dy_scalar_wind[0])
+                ##Gaussian uncertainty
+                #sector_div_scalar_wind["unc"]=\
+                #    np.sqrt(sector_dx_scalar_wind["unc"]**2+\
+                #            sector_dy_scalar_wind["unc"]**2)
+            else:
+                Exception("Something went completely wrong in the regression")
+            
+            # Intersection checks for products needed
+            intersect_index=sector_div_qv.index.intersection(
+                                    sector_div_scalar_wind.index)
+            intersect_index=intersect_index.intersection(
+                            sector_div_q_calc.index)
+            #-----------------------------------------------------------------#
+            # Both Divergence terms
+            
+            # Mass Divergence (q * nabla_v)
+            sector_div_vector_mass=pd.DataFrame()
+            sector_div_vector_mass["val"]=\
+                 (sector_dx_u_wind[0].loc[intersect_index]+\
+                  sector_dy_v_wind[0].loc[intersect_index])*\
+                     self.sector_sonde_values[sector]["q"].loc[\
+                            intersect_index].mean(axis=1).values*1000 #for g/kg from kg/kg
+            sector_div_vector_mass["unc"]=\
+                np.sqrt(sector_dx_u_wind["unc"].loc[intersect_index]**2+\
+                        sector_dy_v_wind["unc"].loc[intersect_index]**2)*\
+                self.sector_sonde_values[sector]["q"].loc[\
+                        intersect_index].mean(axis=1).values*1000
+            
+            #Moisture Advection (v* nabla_q)
+            sector_adv_q_vector=pd.DataFrame()
+            sector_adv_q_vector["val"]=\
+                (sector_mean_u.loc[intersect_index]*\
+                 sector_dx_q_vector[0].loc[intersect_index]+
+                 sector_mean_v.loc[intersect_index]*\
+                 sector_dy_q_vector[0].loc[intersect_index])*1000
+            sector_adv_q_vector["unc"]=\
+                (sector_dx_q_vector["unc"].loc[intersect_index]*\
+                 sector_mean_u.loc[intersect_index]+\
+                 sector_dy_q_vector["unc"].loc[intersect_index]*\
+                 sector_mean_v.loc[intersect_index])*1000
+                
+            self.div_vector_mass[sector] = sector_div_vector_mass
+            self.adv_q_vector[sector]    = sector_adv_q_vector
+            self.save_moisture_transport_divergence(sector)
+    def perform_entire_sonde_ac3_divergence_scalar_calcs(self,
         Dropsondes,relevant_sector_sondes,with_uncertainty=False):
         
         if not hasattr(self,"sector_sonde_values"):
@@ -1226,22 +1362,42 @@ class Moisture_Convergence(Moisture_Budgets):
             self.save_moisture_transport_divergence(sector)
     
     def save_moisture_transport_divergence(self,sector):
-        print("Save mass convergence")
+        #print("Save mass convergence")
         print(self.ar_of_day)
         save_data_path=self.cmpgn_cls.campaign_data_path+"/data/budgets/"
         if not os.path.exists(save_data_path):
             os.mkdir(save_data_path)
-        mass_conv_file_name=self.flight[0]+"_"+self.ar_of_day+"_"+sector+"_"+\
-                                    self.grid_name+"_mass_convergence.csv"
-        adv_q_file_name    =self.flight[0]+"_"+self.ar_of_day+"_"+sector+"_"+\
-                                    self.grid_name+"_adv_q.csv"
-        self.div_scalar_mass[sector].to_csv(save_data_path+mass_conv_file_name)    
-        print("mass convergence saved as: ",
+        mass_conv_file_name         = self.flight[0]+"_"+self.ar_of_day+"_"+\
+                                        sector+"_"+self.grid_name+\
+                                            "_mass_convergence.csv"
+        adv_q_file_name             = self.flight[0]+"_"+self.ar_of_day+"_"+\
+                                        sector+"_"+self.grid_name+"_adv_q.csv"
+        vector_mass_conv_file_name  = self.flight[0]+"_"+self.ar_of_day+"_"+\
+                                        sector+"_"+self.grid_name+\
+                                            "_vector_mass_convergence.csv"
+        vector_adv_q_file_name      = self.flight[0]+"_"+self.ar_of_day+"_"+\
+                                        sector+"_"+self.grid_name+\
+                                            "_vector_adv_q.csv"
+        
+        if hasattr(self,"div_scalar_mass"):
+            self.div_scalar_mass[sector].to_csv(
+                save_data_path+mass_conv_file_name)    
+            print("mass convergence saved as: ",
                               save_data_path+mass_conv_file_name)
-                        
-        self.adv_q_calc[sector].to_csv(save_data_path+adv_q_file_name)
-        print("moisture advection saved as: ",
+        if hasattr(self,"adv_q_calc"):                
+            self.adv_q_calc[sector].to_csv(save_data_path+adv_q_file_name)
+            print("moisture advection saved as: ",
               save_data_path+adv_q_file_name)
+        if hasattr(self,"adv_q_vector"):
+            self.adv_q_vector[sector].to_csv(
+                save_data_path+vector_adv_q_file_name)
+            print("moisture advection saved as: ",
+              save_data_path+vector_adv_q_file_name)
+        if hasattr(self,"div_vector_mass"):
+            self.div_vector_mass[sector].to_csv(
+                save_data_path+vector_mass_conv_file_name)
+            print("vector mass convergence saved as: ",
+                              save_data_path+vector_mass_conv_file_name)
 #-----------------------------------------------------------------------------#
 class Moisture_Budget_Plots(Moisture_Convergence):
     
