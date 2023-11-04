@@ -292,7 +292,7 @@ class ERA5_Downloader(ERA5):
                             'format': 'netcdf',
                             'variable': [
                                 'mean_sea_level_pressure',
-                                'sea_ice_cover',
+                                'sea_ice_cover','sea_surface_temperature',
                                 'total_column_cloud_ice_water',
                                 'total_column_cloud_liquid_water', 
                                 'total_column_water_vapour',
@@ -1175,8 +1175,8 @@ def main(campaign="NAWDEX"):
     elif campaign=="HALO_AC3":
         synthetic_campaign=False
         analysing_campaign=True
-        flights=["RF03"]#["RF06"]#,"RF06"]
-        dates=["20220313"]#["20220316"]#,"20220316"]
+        flights=["RF06"]#["RF06"]#,"RF06"]
+        dates=["20220316"]#["20220316"]#,"20220316"]
     else:
         raise Exception("The given campaign is not specified in the Downloader")
     if not campaign=="PAMTRA_Retrieval":
@@ -1266,14 +1266,14 @@ def main(campaign="NAWDEX"):
     #%% Download_Handler
     # HMP Profile data
     if era_is_desired:
-        era5_downloader.download_handler(do_total_columns=False,do_levels=False,
+        era5_downloader.download_handler(do_total_columns=True,do_levels=False,
                                          do_daily_average_single_levels=False,
                                          do_temp_850hPa=False,
-                                         do_monthly_averages=True)
+                                         do_monthly_averages=False)
     if carra_is_desired:
         carra_downloader.download_handler(do_total_columns=True,do_levels=True,
                                           do_hydrometeors=False)
 if __name__=="__main__":
     #main(campaign="NA_February_Run")
     #main(campaign="NA_February_Run")
-    main(campaign="Weather_Course")#"PAMTRA_Retrieval")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")
+    main(campaign="HALO_AC3")#"PAMTRA_Retrieval")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")

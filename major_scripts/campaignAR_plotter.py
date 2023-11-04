@@ -75,6 +75,8 @@ def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
         cmpgn_cls=na_run               
     elif campaign=="HALO_AC3":
         cpgn_cls_name="HALO_AC3"
+        if config_file["Data_Paths"]["campaign_path"]!=airborne_data_importer_path:
+            config_file["Data_Paths"]["campaign_path"]=airborne_data_importer_path
         ac3_run=flightcampaign.HALO_AC3(is_flight_campaign=True,
             major_path=config_file["Data_Paths"]["campaign_path"],
             aircraft="HALO",interested_flights=flights,
@@ -161,7 +163,7 @@ if __name__=="__main__":
     # Relevant specifications for running , those are default values
     calc_hmp=True
     calc_hmc=False
-    do_plotting=True
+    do_plotting=False
     synthetic_campaign=False
     ar_of_day=["AR_entire_2"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
     campaign_name="HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"
@@ -187,15 +189,15 @@ if __name__=="__main__":
         flights_to_analyse={#"RF02":"20220312",
                             #"RF03":"20220313",
                             #"RF04":"20220314",
-                            #"RF05":"20220315",
-                            "RF06":"20220316",
+                            "RF05":"20220315",
+                            #"RF06":"20220316",
                             #"RF07":"20220320"
                             
                             #"RF10":"20161013"
                             }        
     use_era=True
     use_carra=False
-    use_icon=True
+    use_icon=False
     flights=[*flights_to_analyse.keys()]
     do_instantaneous=False
     include_hydrometeors=True

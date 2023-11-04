@@ -126,7 +126,7 @@ class ERA_on_HALO(ERA5):
                  ar_of_day=None,
                  last_index=None,
                  synthetic_flight=False,
-                 HMPs=["IWV","E","Precip","LWP","IWP","IVT"],
+                 HMPs=["IWV","E","Precip","LWP","IWP","IVT","SST"],
                  HMCs=["IWC","LWC","PWC","Geopot_Z","q","theta_e","u","v"],
                  do_instantaneous=False):
 
@@ -497,6 +497,8 @@ class ERA_on_HALO(ERA5):
                 hmp_era5=self.ds["e"]*1000
             elif hmp=="Precip":
                 hmp_era5=self.ds["tp"]*1000
+            elif hmp=="SST":
+                hmp_era5=self.ds["sst"]
             hour_start=int(self.halo_df.index.hour[0])
             hour_end=int(self.halo_df.index.hour[-1]+2)
             hmp_era5=hmp_era5[hour_start:hour_end,:,:]

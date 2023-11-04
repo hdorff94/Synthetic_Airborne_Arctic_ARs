@@ -214,6 +214,8 @@ def main(config_file_path=os.getcwd(),
             cmpgn_cls=nawdex
     #%% -----------------------------------------------------------------------
         elif campaign=="HALO_AC3":
+            if config_file["Data_Paths"]["campaign_path"]!=config_file_path:
+                config_file["Data_Paths"]["campaign_path"]=config_file_path
             ac3=flightcampaign.HALO_AC3(is_flight_campaign=True,
                     major_path=config_file["Data_Paths"]["campaign_path"],
                     aircraft="HALO",instruments=["radar","dropsondes","sonde"])
@@ -440,9 +442,11 @@ def main(config_file_path=os.getcwd(),
                 pos_path=hydrometeor_lvls_path+"/../BAHAMAS/"
             else:
                 pos_path=cmpgn_cls.campaign_data_path
-            radar["Position"].to_csv(path_or_buf=pos_path+\
+            try:
+                radar["Position"].to_csv(path_or_buf=pos_path+\
                              "HALO_Aircraft_"+flight[0]+".csv")
-        
+            except:
+                pass
         # Load Dropsonde datasets
     
         if not campaign=="HALO_AC3":#try:

@@ -4395,10 +4395,10 @@ def main():
     name="data_config_file"
     config_file_exists=False
     #campaign_name="NAWDEX"
-    campaign_name="NA_February_Run"#"HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"#"NA_February_Run"    
-    flights=["SRF08"]#["SRF03"]#["SRF07"]#["RF07"]#["SRF06"]
+    campaign_name="HALO_AC3"#"NA_February_Run"#"HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"#"NA_February_Run"    
+    flights=["RF06"]#["SRF03"]#["SRF07"]#["RF07"]#["SRF06"]
     met_variable="IWV"
-    ar_of_day="SAR_internal"
+    ar_of_day="AR1"#"SAR_internal"
     ###Switcher in order to specify maps plots to create
     should_plot_iop_map=False
     should_plot_era_map=True
