@@ -164,13 +164,12 @@ if __name__=="__main__":
     calc_hmp=True
     calc_hmc=False
     do_plotting=False
-    synthetic_campaign=False
-    ar_of_day=["AR_entire_2"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
-    campaign_name="HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"
-    #campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"
+    synthetic_campaign=True
+    ar_of_day=["AR_internal"]#"AR_entire_2"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
+    campaign_name="North_Atlantic_Run"#"Second_Synthetic_Study"#"HALO_AC3"#"
     
     if synthetic_campaign:
-        flights_to_analyse={#"SRF02":"20180224",#,#,
+        flights_to_analyse={"SRF02":"20180224",#,#,
                         #"SRF04":"20190319",#}#,#,m,
                         #"SRF07":"20200416",#}#,#,#}#,#}#,
                         #"SRF08":"20200419"#,}
@@ -181,7 +180,7 @@ if __name__=="__main__":
             #"SRF06":"20140325",#,                    
                         #"SRF07":"20150307"}#,
         
-        "SRF08":"20150314",#,
+        #"SRF08":"20150314",#,
         #"SRF09":"20160311",#,
         #"SRF12":"20180225"
         }
@@ -189,7 +188,7 @@ if __name__=="__main__":
         flights_to_analyse={#"RF02":"20220312",
                             #"RF03":"20220313",
                             #"RF04":"20220314",
-                            "RF05":"20220315",
+                            #"RF05":"20220315",
                             #"RF06":"20220316",
                             #"RF07":"20220320"
                             

@@ -43,7 +43,7 @@ def importer():
 def main(flight_dates,do_plotting=False,instantan=False,sector_sonde_no=3,
          calc_hmp=False,calc_hmc=True,use_era=True,use_carra=False,
          use_icon=False,grid_name="ERA5",do_supplements=True,
-         flight_locations=False):    
+         flight_locations=False,scalar_based_div=True):    
     paths_dict=importer()
     # Relevant created classes and modules
     import flightcampaign
@@ -66,8 +66,6 @@ def main(flight_dates,do_plotting=False,instantan=False,sector_sonde_no=3,
                                              "data_config_file")
 
     # Major configurations
-    #campaign="Second_Synthetic_Study"#"North_Atlantic_Run"#"Second_Synthetic_Study"
-    #"North_Atlantic_Run"#"Second_Synthetic_Study"#"North_Atlantic_Run"### 
     init_flight="SRF02"
     if use_icon:
         grid_name="ICON_2km"
@@ -90,10 +88,9 @@ def main(flight_dates,do_plotting=False,instantan=False,sector_sonde_no=3,
         os.makedirs(budget_plot_path)
 
     Moisture_CONV=Budgets.Moisture_Convergence(init_cmpgn_cls,init_flight,
-                                           config_file,grid_name=grid_name,
-                                           flight_dates=flight_dates,
-                                           do_instantan=instantan,
-                                           sonde_no=sector_sonde_no)
+                    config_file,grid_name=grid_name,flight_dates=flight_dates,
+                    do_instantan=instantan,sonde_no=sector_sonde_no,
+                    calc_from_scalar_values=scalar_based_div)
 
     Budget_plots=Budgets.Moisture_Budget_Plots(init_cmpgn_cls,init_flight,
                                            config_file,grid_name=grid_name,
@@ -124,8 +121,12 @@ if __name__=="__main__":
                "SRF09":"20160311",
                "SRF12":"20180225"
                }}
-
-    flight_locations=True # has to be True for instantan comparison if sondes on 
-                            # same positions should be compared
-    main(flight_dates,grid_name="CARRA",instantan=True,do_supplements=False,
-         flight_locations=flight_locations)
+    do_instantan=False
+    flight_locations=False # has to be True for instantan comparison.
+                          # if so, sondes on  same positions should be compared
+                          # can be set False for non-instantaneous perspective 
+    scalar_based_div=False #should be False to conduct vectorised divergence
+    
+    
+    main(flight_dates,grid_name="CARRA",instantan=do_instantan,do_supplements=False,
+         flight_locations=flight_locations,scalar_based_div=scalar_based_div)

@@ -969,8 +969,6 @@ def main(config_file_path=os.getcwd(),
         if carra_is_desired and not icon_is_desired:
             halo_grid_hmc=halo_carra_hmc.copy()
             halo_grid_hmc["name"]="CARRA"
-        #elif icon_is_desired:
-        #    halo_era5_hmc["name"]="ICON"
         if "aircraft_dict" in locals().keys():
             return halo_grid_hmc,radar,aircraft_dict        
         else:

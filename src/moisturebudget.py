@@ -37,7 +37,7 @@ class Moisture_Convergence(Moisture_Budgets):
         self.flight=flight
         self.config_file=config_file
         self.ar_of_day=ar_of_day
-        self.calc_from_scalar_values=calc_from_scalar_values
+        self.scalar_based_div=calc_from_scalar_values
         if flight_dates=={}:
             
             self.flight_dates={"North_Atlantic_Run":
@@ -549,11 +549,6 @@ class Moisture_Convergence(Moisture_Budgets):
             if not os.path.exists(budget_plot_path):
                 os.makedirs(budget_plot_path)
             
-            # create mean values plots
-            mean_profile_fig=plt.figure(figsize=(16,9))
-            ax1_mean=mean_profile_fig.add_subplot(131)
-            ax2_mean=mean_profile_fig.add_subplot(132)
-            ax3_mean=mean_profile_fig.add_subplot(133)
         
             
             for flight in flights:
@@ -568,7 +563,6 @@ class Moisture_Convergence(Moisture_Budgets):
                 else:
                     analysed_flight=flight        
                 ar_of_day="SAR_internal"
-                #working_path=os.getcwd()
                 grid_name=HMCs[analysed_flight]\
                                         ["AR_internal"]["name"]
                 if not use_flight_sonde_locations:
@@ -617,6 +611,12 @@ class Moisture_Convergence(Moisture_Budgets):
                                         sondes_selection["outflow_"+sector]]
                         if use_flight_sonde_locations:
                             inst_HALO=default_HALO_Dict[analysed_flight].copy()
+                            if not "old_index" in inst_HALO["inflow"].columns:
+                                inst_HALO["inflow"]["old_index"]=\
+                                    inst_HALO["inflow"]["Unnamed: 0"]
+                                inst_HALO["outflow"]["old_index"]=\
+                                    inst_HALO["outflow"]["Unnamed: 0"]    
+                            
                             new_inflow_sondes_times=[]
                             new_outflow_sondes_times=[]
                             for time in range(inflow_sondes_times.shape[0]):
@@ -765,11 +765,7 @@ class Moisture_Convergence(Moisture_Budgets):
                         domain_values["wind"]=pd.concat([wind_inflow_sondes,
                                                       wind_outflow_sondes])
                 
-                        mean_u,dx_u,dy_u=self.run_regression(sondes_pos_all,
-                                                     domain_values,"u")
-                        mean_v,dx_v,dy_v=self.run_regression(sondes_pos_all,
-                                                     domain_values,"v")
-                
+                        
                         mean_qv,dx_qv,dy_qv=self.run_regression(sondes_pos_all,
                                                         domain_values,"transport")
                 
@@ -778,92 +774,166 @@ class Moisture_Convergence(Moisture_Budgets):
                 
                         mean_scalar_wind,dx_scalar_wind,dy_scalar_wind=self.run_regression(
                                         sondes_pos_all,domain_values,"wind")
-                
+                        
+                        if not self.scalar_based_div:
+                            # Then we also need the wind components
+                            mean_u,dx_u,dy_u=self.run_regression(sondes_pos_all,
+                                                         domain_values,"u")
+                            mean_v,dx_v,dy_v=self.run_regression(sondes_pos_all,
+                                                         domain_values,"v")
+                    
                         div_qv=(dx_qv+dy_qv)*1000
                         div_scalar_wind=(dx_scalar_wind+dy_scalar_wind)
-                        #div_mass=div_wind*domain_values["q"].mean(axis=0).values*1000
+                        div_scalar_wind=(dx_scalar_wind+dy_scalar_wind)
                         div_scalar_mass=div_scalar_wind*\
-                            domain_values["q"].mean(axis=0).values*1000
-                        # Adv term based on divergence of q from run_regression
-                        adv_q_calc=(dx_q_calc+dy_q_calc)*\
-                            domain_values["wind"].mean(axis=0).values*1000
-                        # Simply the difference of Moisture transport divergence and
-                        # and the scalar based mass divergence
+                        domain_values["q"].mean(axis=0).values*1000
                         adv_q_scalar=div_qv-div_scalar_mass
-                
+                        
+                        if self.scalar_based_div:
+                            # Adv term based on divergence of q from run_regression
+                            adv_q_calc=(dx_q_calc+dy_q_calc)*\
+                                domain_values["wind"].mean(axis=0).values*1000
+                            # Simply the difference of Moisture transport 
+                            # divergence and the scalar based mass divergence
+                            # redundat
+                            #div_mass=div_wind*domain_values["q"].mean(axis=0).values*1000
+                        else:
+                            """
+                            sector_div_vector_mass["val"]=\
+                                 (sector_dx_u_wind[0].loc[intersect_index]+\
+                                  sector_dy_v_wind[0].loc[intersect_index])*\
+                                     self.sector_sonde_values[sector]["q"].loc[\
+                                            intersect_index].mean(axis=1).values*1000 #for g/kg from kg/kg
+                            sector_div_vector_mass["unc"]=\
+                                np.sqrt(sector_dx_u_wind["unc"].loc[intersect_index]**2+\
+                                        sector_dy_v_wind["unc"].loc[intersect_index]**2)*\
+                                self.sector_sonde_values[sector]["q"].loc[\
+                                        intersect_index].mean(axis=1).values*1000
+                            
+                            #Moisture Advection (v* nabla_q)
+                            sector_adv_q_vector=pd.DataFrame()
+                            sector_adv_q_vector["val"]=\
+                                (sector_mean_u.loc[intersect_index]*\
+                                 sector_dx_q_vector[0].loc[intersect_index]+
+                                 sector_mean_v.loc[intersect_index]*\
+                                 sector_dy_q_vector[0].loc[intersect_index])*1000
+                            
+                            """
+                            div_mass=domain_values["q"].mean(axis=0).values*1000*\
+                                (dx_u+dy_v)
+                                
+                            adv_q=(domain_values["u"].mean(axis=0).values*dx_q_calc+\
+                                   domain_values["v"].mean(axis=0).values*dy_q_calc)*\
+                                    1000
+                            
                         if do_supplements:
                             Budget_plots.\
                             plot_single_flight_and_sector_regression_divergence(
                             sector,self.sonde_no,div_qv,div_scalar_mass,
                             adv_q_calc,adv_q_scalar)
-                    
+                            #Budget_plots.plot_sector_based_comparison()
+                            #---> to be added
                             # Sector-based comparison of values
-                            fig=plt.figure(figsize=(9,12))
-                            ax1=fig.add_subplot(111)
-                            ax1.plot(div_qv.values,div_qv.index,label="div: transp")
-                            ax1.axvline(x=0,ls="--",color="grey",lw=2)
+                            #fig=plt.figure(figsize=(9,12))
+                            #ax1=fig.add_subplot(111)
+                            #ax1.plot(div_qv.values,div_qv.index,label="div: transp")
+                            #ax1.axvline(x=0,ls="--",color="grey",lw=2)
                             
-                            ax1.plot(div_scalar_mass.values,
-                                     div_scalar_mass.index,
-                                     label="div: scalar mass")
+                            #ax1.plot(div_scalar_mass.values,
+                            #         div_scalar_mass.index,
+                            #         label="div: scalar mass")
                             
-                            ax1.plot(adv_q_calc,adv_q_calc.index,
-                                     label="adv_calc:q",c="darkgreen")
+                            #ax1.plot(adv_q_calc,adv_q_calc.index,
+                            #         label="adv_calc:q",c="darkgreen")
                             
-                            ax1.plot(adv_q_scalar,adv_q_scalar.index,
-                             label="adv_scalar:q",c="green",ls="--")
+                            #ax1.plot(adv_q_scalar,adv_q_scalar.index,
+                            # label="adv_scalar:q",c="green",ls="--")
                     
-                            ax1.invert_yaxis()
-                            ax1.set_xlim([-2e-4,1e-4])
-                            ax1.set_xticks([-2e-4,0,2e-4])
-                            ax1.set_ylim([1000,300])
-                            ax1.legend()
-                            budget_plot_file_name=flight+"_"+grid_name+\
-                                "_AR_"+sector+"_regr_sonde_no_"+\
-                                    str(number_of_sondes)+".png"
-                            fig.savefig(budget_plot_path+"/supplementary/"+
-                                        budget_plot_file_name,
-                                        dpi=300,bbox_inches="tight")
-                            print("Figure saved as:",budget_plot_path+\
-                                  "/supplements/"+budget_plot_file_name)
+                            #ax1.invert_yaxis()
+                            #ax1.set_xlim([-2e-4,1e-4])
+                            #ax1.set_xticks([-2e-4,0,2e-4])
+                            #ax1.set_ylim([1000,300])
+                            #ax1.legend()
+                            #budget_plot_file_name=flight+"_"+grid_name+\
+                            #    "_AR_"+sector+"_regr_sonde_no_"+\
+                            #        str(number_of_sondes)+".png"
+                            #fig.savefig(budget_plot_path+"/supplementary/"+
+                            #            budget_plot_file_name,
+                            #            dpi=300,bbox_inches="tight")
+                            #print("Figure saved as:",budget_plot_path+\
+                            #      "/supplements/"+budget_plot_file_name)
                         
                         if number_of_sondes<10:
-                            ax1_mean.plot(domain_values["wind"].mean()*\
-                              (q_outflow_sondes.mean()-q_inflow_sondes.mean()),
-                              q_inflow_sondes.columns.astype(float),
-                              color=Budget_plots.sector_colors[sector])
-                            ax1_mean.text(-0.01,150,"ADV")
-                            ax2_mean.plot(domain_values["q"].mean()*\
-                              (wind_outflow_sondes.mean()-\
-                               wind_inflow_sondes.mean()),
-                              wind_outflow_sondes.columns.astype(float),
-                              color=Budget_plots.sector_colors[sector])
-                            ax2_mean.text(-0.01,150,"Mass Div")
-                            ax3_mean.plot(moist_transport_outflow.mean()-\
-                              moist_transport_inflow.mean(),
-                              moist_transport_outflow.columns.astype(float))
-                            ax3_mean.text(-0.01,150,s="Transp Div")
+                            # create mean values plots
+                            #mean_profile_fig=plt.figure(figsize=(16,9))
+                            #ax1_mean=mean_profile_fig.add_subplot(131)
+                            #ax2_mean=mean_profile_fig.add_subplot(132)
+                            #ax3_mean=mean_profile_fig.add_subplot(133)
+
+                            #ax1_mean.plot(domain_values["wind"].mean()*\
+                            #  (q_outflow_sondes.mean()-q_inflow_sondes.mean()),
+                            #  q_inflow_sondes.columns.astype(float),
+                            #  color=Budget_plots.sector_colors[sector])
+                            #ax1_mean.text(-0.01,150,"ADV")
+                            #ax2_mean.plot(domain_values["q"].mean()*\
+                            #  (wind_outflow_sondes.mean()-\
+                            #   wind_inflow_sondes.mean()),
+                            #  wind_outflow_sondes.columns.astype(float),
+                            #  color=Budget_plots.sector_colors[sector])
+                            #ax2_mean.text(-0.01,150,"Mass Div")
+                            #ax3_mean.plot(moist_transport_outflow.mean()-\
+                            #  moist_transport_inflow.mean(),
+                            #  moist_transport_outflow.columns.astype(float))
+                            #ax3_mean.text(-0.01,150,s="Transp Div")
+                            pass
+                        #if do_supplements:
+                        #    ax1_mean.invert_yaxis()
+                        #    ax2_mean.invert_yaxis()
+                        #    ax3_mean.invert_yaxis() 
+                        #    ax1_mean.set_xlim([-0.02,0.02])
+                        #    ax2_mean.set_xlim([-0.02,0.02])
+                        #    ax3_mean.set_xlim([-0.02,0.02])  
+                        #    file_name=flight+"_simplified_divergence_sonde_no_"+\
+                        #                str(number_of_sondes)+".png"
+                        #    mean_profile_fig.savefig(budget_data_path+file_name)
+                        #    print("Figure saved as:",budget_data_path+file_name)
                         # Save sonde budget components as dataframe
                         budget_regression_profile_df=pd.DataFrame(data=np.nan,
                                         index=div_qv.index,
                                         columns=["CONV","ADV_calc","ADV_diff",
                                                  "TRANSP"])
-                        budget_regression_profile_df["CONV"]=\
-                            div_scalar_mass.values
-                        budget_regression_profile_df["ADV_calc"]=\
-                            adv_q_calc.values
-                        budget_regression_profile_df["ADV_diff"]=\
-                            adv_q_scalar.values
-                        budget_regression_profile_df["TRANSP"]=\
-                            div_qv.values
-                
+                        if self.scalar_based_div:
+                            budget_regression_profile_df["CONV"]=\
+                                div_scalar_mass.values
+                            budget_regression_profile_df["ADV_calc"]=\
+                                adv_q_calc.values
+                            budget_regression_profile_df["ADV_diff"]=\
+                                adv_q_scalar.values
+                            budget_regression_profile_df["TRANSP"]=\
+                                div_qv.values
+                        else:
+                            budget_regression_profile_df["CONV"]=\
+                                div_mass.values
+                            budget_regression_profile_df["ADV_calc"]=\
+                                adv_q.values
+                            
+                            budget_regression_profile_df["ADV_diff"]=\
+                                    adv_q_scalar.values
+                            budget_regression_profile_df["TRANSP"]=\
+                                    div_qv.values
+      
                         # Save budget values
                         name_arg=""
+                        file_end=".csv"
                         if use_flight_sonde_locations:
                             name_arg="_on_flight"+name_arg
                         budget_file_name=flight+"_AR_"+sector+"_"+\
                                     grid_name+"_regr_sonde_no_"+str(number_of_sondes)+\
-                                        name_arg+".csv"
+                                        name_arg
+                        if not self.scalar_based_div:
+                            budget_file_name+="_vectorised"
+                        budget_file_name+=file_end
+                        
                         budget_regression_profile_df.to_csv(
                             path_or_buf=budget_data_path+budget_file_name)    
                         print("Convergence components saved as: ",
@@ -880,17 +950,7 @@ class Moisture_Convergence(Moisture_Budgets):
                                                  sonde_pos_fname)
                         print("Sonde position saved as:",
                               budget_data_path+sonde_pos_fname)
-                if do_supplements:
-                    ax1_mean.invert_yaxis()
-                    ax2_mean.invert_yaxis()
-                    ax3_mean.invert_yaxis() 
-                    ax1_mean.set_xlim([-0.02,0.02])
-                    ax2_mean.set_xlim([-0.02,0.02])
-                    ax3_mean.set_xlim([-0.02,0.02])  
-                    file_name=flight+"_simplified_divergence_sonde_no_"+\
-                                str(number_of_sondes)+".png"
-                    mean_profile_fig.savefig(budget_data_path+file_name)
-                    print("Figure saved as:",budget_data_path+file_name)
+                
             
     @staticmethod
     def get_xy_coords_for_domain(domain):
