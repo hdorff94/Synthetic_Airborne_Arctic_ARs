@@ -43,7 +43,7 @@ def main(config_file_path=os.getcwd(),
          # USEFUL values
          synthetic_icon_lat=0,
          synthetic_icon_lon=0,
-         upsample_time="20min", # ---> very important for computational ressources
+         upsample_time="10min", # ---> very important for computational ressources
          #synthetic_icon_lat=-7,
          #synthetic_icon_lon=-12,
          #synthetic_icon_lat=1.8,

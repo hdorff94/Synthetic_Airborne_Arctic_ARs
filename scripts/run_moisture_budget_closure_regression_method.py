@@ -70,7 +70,7 @@ def main(flight_dates,do_plotting=False,instantan=False,sector_sonde_no=3,
     if use_icon:
         grid_name="ICON_2km"
     elif use_carra:
-        grid_name="CARRA"
+        grid_name="ERA5"
 
     #flights=[*flight_dates[campaign].keys()]
     init_cmpgn_cls=flightcampaign.North_Atlantic_February_Run(
@@ -121,8 +121,8 @@ if __name__=="__main__":
                "SRF09":"20160311",
                "SRF12":"20180225"
                }}
-    do_instantan=False
-    flight_locations=False # has to be True for instantan comparison.
+    do_instantan=True
+    flight_locations=True # has to be True for instantan comparison.
                           # if so, sondes on  same positions should be compared
                           # can be set False for non-instantaneous perspective 
     scalar_based_div=False #should be False to conduct vectorised divergence

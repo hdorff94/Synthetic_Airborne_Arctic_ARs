@@ -117,7 +117,6 @@ def load_ar_dropsonde_profiles(dropsond_path,flight,ar_of_day,
 """
 ## ERA
 """
-#%%
 class ERA_on_HALO(ERA5):
     def __init__(self,halo_df,hydrometeor_lvls_path,
                  hydrometeor_lvls_file,interpolated_lvls_file,
@@ -154,7 +153,8 @@ class ERA_on_HALO(ERA5):
         self.halo_df=new_halo_df
         if change_last_index:
             self.last_index=len(self.halo_df)
-    #%% HMCs    
+    #-------------------------------------------------------------------------#
+    #HMCs    
     def interpolate_grid_on_halo(self,content_levels=False):
         
         """
@@ -472,8 +472,8 @@ class ERA_on_HALO(ERA5):
                     raise ValueError(vertical_var,
                                      " has not yet been interpolated")            
         return halo_era5_hmc     
-
-    #%% HMPs
+    #-------------------------------------------------------------------------#
+    # HMPs
     def upsample_hmp(self):
         # take total column datasets, unit is kg/m2 change this to g/m2 
         # for hydrometeors, water vapour in kg/m2 is correct
@@ -554,7 +554,8 @@ class ERA_on_HALO(ERA5):
                                             self.upsampled_hmp.iloc[:,0])
         return self.upsampled_hmp
             
-    #%% Others
+    #-------------------------------------------------------------------------#
+    # Others
     def cut_halo_to_AR_crossing(self,AR_of_day,flight,initial_halo,
                                 initial_df,device="radar",
                                 invert_flight=False):
@@ -688,7 +689,8 @@ class ERA_on_HALO(ERA5):
             
             print("ERA variable ",variable," is masked successfully")
             return masked_era_df,self.mask_df
-    #%% Dropsondes 
+    #-------------------------------------------------------------------------#
+    # Dropsondes 
     def save_ar_dropsonde_soundings(self,sondes,save_path,variables=[],
                                     research_flight="RF_None",
                                     ar_number="AR1",upsampled=False):
@@ -825,7 +827,64 @@ class CARRA_on_HALO(CARRA):
         self.halo_df=new_halo_df
         if change_last_index:
             self.last_index=len(self.halo_df)
+    def correct_wind_components(self):
+        """
+        Caution: U/V wind components in CARRA refer relative to grid rotation.
+        This is strongly location depend. U,V values have to be recalculated
+        for following divergence calculations. This considers the before 
+        calculated correction angles saved in "/testing/" as gained from the
+        respective testing script. 
+        
+        Workflow:
+            -get both wind components and calculate windspeed (which is correct)
+             and wind direction (which is wrong) from both components.
+            - check if CARRA domain is eastern or western
+            - load region specific Wind direction correction
+            - recalculate the components (u,v) from corrected wdir
+            
+        
+            
 
+        Returns
+        -------
+        None.
+
+        """
+        
+        if not self.wind_corrected:
+            print("Correct CARRA wind field")
+            from metpy.calc import wind_components,wind_direction
+            u_lam_wind=self.ds["u"]
+            v_lam_wind=self.ds["v"]
+            lam_wdir  =np.array(wind_direction(u_lam_wind*units['m/s'],
+                                               v_lam_wind*units['m/s']))
+            lam_wspeed=np.array(np.sqrt(u_lam_wind**2+v_lam_wind**2))
+            #check for region
+            if self.ds["longitude"][0,0]+360<330:
+                region="west"
+            else:
+                region="east"
+            src_path=os.getcwd()
+            test_path=os.getcwd()+"/../testing/"
+            file_name="Wdir_lam_to_ne_correction_"
+            file_name+=region+".csv"
+            wdir_correction=np.array(pd.read_csv(test_path+file_name,index_col=0))    
+            # how to repeat along new directions
+            wdir_correction=np.float32(np.tile(wdir_correction,(u_lam_wind.shape[0],
+                                                     u_lam_wind.shape[1],
+                                                     1,1)))
+            
+            corrected_wdir=lam_wdir+wdir_correction
+            u_ne,v_ne=wind_components(lam_wspeed*units["m/s"],
+                                      corrected_wdir*units["deg"])
+            u_ne=np.array(u_ne)
+            v_ne=np.array(v_ne)
+            self.ds["u"].values=u_ne
+            self.ds["v"].values=v_ne
+            self.wind_corrected=True
+        else:
+            print("Wind is already corrected")
+            
     def calc_specific_humidity_from_relative_humidity(self):
         """
         CARRA moisture data on pressure levels is only given as rel. humidity,
@@ -852,13 +911,13 @@ class CARRA_on_HALO(CARRA):
         rh=rh.astype(np.float32)
         temperature=self.ds["t"].data.astype(np.float32) * units.K
         mixing_ratio=mpcalc.mixing_ratio_from_relative_humidity(
-                                        rh,temperature,pressure)
+                                        pressure,temperature,rh)
         print("mixing_ratio calculated")
         specific_humidity=xr.DataArray(np.array(
                                     mpcalc.specific_humidity_from_mixing_ratio(
                                         mixing_ratio)),
                                    dims=["time","isobaricInhPa","y","x"])
-        print("specific humidity calculated")
+        self.ds=self.ds.drop_vars("step")
         self.ds=self.ds.assign({"specific_humidity":specific_humidity})
     
     def calc_IVT_from_q(self):
@@ -1144,7 +1203,6 @@ class CARRA_on_HALO(CARRA):
             print("CARRA data has not been interpolated")
             self.calc_interp_hmp_data()
     ###########################################################################
-    #%%
     # HMC DATA    
     def check_if_hmc_data_is_interpolated(self):
         self.carra_hmc_is_interpolated=False
@@ -1200,12 +1258,18 @@ class CARRA_on_HALO(CARRA):
         # default is the length of HALO dataframe (so entire flight data)
         iterative_length=self.halo_carra.shape[0]
             
-            
+        self.wind_corrected=False    
         for var in self.HMCs:
             print("Upsample CARRA ",var)#,var," onto the Flight Track")
             print("Preprocessing")
+            
+            if var in ["u","v"]:
+                # Caution CARRA u,v component are relative to Lambertian
+                # grid rotation
+                self.correct_wind_components()
             carra_q=self.ds[var]
-            #q_interp_point=pd.DataFrame(index=halo_carra.index[0:self.last_index],
+            
+            ##q_interp_point=pd.DataFrame(index=halo_carra.index[0:self.last_index],
             #                        columns=np.arange(len(carra_q.level)),
             #                        dtype=float)
             da_cutted=carra_q.sel(time=slice(start,end))
@@ -1404,7 +1468,8 @@ class ICON_on_HALO(ICON):
         self.campaign_name=cmpgn_cls.name
     def update_ICON_hydrometeor_data_path(self,hydro_path):
         self.hydrometeor_icon_path=hydro_path
-    #%% Hydrometeorpaths    
+    #-------------------------------------------------------------------------#
+    # Hydrometeorpaths    
     def interpolate_icon_hmp(self,last_index):
         """
         This function spatially interpolates the ICON Triangle Grid Data on the 
@@ -1565,7 +1630,8 @@ class ICON_on_HALO(ICON):
                                             self.halo_icon_hmp["time"])
         return self.halo_icon_hmp
     
-    #%% Hydrometeorcontents (HMCs)
+    #-------------------------------------------------------------------------#
+    # Hydrometeorcontents (HMCs)
     def interpolate_icon_3D_data(self,icon_q,var,
                                  geo_interpolation_type="triangle",
                                  save_interpolation_df=False):

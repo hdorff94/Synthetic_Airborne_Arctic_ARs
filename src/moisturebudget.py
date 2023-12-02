@@ -290,15 +290,21 @@ class Moisture_Convergence(Moisture_Budgets):
         ## Access sector-based divergence values   
         sectors=["core","warm_sector","cold_sector"]
         #s
+        file_end=".csv"
         for sector in sectors:
             #if not self.do_instantan:
             budget_file=self.flight+"_AR_"+sector+"_"+self.grid_name+\
-                            "_regr_sonde_no_"+str(self.sonde_no)+".csv"
+                            "_regr_sonde_no_"+str(self.sonde_no)
+            budget_ideal_file=self.flight+"_AR_"+sector+"_"+self.grid_name+\
+                                "_regr_sonde_no_100"
+            if not self.scalar_based_div:
+                budget_file+="_vectorised"
+                budget_ideal_file+="_vectorised"
+            budget_file       += file_end
+            budget_ideal_file += file_end
             if sector=="core":
                 print("Read budget file",budget_file)
-            budget_ideal_file=self.flight+"_AR_"+sector+"_"+self.grid_name+\
-                                "_regr_sonde_no_100"+".csv"
-            #else:
+            
             #    budget_file=self.flight+"_instantan_AR_"+sector+"_"+self.grid_name+\
             #    "_regr_sonde_no_"+sonde_no+".csv"
             #    budget_ideal_file=self.flight+"_instantan_AR_"+sector+"_"+\
@@ -379,10 +385,19 @@ class Moisture_Convergence(Moisture_Budgets):
                     if use_flight_tracks:
                         name_arg="_on_flight"
                 #Core
+                file_end=".csv"
+                
                 core_file=flight+"_AR_core_"+self.grid_name+\
-                "_regr_sonde_no_"+str(self.sonde_no)+name_arg+".csv"
+                "_regr_sonde_no_"+str(self.sonde_no)+name_arg
+                
                 core_ideal_file=flight+"_AR_core_"+self.grid_name+\
-                "_regr_sonde_no_100"+name_arg+".csv"
+                "_regr_sonde_no_100"+name_arg
+                if not self.scalar_based_div:
+                    core_file+="_vectorised"
+                    core_ideal_file+="_vectorised"
+                core_file+=file_end
+                core_ideal_file+=file_end
+                
                 core=pd.read_csv(budget_data_path+core_file)
                 core_ideal=pd.read_csv(budget_data_path+core_ideal_file)
                 if not "level" in core.columns:
@@ -396,9 +411,16 @@ class Moisture_Convergence(Moisture_Budgets):
         
                 # Warm sector
                 warm_file=flight+"_AR_warm_sector_"+self.grid_name+\
-                    "_regr_sonde_no_"+str(self.sonde_no)+name_arg+".csv"
+                    "_regr_sonde_no_"+str(self.sonde_no)+name_arg
                 warm_ideal_file=flight+"_AR_warm_sector_"+self.grid_name+\
-                    "_regr_sonde_no_100"+name_arg+".csv"
+                    "_regr_sonde_no_100"+name_arg
+                
+                if not self.scalar_based_div:
+                    warm_file+="_vectorised"
+                    warm_ideal_file+="_vectorised"
+                warm_file+=file_end
+                warm_ideal_file+=file_end
+                
                 warm=pd.read_csv(budget_data_path+warm_file)
                 warm_ideal=pd.read_csv(budget_data_path+warm_ideal_file)
                 if not "level" in warm.columns:
@@ -413,9 +435,14 @@ class Moisture_Convergence(Moisture_Budgets):
                 # Cold sector
                 if not flight.startswith("SRF12"):
                     cold_file=flight+"_AR_cold_sector_"+self.grid_name+\
-                        "_regr_sonde_no_"+str(self.sonde_no)+name_arg+".csv"
+                        "_regr_sonde_no_"+str(self.sonde_no)+name_arg
                     cold_ideal_file=flight+"_AR_cold_sector_"+self.grid_name+\
-                    "_regr_sonde_no_100"+name_arg+".csv"
+                    "_regr_sonde_no_100"+name_arg
+                    if not self.scalar_based_div:
+                        cold_file+="_vectorised"
+                        cold_ideal_file+="_vectorised"
+                    cold_file+=file_end
+                    cold_ideal_file+=file_end
                     cold=pd.read_csv(budget_data_path+cold_file)
                     cold_ideal=pd.read_csv(budget_data_path+cold_ideal_file)
                     if not "level" in cold.columns:
@@ -784,7 +811,7 @@ class Moisture_Convergence(Moisture_Budgets):
                     
                         div_qv=(dx_qv+dy_qv)*1000
                         div_scalar_wind=(dx_scalar_wind+dy_scalar_wind)
-                        div_scalar_wind=(dx_scalar_wind+dy_scalar_wind)
+                        #div_scalar_wind=(dx_scalar_wind+dy_scalar_wind)
                         div_scalar_mass=div_scalar_wind*\
                         domain_values["q"].mean(axis=0).values*1000
                         adv_q_scalar=div_qv-div_scalar_mass
@@ -1462,14 +1489,17 @@ class Moisture_Convergence(Moisture_Budgets):
 class Moisture_Budget_Plots(Moisture_Convergence):
     
     def __init__(self,cmpgn_cls,flight,config_file,
-                 grid_name="ERA5",do_instantan=False,sonde_no=3):
+                 grid_name="ERA5",do_instantan=False,sonde_no=3,
+                 scalar_based_div=True):
         
-        super().__init__(cmpgn_cls,flight,config_file,grid_name,do_instantan)
+        super().__init__(cmpgn_cls,flight,config_file,
+                         grid_name,do_instantan)
         self.plot_path=self.cmpgn_cls.plot_path+"/budget/" # ----> to be filled
         self.grid_name=grid_name
         self.sonde_no=sonde_no
-        
-    #%% Preprocessing for plots
+        self.scalar_based_div=scalar_based_div
+    #-------------------------------------------------------------------------#
+    # Preprocessing for plots
     def allocate_budgets(self,Campaign_Budgets={},
                          Campaign_Ideal_Budgets={},
                          Campaign_Inst_Budgets={},
@@ -1578,9 +1608,10 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         
     
     ###############################################################################
-    #%% Plot Major functions
+    # Plot Major functions
     # Figure 12
     def plot_single_case(self,Sectors,Ideal_Sectors,
+                         do_log_scale=True,
                          save_as_manuscript_figure=False):
         """
     
@@ -1690,7 +1721,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax2.spines['top'].set_visible(False)
         ax2.spines['left'].set_visible(False)
         ax2.yaxis.set_tick_params(width=2,length=6)
-        ax2.set_title("mass \nCONV",fontsize=20)
+        ax2.set_title("mass \nDIV",fontsize=20)
         ax2.set_xlim([-3e-4,3e-4])
         ax2.set_xticks([-3e-4,0,3e-4])
         ax2.set_xticklabels(["-3e-4","0","3e-4"])
@@ -1704,26 +1735,37 @@ class Moisture_Budget_Plots(Moisture_Convergence):
     
         #######################################################################
         ax3=profile.add_subplot(133)
-        ax3.plot(core["TRANSP"],
+        core["sum_trans"]=core["CONV"]+core["ADV_calc"]
+        warm_sector["sum_trans"]=warm_sector["CONV"]+warm_sector["ADV_calc"]
+        cold_sector["sum_trans"]=cold_sector["CONV"]+cold_sector["ADV_calc"]
+        
+        
+        core_ideal["sum_trans"]=core_ideal["CONV"]+core_ideal["ADV_calc"]
+        warm_sector_ideal["sum_trans"]=warm_sector_ideal["CONV"]+\
+                                        warm_sector_ideal["ADV_calc"]
+        cold_sector_ideal["sum_trans"]=cold_sector_ideal["CONV"]+\
+                                            cold_sector_ideal["ADV_calc"]
+        
+        ax3.plot(core["sum_trans"],
              core["TRANSP"].index.astype(int),label="core",color="darkgreen")
-        ax3.plot(warm_sector["TRANSP"],
-             warm_sector["TRANSP"].index.astype(int),
+        ax3.plot(warm_sector["CONV"]+warm_sector["ADV_calc"],
+             warm_sector["CONV"].index.astype(int),
              label="warm sector",color="orange")
-        ax3.plot(cold_sector["TRANSP"],
+        ax3.plot(cold_sector["CONV"]+cold_sector["ADV_calc"],
              cold_sector["TRANSP"].index.astype(int),
              label="cold sector",color="darkblue")
     
         ax3.fill_betweenx(y=core.index.astype(float),
-                          x1=core["TRANSP"],
-                          x2=core_ideal["TRANSP"], 
+                          x1=core["sum_trans"],
+                          x2=core_ideal["sum_trans"], 
                           color="green",alpha=0.3)
         ax3.fill_betweenx(y=warm_sector.index.astype(float),
-                          x1=warm_sector["TRANSP"],
-                          x2=warm_sector_ideal["TRANSP"], 
+                          x1=warm_sector["sum_trans"],
+                          x2=warm_sector_ideal["sum_trans"], 
                           color="orange",alpha=0.3)
         ax3.fill_betweenx(y=core.index.astype(float),
-                          x1=cold_sector["TRANSP"],
-                          x2=cold_sector_ideal["TRANSP"], 
+                          x1=cold_sector["sum_trans"],
+                          x2=cold_sector_ideal["sum_trans"], 
                           color="blue",alpha=0.3)
     
         ax3.axvline(0,ls="--",lw=2,color="k")
@@ -1743,15 +1785,17 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         #ax1.plot(.mean()*1000,pressure,label="q-outflow")
         #ax1.plot(mean_trpz_moist_transport*1000,pressure,label="transport")
         """
-        ax1.text(-4.5e-4,250,"(a)",fontsize=18)#transform=ax1.transAxes)
-        ax2.text(-4.5e-4,250,"(b)",fontsize=18)#,transform=ax1.transAxes)
-        ax3.text(-4.5e-4,250,"(c)",fontsize=18)#,transform=ax1.transAxes)
+        if do_log_scale:
+            ax1.set_yscale("log")
+            ax2.set_yscale("log")
+            ax3.set_yscale("log")
+        ax1.text(-4.5e-4,225,"(a)",fontsize=18)#transform=ax1.transAxes)
+        ax2.text(-4.5e-4,225,"(b)",fontsize=18)#,transform=ax1.transAxes)
+        ax3.text(-4.5e-4,225,"(c)",fontsize=18)#,transform=ax1.transAxes)
         ax1.set_ylabel("Pressure in hPa")
         ax1.set_yticks([300,500,700,850,1000])
         ax1.set_yticklabels(["300","500","700","850","1000"])
         ax2.set_yticks([300,500,700,850,1000])
-        ax3.set_yticks([300,500,700,850,1000])
-        
         ax2.set_yticklabels([])
     
         ax3.yaxis.tick_right()
@@ -1760,9 +1804,19 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         for loc, spine in ax3.spines.items():
             if loc in ["right","bottom"]:
                 spine.set_position(('outward', 10)) 
+        ax3.set_yticks([300,500,700,850,1000])
+        ax3.set_yticklabels(["300","500","700","850","1000"])
+                
+        ## Log-scale !!! Add that
+        ###### for tomorrow
+        
         plt.subplots_adjust(wspace=0.4)
+        file_end=".png"
         fig_name=self.flight+"_"+self.grid_name+"_sonde_no_"+\
-            str(self.sonde_no)+"_Moisture_transport_Divergence.png"
+            str(self.sonde_no)+"_Moisture_transport_Divergence"
+        if not self.scalar_based_div:
+            fig_name+="_vectorised"
+        fig_name+=file_end
         if not save_as_manuscript_figure:
             fig_plot_path=self.cmpgn_cls.plot_path+"/budget/"
             if not os.path.exists(fig_plot_path):
@@ -1999,6 +2053,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             fig_name=self.grid_name+"_inst"+"_Water_Vapour_Budget"
         if use_flight_tracks:
             fig_name=fig_name+"_on_flight"
+        if not self.scalar_based_div:
+            fig_name+="_vectorised"
         fig_name=fig_name+file_end
         if not save_as_manuscript_figure:
             plot_path=self.plot_path
@@ -2147,6 +2203,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.legend(loc="lower left",fontsize=18,title="RMSE")
         file_end=".pdf"
         fig_name=self.grid_name+"_Inst_Sonde_Error_Overview"
+        if not self.scalar_based_div:
+            fig_name+="vectorised"
         fig_name=fig_name+file_end
         if not save_as_manuscript_figure:
             plot_path=self.plot_path

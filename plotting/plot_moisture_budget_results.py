@@ -55,14 +55,15 @@ def main(figure_to_create="fig13"):
     #####################################################################
     #%% Specifications
     # Major configurations
-    campaign="Second_Synthetic_Study"#"North_Atlantic_Run"
+    campaign="North_Atlantic_Run"#"Second_Synthetic_Study"#"North_Atlantic_Run"
 
     init_flight="SRF08"
-    grid_name="CARRA"#"ERA5"
+    grid_name="CARRA"#"CARRA"#"ERA5"
     sonde_no="3"
     do_instantan=False
     do_plotting=True
     save_for_manuscript=True
+    scalar_based_div=False
     if do_instantan:
         flight=init_flight+"_instantan"
     else:
@@ -104,12 +105,14 @@ def main(figure_to_create="fig13"):
     Moisture_CONV=\
         Budgets.Moisture_Convergence(cmpgn_cls,flight,config_file,
                  flight_dates=flight_dates,grid_name=grid_name,
-                 do_instantan=do_instantan,sonde_no=sonde_no)
+                 do_instantan=do_instantan,sonde_no=sonde_no,
+                 calc_from_scalar_values=scalar_based_div)
     Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,config_file,
-                 grid_name=grid_name,do_instantan=do_instantan,sonde_no=sonde_no)
+                 grid_name=grid_name,do_instantan=do_instantan,
+                 sonde_no=sonde_no,scalar_based_div=scalar_based_div)
     Inst_Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,
-                                        config_file,grid_name=grid_name,
-                                        do_instantan=True,sonde_no=sonde_no)
+                config_file,grid_name=grid_name,do_instantan=True,
+                sonde_no=sonde_no,scalar_based_div=scalar_based_div)
     on_flight_tracks=True
     
     if figure_to_create.startswith("fig12"):
@@ -137,7 +140,8 @@ def main(figure_to_create="fig13"):
         Inst_Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,
                                     flight+"_instantan",config_file,
                                     flight_dates=flight_dates,
-                                    grid_name=grid_name,do_instantan=True)
+                                    grid_name=grid_name,do_instantan=True,
+                                    calc_from_scalar_values=scalar_based_div)
         #Inst_Moisture_CONV.sonde_no="100"
         Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets(
                         use_flight_tracks=on_flight_tracks)
@@ -173,7 +177,8 @@ def main(figure_to_create="fig13"):
         Inst_Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,
                                     flight+"_instantan",config_file,
                                     flight_dates=flight_dates,
-                                    grid_name=grid_name,do_instantan=True)
+                                    grid_name=grid_name,do_instantan=True,
+                                    calc_from_scalar_values=scalar_based_div)
         Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets(
             use_flight_tracks=on_flight_tracks)
        
@@ -210,15 +215,17 @@ def main(figure_to_create="fig13"):
         NA_flights_to_analyse={"SRF02":"20180224",#,#,
                                "SRF04":"20190319",#}#,#,
                                "SRF07":"20200416",#}#,#,#}#,#}#,
-                               "SRF08":"20200419"}
+                               "SRF08":"20200419"
+                               }
         #Second Synthetic Study
         SND_flights_to_analyse={"SRF02":"20110317",
                                 "SRF03":"20110423",#,
                                 "SRF08":"20150314",#,
                                 "SRF09":"20160311",#,
-                                "SRF12":"20180225"}
+                                "SRF12":"20180225"
+                                }
         use_era=True
-        use_carra=True
+        use_carra=False
         use_icon=False
         na_flights=[*NA_flights_to_analyse.keys()]
         snd_flights=[*SND_flights_to_analyse.keys()]
@@ -256,10 +263,10 @@ def main(figure_to_create="fig13"):
         
 if __name__=="__main__":
     # Figures to create choices:
-    figure_to_create="fig12_single_case_sector_profiles"
+    #figure_to_create="fig12_single_case_sector_profiles"
     #figure_to_create="fig13_campaign_divergence_overviews"
     #figure_to_create="fig14_divergence_instantan_errorbars"
-    #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
+    figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
     
     #figure_to_create="fig_supplements_sonde_pos_comparison"
     #figure_to_create="fig12_campaign_divergence_overviews"

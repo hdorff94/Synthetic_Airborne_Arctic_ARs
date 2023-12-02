@@ -815,10 +815,11 @@ class CARRA():
         if len(self.ds["t"].shape)>=3:
             pressure=pressure[:,:,np.newaxis]
             pressure=np.repeat(pressure,self.ds["t"].shape[2],axis=2)
-            pressure=pressure * units.hPa
+        pressure=pressure * units.hPa
     
         rh=self.ds["r"].data/100
         temperature=self.ds["t"].data * units.K
+        print("Whats wrong here?")
         mixing_ratio=mpcalc.mixing_ratio_from_relative_humidity(
             rh,temperature,pressure)
         specific_humidity=xr.DataArray(np.array(

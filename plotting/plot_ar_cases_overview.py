@@ -132,8 +132,8 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         #%% Plot the map
         import matplotlib
         import matplotlib.patches as patches
-        matplotlib.rcParams.update({"font.size":16})
         import matplotlib.pyplot as plt
+        import matplotlib.ticker as mticker
         import cartopy
         import cartopy.crs as ccrs
         try:
@@ -141,7 +141,11 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         except:
             print("Typhon module cannot be imported")
         
+        matplotlib.rcParams.update({"font.size":16})
+        
         from reanalysis import ERA5        
+        
+        
         # Define the plot specifications for the given variables
         met_var_dict={}
         met_var_dict["ERA_name"]    = {"IWV":"tcwv","IVT":"IVT",
@@ -211,7 +215,17 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                era_ds["IVT_v"]=era_ds["p72.162"]
                era_ds["IVT_u"]=era_ds["p71.162"]
                era_ds["IVT"]=np.sqrt(era_ds["IVT_u"]**2+era_ds["IVT_v"]**2)
-               
+               gl=axs[row,col].gridlines(crs=ccrs.PlateCarree(), draw_labels=True,
+                  linewidth=1, color='lightgray', alpha=0.5, linestyle='--')
+               gl.xlocator = mticker.FixedLocator([-20, 0, 20])
+               gl.xlabels_top       = False
+               gl.ylabels_left      = False
+               gl.xlabels_bottom    = False
+               gl.ylabels_right     = False
+               if col==0:
+                   gl.ylabels_left  = True
+               if row==2:
+                   gl.xlabels_bottom= True
                # Plot IVT
                C1=axs[row,col].contourf(era_ds["longitude"],era_ds["latitude"],
                     era_ds[met_var_dict["ERA_name"][meteo_var]][era_index,:,:],
@@ -236,14 +250,15 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                     
                            
                halo_df=flight_tracks_dict[flight_date]
-               axs[row,col].coastlines(resolution="50m",zorder=0)
+               axs[row,col].coastlines(resolution="50m",zorder=8)
                axs[row,col].set_extent([-20,25,60,90])
-               
+              
                # Date and Timestep
                axs[row,col].text(-12, 62, str(flight_date)+" "+\
                                  str(era_index)+" UTC",
                     fontsize=15,transform=ccrs.PlateCarree(),color="darkblue",
-                    bbox=dict(facecolor='lightgrey',edgecolor="black"))
+                    bbox=dict(facecolor='lightgrey',edgecolor="black"),
+                    zorder=10)
                
                axs[row,col].plot(halo_df["longitude"],halo_df["latitude"],
                         color="white",lw=4,transform=ccrs.PlateCarree())
@@ -279,6 +294,11 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                    x=[-16,21,23,-16.75]
                    y=[63.5, 61.4, 63.2, 65.6]
                    q_typ=600.0
+                   
+                   axs[row,col].add_patch(
+                           patches.Polygon(xy=list(zip(x,y)),fill=True,
+                           linewidth=1, edgecolor='k', facecolor='lightgrey',
+                           transform=ccrs.Geodetic(),zorder=9,alpha=0.8))
                    qk=axs[row, col].quiverkey(quiver,0.4,0.13,q_typ,
                     label=str(q_typ)+' $\mathrm{kgm}^{-1}\mathrm{s}^{-1}$',
                     coordinates="axes",labelpos="E",fontproperties={"size":12},
@@ -286,11 +306,6 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                    qk.text.set_zorder(50)
                    qk.Q.set_zorder(50)#
                    
-                   rect = axs[row,col].add_patch(
-                           patches.Polygon(xy=list(zip(x,y)),fill=True,
-                           linewidth=1, edgecolor='k', facecolor='lightgrey',
-                           transform=ccrs.Geodetic(),zorder=1,alpha=0.8))
-                   # Create a Rectangle patch
                    
                key+=1
         
@@ -344,4 +359,4 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         raise Exception("You have given the wrong figure name.",
                         " No figure created")
 if __name__=="__main__":
-    main(save_in_manuscript_path=True,figure_to_create="fig10_")
+    main(save_in_manuscript_path=True,figure_to_create="fig01_")
