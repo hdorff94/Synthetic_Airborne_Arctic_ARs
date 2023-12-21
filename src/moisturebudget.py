@@ -61,7 +61,7 @@ class Moisture_Convergence(Moisture_Budgets):
                             "cold_sector":"darkblue"}            
     
     def vertically_integrated_divergence(self):
-        scalar_based_div=self.calc_from_scalar_values
+        scalar_based_div=self.scalar_based_div
         integrated_divergence={}
         
         for sector in self.sector_types:
@@ -216,6 +216,24 @@ class Moisture_Convergence(Moisture_Budgets):
             mean_sector_trpz_q,mean_sector_trpz_wind,mean_sector_trpz_moist_transport,
             pressure,mean_distance,sector)
     
+    def add_synthetic_sondes(self,sector_to_plot="warm",
+            additional_sondes=pd.DataFrame()):
+        if additional_sondes.isempty():
+            print("DataFrame with additional sondes is empty.",
+                  "Nothing is done.")
+        else:    
+            new_sondes_pos_all=self.sondes_pos_all.copy()
+            del new_sondes_pos_all[sector_to_plot]["dx"]
+            del new_sondes_pos_all[sector_to_plot]["dy"]
+            sector_sonde_values={}
+            sector_relevant_times={}
+    
+            new_sondes_pos_all[sector_to_plot]=\
+                new_sondes_pos_all[sector_to_plot].append(additional_sondes)
+            # Positions relevant for divergence calculations
+            self.sondes_pos_all[sector_to_plot]=self.get_xy_coords_for_domain(
+               new_sondes_pos_all[sector_to_plot])
+
     def load_moisture_convergence_single_case(self,campaign="same"):
         """
     
