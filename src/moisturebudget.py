@@ -1650,6 +1650,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         None.
         
         """
+        from matplotlib.ticker import NullFormatter
         #---------- Get sector-based divergence from dict --------------------#
         core=Sectors["core"]
         warm_sector=Sectors["warm_sector"]
@@ -1665,16 +1666,36 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         #######################################################################
         #Moisture advection
         ax1=profile.add_subplot(131)
+        ax2=profile.add_subplot(132)
+        ax3=profile.add_subplot(133)
+        
+        if do_log_scale:
+            ax1.set_yscale("log")
+            ax2.set_yscale("log")
+            ax3.set_yscale("log")
+        
         ax1.plot(core["ADV_calc"],
-             core["ADV_calc"].index.astype(int),lw=2,label="core",
-             color="darkgreen")
+             core["ADV_calc"].index.astype(int),lw=1,
+             color="green",ls="--")
     
         ax1.plot(warm_sector["ADV_calc"],
-             warm_sector["ADV_calc"].index.astype(int),lw=2,
-             label="warm sector",color="darkorange")
+             warm_sector["ADV_calc"].index.astype(int),lw=1,
+             color="orange",ls="--")
     
         ax1.plot(cold_sector["ADV_calc"],
-             cold_sector["ADV_calc"].index.astype(int),lw=2,
+             cold_sector["ADV_calc"].index.astype(int),lw=1,
+             color="blue",ls="--")
+        # ideal sector
+        ax1.plot(core_ideal["ADV_calc"],
+             core_ideal["ADV_calc"].index.astype(int),lw=2,label="core",
+             color="darkgreen")
+    
+        ax1.plot(warm_sector_ideal["ADV_calc"],
+             warm_sector_ideal["ADV_calc"].index.astype(int),lw=2,
+             label="warm sector",color="darkorange")
+    
+        ax1.plot(cold_sector_ideal["ADV_calc"],
+             cold_sector_ideal["ADV_calc"].index.astype(int),lw=2,
              label="cold sector",color="darkblue")
     
         ax1.axvline(0,ls="--",lw=2,color="k")
@@ -1699,25 +1720,36 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.yaxis.set_tick_params(width=3,length=6)
         
         ax1.legend(loc="upper left",fontsize=14)
-        ax1.set_title("moisture \nADV",fontsize=20)
+        ax1.set_title("\nADV",fontsize=20)
         ax1.set_xlim([-3e-4,3e-4])
         ax1.set_xticks([-3e-4,0,3e-4])
         ax1.set_xticklabels(["-3e-4","0","3e-4"])
         ax1.xaxis.set_tick_params(width=3,length=6)
         
         sns.despine(ax=ax1,offset=10)
-    
+        ax1.yaxis.set_minor_formatter(NullFormatter())
         ax1.set_ylim([200,1000])
         ax1.invert_yaxis()
+        ax1.set_yticks([])
+        ax1.set_yticklabels([],which="both")
         #######################################################################
-        ax2=profile.add_subplot(132)
         ax2.axvline(0,ls="--",lw=2,color="k")
         ax2.plot(core["CONV"],core["CONV"].index.astype(int),
-                 label="core",color="darkgreen")
+                 label="core",color="green",ls="--")
         ax2.plot(warm_sector["CONV"],warm_sector["CONV"].index.astype(int),
-             label="warm sector",color="orange")
+             label="warm sector",color="orange",ls="--")
         ax2.plot(cold_sector["CONV"],cold_sector["CONV"].index.astype(int),
-             label="core",color="darkblue")
+             label="core",color="blue",ls="--")
+        # ideal
+        ax2.plot(core_ideal["CONV"],core_ideal["CONV"].index.astype(int),
+                 label="core",color="darkgreen",lw=2)
+        ax2.plot(warm_sector_ideal["CONV"],
+                 warm_sector_ideal["CONV"].index.astype(int),
+                 label="warm sector",color="darkorange",lw=2)
+        ax2.plot(cold_sector_ideal["CONV"],
+                 cold_sector_ideal["CONV"].index.astype(int),
+                 label="core",color="darkblue",lw=2)
+        
         ax2.set_ylim([200,1000])
         
         ax2.fill_betweenx(y=core.index.astype(float),
@@ -1738,8 +1770,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax2.spines['right'].set_visible(False)
         ax2.spines['top'].set_visible(False)
         ax2.spines['left'].set_visible(False)
-        ax2.yaxis.set_tick_params(width=2,length=6)
-        ax2.set_title("mass \nDIV",fontsize=20)
+        ax2.set_title("mass DIV",fontsize=20)
         ax2.set_xlim([-3e-4,3e-4])
         ax2.set_xticks([-3e-4,0,3e-4])
         ax2.set_xticklabels(["-3e-4","0","3e-4"])
@@ -1749,10 +1780,11 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax2.set_xlabel("Flux divergence in $\mathrm{gkg}^{-1}\mathrm{s}^{-1}$")
         
         ax2.invert_yaxis()
-        sns.despine(ax=ax2,offset=10)
-    
+        ax2.yaxis.set_minor_formatter(NullFormatter())
+        ax2.set_yticks([])
+        ax2.set_yticklabels([])
+        sns.despine(offset=10)
         #######################################################################
-        ax3=profile.add_subplot(133)
         core["sum_trans"]=core["CONV"]+core["ADV_calc"]
         warm_sector["sum_trans"]=warm_sector["CONV"]+warm_sector["ADV_calc"]
         cold_sector["sum_trans"]=cold_sector["CONV"]+cold_sector["ADV_calc"]
@@ -1764,15 +1796,25 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         cold_sector_ideal["sum_trans"]=cold_sector_ideal["CONV"]+\
                                             cold_sector_ideal["ADV_calc"]
         
-        ax3.plot(core["sum_trans"],
-             core["TRANSP"].index.astype(int),label="core",color="darkgreen")
+        ax3.plot(core["CONV"]+core["ADV_calc"],
+             core["TRANSP"].index.astype(int),label="core",color="green",ls="--")
         ax3.plot(warm_sector["CONV"]+warm_sector["ADV_calc"],
              warm_sector["CONV"].index.astype(int),
-             label="warm sector",color="orange")
+             label="warm sector",color="orange",ls="--")
         ax3.plot(cold_sector["CONV"]+cold_sector["ADV_calc"],
              cold_sector["TRANSP"].index.astype(int),
-             label="cold sector",color="darkblue")
-    
+             label="cold sector",color="blue",ls="--")
+        # ideal
+        ax3.plot(core_ideal["CONV"]+core_ideal["ADV_calc"],
+             core_ideal["TRANSP"].index.astype(int),
+             label="core",color="darkgreen",lw=2)
+        ax3.plot(warm_sector_ideal["CONV"]+warm_sector_ideal["ADV_calc"],
+             warm_sector_ideal["CONV"].index.astype(int),
+             label="warm sector",color="darkorange",lw=2)
+        ax3.plot(cold_sector_ideal["CONV"]+cold_sector_ideal["ADV_calc"],
+             cold_sector_ideal["TRANSP"].index.astype(int),
+             label="cold sector",color="darkblue",lw=2)
+        
         ax3.fill_betweenx(y=core.index.astype(float),
                           x1=core["sum_trans"],
                           x2=core_ideal["sum_trans"], 
@@ -1789,24 +1831,17 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax3.axvline(0,ls="--",lw=2,color="k")
         ax3.spines['left'].set_visible(False)
         ax3.spines['top'].set_visible(False)
+        ax3.spines['right'].set_visible(True)
+        
         for axis in ['top','bottom','left','right']:
             ax3.spines[axis].set_linewidth(3)
         ax3.yaxis.set_tick_params(width=3,length=6)
         ax3.xaxis.set_tick_params(width=3,length=6)
-        
-        ax3.set_title("moisture \ntransport",fontsize=20)
+        ax3.set_title("moist. transp.",fontsize=20)
         ax3.set_xlim([-3e-4,3e-4])
         ax3.set_xticks([-3e-4,0,3e-4])
         ax3.set_xticklabels(["-3e-4","0","3e-4"])
 
-        """
-        #ax1.plot(.mean()*1000,pressure,label="q-outflow")
-        #ax1.plot(mean_trpz_moist_transport*1000,pressure,label="transport")
-        """
-        if do_log_scale:
-            ax1.set_yscale("log")
-            ax2.set_yscale("log")
-            ax3.set_yscale("log")
         ax1.text(-4.5e-4,225,"(a)",fontsize=18)#transform=ax1.transAxes)
         ax2.text(-4.5e-4,225,"(b)",fontsize=18)#,transform=ax1.transAxes)
         ax3.text(-4.5e-4,225,"(c)",fontsize=18)#,transform=ax1.transAxes)
@@ -1822,12 +1857,11 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         for loc, spine in ax3.spines.items():
             if loc in ["right","bottom"]:
                 spine.set_position(('outward', 10)) 
+        ax3.set_yticks([])
+        ax3.yaxis.set_minor_formatter(NullFormatter())
         ax3.set_yticks([300,500,700,850,1000])
         ax3.set_yticklabels(["300","500","700","850","1000"])
                 
-        ## Log-scale !!! Add that
-        ###### for tomorrow
-        
         plt.subplots_adjust(wspace=0.4)
         file_end=".png"
         fig_name=self.flight+"_"+self.grid_name+"_sonde_no_"+\

@@ -55,7 +55,7 @@ def main(figure_to_create="fig13"):
     #####################################################################
     #%% Specifications
     # Major configurations
-    campaign="North_Atlantic_Run"#"Second_Synthetic_Study"#"North_Atlantic_Run"
+    campaign="Second_Synthetic_Study"#"North_Atlantic_Run"
 
     init_flight="SRF08"
     grid_name="CARRA"#"CARRA"#"ERA5"
@@ -259,7 +259,7 @@ def main(figure_to_create="fig13"):
         Inst_Budget_plots.mean_errors_per_flight(flight_dates,
                                                  flight_Ideal_Budgets,
                                                  Inst_Ideal_Budgets,
-                                                 save_as_manuscript_figure=False)
+                                                 save_as_manuscript_figure=True)
         
 if __name__=="__main__":
     # Figures to create choices:
