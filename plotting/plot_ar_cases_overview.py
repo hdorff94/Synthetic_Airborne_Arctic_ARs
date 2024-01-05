@@ -8,7 +8,7 @@ import numpy as np
 import os
 import sys
     
-#%% Predefining all paths to take scripts and data from and where to store
+#Predefining all paths to take scripts and data from and where to store
 def importer():
     paths_dict={}
     
@@ -70,7 +70,6 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
     """
     
     paths_dict=importer()
-    #%% Define the flight campaign classes
     import flightcampaign
     if "data_config" in sys.modules:
         import data_config
@@ -93,7 +92,6 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                                         "SRF08","SRF09","SRF12"],
                     instruments=["radar","radiometer","sonde"])
     
-    #%% Get the flight data    
     import flight_track_creator
     Flight_Tracker=flight_track_creator.Flighttracker(
                                                 na_run,"SRF02","AR_internal",
@@ -359,4 +357,4 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         raise Exception("You have given the wrong figure name.",
                         " No figure created")
 if __name__=="__main__":
-    main(save_in_manuscript_path=True,figure_to_create="fig01_")
+    main(save_in_manuscript_path=True,figure_to_create="fig10_")

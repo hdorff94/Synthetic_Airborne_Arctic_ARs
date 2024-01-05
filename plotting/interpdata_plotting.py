@@ -27,6 +27,7 @@ def ar_cross_sections_overview_flights_vertical_profile(
         flight_dates,use_era,use_carra,
         use_icon,na_flights,snd_flights,do_meshing=True,
         use_cmasher=True):
+    from matplotlib.ticker import NullFormatter
     
     ar_of_day=["AR_internal"]
     import campaignAR_plotter
@@ -164,11 +165,6 @@ def ar_cross_sections_overview_flights_vertical_profile(
         wind_levels=[15,25,35]
         axes[p].set_xlim([-500,500])
         axes[p].set_xticks([-500,-250,0,250,500])
-        if p%3==0:
-            axes[p].set_yticks([1000,850,700,500])
-        else:
-            axes[p].set_yticks([1000,850,700,500])
-            axes[p].set_yticklabels("")
         if p<6:
             axes[p].set_xticklabels("")
         if p==1:
@@ -192,11 +188,25 @@ def ar_cross_sections_overview_flights_vertical_profile(
         CS2=axes[p].contour(x/1000,y,wind.iloc[:,pres_start::],
                            levels=wind_levels,colors=["grey","plum","magenta"],
                            linestyles="--",linewidths=3.0)
-        #    axes[p].set_yscale("log")
+        
+        axes[p].invert_yaxis()
+        axes[p].set_yscale("log")
+        axes[p].yaxis.set_minor_formatter(NullFormatter())
+        
+        if p%3==0:
+            axes[p].set_yticks([1000,850,700,500])
+            axes[p].set_yticklabels(["1000","850","700","500"])
+            
+        else:
+            axes[p].set_yticks([1000,850,700,500])
+            axes[p].set_yticklabels("")
+        
         for axis in ["left","bottom"]:
             axes[p].spines[axis].set_linewidth(2)
             axes[p].tick_params(length=4,width=2)
-        axes[p].invert_yaxis()
+        
+        #ax[1].set_xlabel("Relative standard deviation")
+        
         axes[p].axvline(0,ls="--",color="k")
         axes[p].clabel(CS2,fontsize=16,fmt='%1d $\mathrm{ms}^{-1}$',inline=1)
         wv_flux=moisture*wind #halo_era5_hmc["wind"]

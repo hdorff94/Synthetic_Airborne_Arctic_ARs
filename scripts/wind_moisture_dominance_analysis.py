@@ -232,7 +232,7 @@ def create_fig_q_v_vertical_variability(paths_dict,config_file,flight_dates,
     import ivtvariability as IVT_handler
     from ivtvariability import IVT_variability
     
-    #%%
+
     log_file_name="logging_ivt_variability_icon.log"
     ivt_logger=IVT_handler.ICON_IVT_Logger(log_file_path=os.getcwd(),
                                             file_name=log_file_name)
@@ -286,6 +286,8 @@ def create_fig08_normalised_standard_deviation_q_v(paths_dict,config_file,
     import matplotlib
     import matplotlib.pyplot as plt
     import seaborn as sns
+    from matplotlib.ticker import NullFormatter
+    
     matplotlib.rcParams.update({"font.size":22})
     g=9.82
     merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
@@ -347,10 +349,15 @@ def create_fig08_normalised_standard_deviation_q_v(paths_dict,config_file,
     
     ax1.set_xlim([0,1.2])
     ax1.set_ylim([150,1020])
-    ax1.set_yticks([200,400,600,800,1000])
+    
     ax1.invert_yaxis()
     ax1.set_ylabel("Pressure (hPa)")
+    ax1.set_yscale("log")
+    ax1.yaxis.set_minor_formatter(NullFormatter())
+    
     ax1.set_xlabel("Relative standard deviation")
+    ax1.set_yticks([200,400,600,800,1000])
+    ax1.set_yticklabels(["200","400","600","800","1000"])
     
     for axis in ["left","bottom"]:
         ax1.spines[axis].set_linewidth(2)
@@ -391,6 +398,9 @@ def create_summarized_fig09_coherence(paths_dict,config_file,
     import matplotlib
     import matplotlib.pyplot as plt
     import seaborn as sns
+    
+    from matplotlib.ticker import NullFormatter
+    
     matplotlib.rcParams.update({"font.size":22})
     g=9.82
     merged_profiles,profile_stats,moisture_transport_flights_dict,extra_output=\
@@ -468,8 +478,12 @@ def create_summarized_fig09_coherence(paths_dict,config_file,
 
     sns.despine(offset=10)
     ax1.legend(loc="upper right")
+    ax1.set_yscale("log")
     ax1.set_ylim([150,1020])
     ax1.set_yticks([200,400,600,800,1000])
+    ax1.set_yticklabels(["200","400","600","800","1000"])
+    ax1.yaxis.set_minor_formatter(NullFormatter())
+    
     #if not reanalysis_to_use=="ERA-5":
     ax1.invert_yaxis()
     
