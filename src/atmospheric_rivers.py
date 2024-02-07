@@ -147,7 +147,6 @@ class Atmospheric_Rivers():
         AR_length_s   = pd.Series()
         AR_width_s    = pd.Series()            
         unique_AR_list=[]
-        
         # Depending on flights to use
         if single_flight!="":
             flights_to_loop=[single_flight]
@@ -172,7 +171,6 @@ class Atmospheric_Rivers():
             
             for flight in flights_to_loop:
                 if flight.startswith("S"):
-                    print(flight)
                     Tracker=flight_track_creator.Flighttracker(campaign_cls,
                                                     flight,
                                                     ARs_of_day[0],
@@ -182,7 +180,6 @@ class Atmospheric_Rivers():
                     track_df,campaign_path=Tracker.get_synthetic_flight_track()
                     aircraft_dict=Tracker.make_dict_from_aircraft_df()
              
-                    print("Synthetic flight track loaded")
                     # If halo df is a dict, then this may arise from the 
                     # internal leg created flight track. So merge it to a 
                     # single dataframe, or loc current leg from it

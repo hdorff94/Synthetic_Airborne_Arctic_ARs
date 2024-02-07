@@ -222,8 +222,9 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                gl.ylabels_right     = False
                if col==0:
                    gl.ylabels_left  = True
-               if row==2:
+               if row==2 and col !=1:
                    gl.xlabels_bottom= True
+                   
                # Plot IVT
                C1=axs[row,col].contourf(era_ds["longitude"],era_ds["latitude"],
                     era_ds[met_var_dict["ERA_name"][meteo_var]][era_index,:,:],
@@ -357,4 +358,4 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         raise Exception("You have given the wrong figure name.",
                         " No figure created")
 if __name__=="__main__":
-    main(save_in_manuscript_path=True,figure_to_create="fig10_")
+    main(save_in_manuscript_path=True,figure_to_create="fig01_")

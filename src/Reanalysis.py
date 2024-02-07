@@ -58,6 +58,11 @@ class ERA5():
         ds=xr.open_dataset(self.data_path+file_name)
         return ds,self.data_path
     
+    def load_era5_850hPa(self,file_name):
+        ds850=xr.open_dataset(self.data_path+file_name)
+        ds850["name"]="850hPa"
+        return ds850, self.data_path
+        
     def calculate_theta_e(self,ds):
         if not [i in list(ds.keys()) for i in ["r","t"]]:
             raise Exception("Some variables are not included in the dataset.",
@@ -70,11 +75,13 @@ class ERA5():
             RH_profile=ds["r"]#[:,:,50,50]
             
             print("Replicate p-levels to ndarray")
+            
+            #if not T_profile
             if not hasattr(ds, "name"):    
                 p_hPa=np.tile(ds["level"],(ds["t"].shape[0],1))
             else:
                 p_hPa=np.tile(float(str(ds["name"].values)[:-3]),
-                              (ds["t"].shape[0],1))
+                              (ds["t"].shape[0],ds["t"].shape[1]))
             if not len(p_hPa.shape)==3:
                 p_hPa=np.expand_dims(p_hPa,axis=2)
             #p_hPa=np.repeat(p_hPa,ds["t"].shape[1],axis=1)

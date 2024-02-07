@@ -318,7 +318,6 @@ class Instationarity(GridHalo.ERA_on_HALO,GridHalo.CARRA_on_HALO):
         self.plot_in_outflow_instantan_comparison(
             save_as_manuscript_figure=save_as_manuscript_figure)
     
-    #%%
     def plot_div_term_instantan_comparison(self,div_var="CONV",
                                            limit_min_max=pd.DataFrame(),
                                            save_as_manuscript_figure=False):

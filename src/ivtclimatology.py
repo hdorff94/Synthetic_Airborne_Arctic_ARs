@@ -158,13 +158,14 @@ def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
                                     AR_nawdex_cross_sections,
                                     single_flight="RF10")
     elif season=="spring":
-        print("Currently no AR locator for spring is defined",
-              " but will be added.")
+        #print("Currently no AR locator for spring is defined",
+        #      " but will be added.")
         # If the NAWDEX case is included
         #AR_nawdex_cross_sections=AR_cls.get_HALO_NAWDEX_AR_cross_sections()
         #AR_campaign_cross_sections=Grid_on_HALO.cut_halo_to_AR_crossing(
         #                        "SAR_internal",campaign=cmpgn_cls[0],
         #                        device="halo")    
+        #print(add_single_flight)
         if add_single_flight=="RF10":
             NAWDEX=flightcampaign.NAWDEX(is_flight_campaign=True,
                 major_path=cfg_file["Data_Paths"]["campaign_path"],
@@ -186,6 +187,152 @@ def process_seasonal_AR_climatology(cfg_file,cmpgn_cls,AR_cls,AR_era_ds,
     print("North Atlantic AR statistics saved as:",
           cmpgn_cls.plot_path+ar_file_name)
     return regional_ARs,AR_campaign_df
+
+def print_all_AR_catalog_characteristics():
+    """
+    
+
+    Returns
+    -------
+    None.
+
+    """
+    pass
+def get_real_campaign_ARs(BAHAMAS_cls,file_list,
+                          campaign_days={},
+                          campaign_name="HALO_AC3"):
+    """
+    This routine gets all ARs from the respective campaign 
+    (defined in campaign name), it allows to check which ARs are caught by 
+    the aircraft. It needs the BAHAMAS_cls to get the aircraft location for all
+    given campaign days. 
+    The output is the AR dataframe containing the common AR characteristics:
+        mean IVT
+        center AR location
+        head AR location
+    
+
+    Parameters
+    ----------
+    BAHAMAS_cls : TYPE
+        DESCRIPTION.
+    file_list : TYPE
+        DESCRIPTION.
+    campaign_days : TYPE, optional
+        DESCRIPTION. The default is {}.
+    campaign_name : TYPE, optional
+        DESCRIPTION. The default is "HALO_AC3".
+
+    Raises
+    ------
+    Exception
+        if wrong date is given. So far, the routine is restricted to HALO-(AC)3
+
+    Returns
+    -------
+    campaign_ARs : pd.DataFrame
+        AR catalog of caught ARs with some major characteristics.
+
+    """
+    
+    flights_to_dates=campaign_days.copy()
+    dates_to_flights=pd.Series(flights_to_dates)
+    use_head_or_center="center"  # make statistics over AR heads or AR centers location
+    
+    for d,day in enumerate([*flights_to_dates.values()][1:]):
+        values_haloac3_list=[]
+
+        BAHAMAS_cls.cfg_dict["flight_date_used"]=day 
+        # new day used for BAHAMAS class to load daily bahamas data
+        BAHAMAS_cls.open_bahamas_data()
+        bahamas=BAHAMAS_cls.bahamas_ds
+        # select position and time data
+        lon, lat, altitude, times = bahamas["IRS_LON"], \
+                                        bahamas["IRS_LAT"],\
+                                            bahamas["IRS_ALT"],\
+                                                bahamas["TIME"]        
+    
+        lon_min=float(lon.min())
+        lon_max=float(lon.max())
+        lat_min=float(lat.min())
+        lat_max=float(lat.max())
+        if day.startswith("202203"):
+            AR_month=xr.open_dataset(file_list[-2])
+        elif day.startswith("202204"):
+            AR_month=xr.open_dataset(file_list[-1])
+        else:
+            raise Exception("Something went wrong")
+            
+        AR_day=AR_month.sel(time=day[0:4]+"-"+day[4:6]+"-"+day[6:8])
+        AR_day["ivt"]=np.sqrt(AR_day["ivtx"]**2+AR_day["ivty"]**2)
+        relevant_times=AR_day.time[::6]
+        for t in np.arange(1,4):
+            if use_head_or_center=="center":
+                #AR centers
+                center_lat=pd.Series(AR_day["clat"][0,6*t,0,:].values)
+                center_lon=pd.Series(AR_day["clon"][0,6*t,0,:].values)
+                center_lon[center_lon>180]=center_lon[center_lon>180]-360
+                relevant_center_lons=center_lon[center_lon>lon_min]
+                relevant_center_lons=relevant_center_lons[\
+                                                relevant_center_lons<lon_max]
+                relevant_center_lats=center_lat[center_lat>lat_min]
+                relevant_center_lats=relevant_center_lats[\
+                                            relevant_center_lats<lat_max]
+
+                # the important index locator
+                relevant_center_ars=relevant_center_lons.index.intersection(
+                    relevant_center_lats.index)
+                relevant_ars=relevant_center_ars
+
+            elif use_head_or_center=="head":
+                # AR heads
+                head_lat=pd.Series(AR_day["hlat"][0,6*t,0,:].values)
+                head_lon=pd.Series(AR_day["hlon"][0,6*t,0,:].values)
+                head_lon[head_lon>180]=head_lon[head_lon>180]-360
+                relevant_head_lons=head_lon[head_lon>lon_min]
+                relevant_head_lons=relevant_head_lons[relevant_head_lons<lon_max]
+
+                relevant_head_lats=head_lat[head_lat>lat_min]
+                relevant_head_lats=relevant_head_lats[relevant_head_lats<lat_max]
+                relevant_head_ars=relevant_head_lons.index.intersection(
+                    relevant_head_lats.index)
+                relevant_ars=relevant_head_ars.union(relevant_center_ars)
+
+            time=pd.to_datetime(np.array(AR_day.time[6*t]))
+
+            AR_ivtx=pd.Series(np.array(AR_day["ivtx"][0,6*t,0,:]))
+            AR_ivty=pd.Series(np.array(AR_day["ivty"][0,6*t,0,:]))
+            AR_ivt=pd.Series(np.array(AR_day["ivt"][0,6*t,0,:]))
+            AR_clon=center_lon
+            AR_clat=center_lat
+            # Get index    
+            for kid in relevant_ars:
+                values_dict={}
+                values_dict["time"]=time
+                values_dict["ivt_x"] = AR_ivtx.loc[kid].astype(float)
+                values_dict["ivt_y"] = AR_ivty.loc[kid].astype(float)
+                values_dict["ivt"]   = AR_ivt.loc[kid].astype(float)
+                values_dict["clon"]  = AR_clon.loc[kid].astype(float)
+                values_dict["clat"]  = AR_clat.loc[kid].astype(float)
+                values_dict["RF"]    = [*dates_to_flights.keys()][d+1]
+                values_haloac3_list.append(values_dict)
+            t+=1
+
+        if (d==0):    
+            # Assign all quantities of listed regional ARs to dataframe
+            campaign_ARs=pd.DataFrame(data=values_haloac3_list,
+                                      columns=["time","ivt_x","ivt_y",
+                                               "ivt","clat","clon","RF"])
+
+        else:
+            temp_campaign_ARs=pd.DataFrame(data=values_haloac3_list,
+                                           columns=["time","ivt_x","ivt_y","ivt",
+                                                "clat","clon","RF"])
+            campaign_ARs=pd.concat([campaign_ARs,temp_campaign_ARs])
+    campaign_ARs.index=campaign_ARs["time"]
+    return campaign_ARs
+
+
 
 def plot_AR_IVT_climatology(north_atlantic_ARs,plot_path,
                             AR_unique_df=pd.DataFrame(),
@@ -275,7 +422,7 @@ def plot_single_season_characteristics(season="autumn",take_both_campaigns="True
     # Loop over timesteps
     values_list=[]
     performance=Performance.performance()
-    for t in range(100):#season_AR_era_ds.time.shape[0]):
+    for t in range(season_AR_era_ds.time.shape[0]):
         #Add land mask to ignore ARs that are purely over land
         AR_id_field=pd.DataFrame(np.array(season_AR_era_ds["kidmap"][0,t,0,:,:])*\
                              np.invert(np.array(

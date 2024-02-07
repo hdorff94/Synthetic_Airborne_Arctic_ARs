@@ -2067,10 +2067,10 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             budget_ideal_regions=-1*budget_ideal_regions
             budget_continuous_regions=-1*budget_continuous_regions
         
-        budget_continuous_regions["Time"]="flight duration"
+        budget_continuous_regions["Time"]="Non-instantaneous"
         budget_continuous_regions["Sector_Term"]=budget_continuous_regions.index.copy()
         budget_continuous_regions.index=np.arange(9)
-        budget_ideal_regions["Time"]="instantaneous"
+        budget_ideal_regions["Time"]="Instantaneous"
         budget_ideal_regions["Sector_Term"]=budget_ideal_regions.index.copy()
         budget_ideal_regions.index=np.arange(9)
         budget_regions=pd.concat([budget_continuous_regions,budget_ideal_regions],
@@ -2146,8 +2146,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         This plot routines illustrates the root-mean squared error (RMSE) to 
         the continuous and instantaneous representation of divergence components
         as a reference (Fig. 15). Three bars specify the instantaneous error 
-        (for both continuous representations). Then error for sounding just in the 
-        instantanenous representation and the combined error. 
+        (for both continuous representations). Then error for sounding just in 
+        the instantanenous representation and the combined error. 
         
         Parameters
         ----------
@@ -2205,21 +2205,21 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.bar(np.arange(rmse_inst.shape[0])+1,
                 rmse_inst,facecolor="darkgrey",
                 width=0.15,edgecolor="k",linewidth=3,
-                alpha=0.9,label="Instationarity")
+                alpha=0.9,label="Non-instantaneous")
         ax1.bar(np.arange(rmse_inst.shape[0])+0.85,
                 rmse_inst_sonde,facecolor="peachpuff",
                 width=0.15,edgecolor="saddlebrown",
                 linewidth=3,linestyle=":",
-                alpha=0.9,label="Instationarity &\nSonde")
+                alpha=0.9,label="Non-instantaneous &\nDiscrete")
         ax1.bar(np.arange(rmse_inst.shape[0])+1.15,
                 rmse_pure_sonde,facecolor="lightgreen",width=0.15,linestyle="--",
-                edgecolor="darkgreen",linewidth=3,alpha=0.9,label="Discrete Sondes")
+                edgecolor="darkgreen",linewidth=3,alpha=0.9,label="Discrete")
         
         ax1.set_xticks(np.arange(rmse_inst.shape[0])+1)
         ax1.set_xticklabels(rmse_inst.index,fontsize=10)
         ax1.set_xlabel("Frontal Sector and Component")
         
-        ax1.set_ylabel("Error (inst-flight) in \nIVT Divergence ($\mathrm{mmd}^{-1}$)")
+        ax1.set_ylabel("Error (inst-evolving) in \nIVT Divergence ($\mathrm{mmd}^{-1}$)")
         # Axis linewidth
         for axis in ["left","bottom"]:
             ax1.spines[axis].set_linewidth(3.0)
@@ -2268,7 +2268,6 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                        dpi=200,bbox_inches="tight")
         print("Figure saved as:",plot_path+fig_name)
 
-    #%%
     # Supplementary Plots
     def plot_single_flight_and_sector_regression_divergence(self,sector,
                                                             number_of_sondes,

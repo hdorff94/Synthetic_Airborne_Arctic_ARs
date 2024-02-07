@@ -251,7 +251,7 @@ def sonde_freq_ivtvar_analysis(hmp_flow,analyzed_flight_df,cmpgn_cls_to_analyse)
     # Preconfigurations for subsampled tivt
     resampled_tivt=pd.DataFrame(columns=["Resolution","TIVT_Mean",
                                                  "TIVT_Std","Resampled_Distance"])
-    number_of_shifts=10
+    number_of_shifts=50
     df_resampled_tivt=pd.DataFrame(columns=resolutions,
                                                index=np.arange(0,number_of_shifts))
     df_resampled_tivt.index.name="Index_Shift_Factor"
@@ -272,7 +272,8 @@ def sonde_freq_ivtvar_analysis(hmp_flow,analyzed_flight_df,cmpgn_cls_to_analyse)
   
         shift_factor=int(float(resolutions_int[i])/(2*number_of_shifts))
         #series of tivt based on given resolution showing values with shift_factors given in seconds.
-        res_case_tivt=pd.Series(index=np.arange(0,number_of_shifts)*shift_factor)  
+        # Shift factor in index commented out. 2024-01-11
+        res_case_tivt=pd.Series(index=np.arange(0,number_of_shifts))#*shift_factor)  
         for shift in range(number_of_shifts):
             # Resample aircraft and grid ivt data to specific soundings
             resampled_grid_ivt=continuous_ivt.iloc[int(shift_factor*shift):]
@@ -330,9 +331,9 @@ shifted_lat=0
 shifted_lon=0
 ar_of_day="SAR_internal"
 
-leg_type="outflow"
-flight_to_analyse="SRF08"
-campaign_to_analyse="Second_Synthetic_Study"#"North_Atlantic_Run"#"Second_Synthetic_Study"
+leg_type="inflow"
+flight_to_analyse="SRF12"
+campaign_to_analyse="Second_Synthetic_Study"#"North_Atlantic_Run"#
 # Loop over cross-sections from all flights
 hmp_flow,analyzed_flight_df,cmpgn_cls_to_analyse=calc_ivt_stats_all_RFs(
                         flight_dates,flight_to_analyse=flight_to_analyse,
