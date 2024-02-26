@@ -22,6 +22,15 @@ class ICON_NWP():
         self.resolution=resolution
         if resolution>1000:
             self.simulation_type="NWP"
+            self.icon_box_lon=[np.linspace(30,-20, 1000),
+                               np.array([-20, -20]),
+                               np.linspace(-20, 30, 1000),
+                               np.array([30.0, 30.0])]
+            self.icon_box_lat=[np.linspace(70.5, 70.5,1000),
+                               np.array([70.5,85.5]),
+                               np.linspace(85.5, 85.5, 1000),
+                               np.array([85.5, 70.5])]          
+            
         elif resolution<1000:
             self.simulation_type="LES"
         if for_flight_campaign:

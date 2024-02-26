@@ -19,7 +19,7 @@ def importer():
     paths_dict["current_path"]          = os.getcwd()
     paths_dict["major_path"]            = os.path.abspath("../../../")
     paths_dict["base_working_path"]     = paths_dict["major_path"]+ \
-                                        "/my_GIT/Synthetic_Airborne_Arctic_ARs"
+                                        "/my_GIT/Synthetic_Airborne_Arctic_ARs/"
     paths_dict["aircraft_base_path"]    = paths_dict["major_path"]+\
                                             "/Work/GIT_Repository/"
     paths_dict["config_path"]           = paths_dict["base_working_path"]+\
@@ -128,5 +128,5 @@ if __name__=="__main__":
     scalar_based_div=False #should be False to conduct vectorised divergence
     
     
-    main(flight_dates,grid_name="CARRA",instantan=do_instantan,do_supplements=False,
+    main(flight_dates,grid_name="ERA5",instantan=do_instantan,do_supplements=False,
          flight_locations=flight_locations,scalar_based_div=scalar_based_div)
