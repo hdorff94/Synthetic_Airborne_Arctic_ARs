@@ -11,6 +11,7 @@ import data_config
 
 import pandas as pd
 import numpy as np
+import xarray as xr
 import matplotlib.pyplot as plt
 
 class Atmospheric_Rivers():
@@ -118,8 +119,161 @@ class Atmospheric_Rivers():
         #                    "end":"2016-10-15 10:20"}
         
         return ARs
-    def get_ids_of_ARs_from_campaign_month(self,AR_ds,campaign_cls):
-        pass
+    def plot_nawdex_AR_statistics(self,AR_unique_df,config_file,only_IVT):
+        import matplotlib
+        import seaborn as sns
+        if not only_IVT:
+            AR_stat_fig=plt.figure(figsize=(16,14))
+        else:
+            AR_stat_fig=plt.figure(figsize=(9,10))
+        matplotlib.rcParams.update({"font.size":25})
+        uniques,indices=np.unique(AR_unique_df["ID"],return_index=True)
+        unique_ID=np.array(AR_unique_df["ID"][np.sort(indices)])
+        
+        markers =["p","o","d","D","s","H"]
+        #flight_colors={"RF01":,"RF02":"paleturquoise","RF03":"salmon",
+        #         "RF04":"peru","RF05":"skyblue","RF06":"moccasin",
+        #         "RF07":"slateblue","RF08":"bisque","RF09":"thistle",
+        #         "RF10":"lightgreen","RF11":"lightpink","RF12":"gold",
+        #         "RF13":"rosybrown"}
+       
+        mark_cls=["grey","salmon","skyblue","bisque","lightgreen","orange"]
+        if not only_IVT:
+            ax1=AR_stat_fig.add_subplot(221)
+            ax2=AR_stat_fig.add_subplot(222)
+            ax3=AR_stat_fig.add_subplot(223)#,sharex=ax1)
+            ax4=AR_stat_fig.add_subplot(224)#,sharex=ax2)
+            
+            i=0
+            marker_entries=[]
+            for uni_ID in unique_ID:
+                
+                #IVT preprocessing
+                IVT_x=AR_unique_df["IVT_x"][AR_unique_df["ID"]==uni_ID]
+                IVT_y=AR_unique_df["IVT_y"][AR_unique_df["ID"]==uni_ID]
+                IVT=np.sqrt(IVT_x**2+IVT_y**2)
+                TIVT=AR_unique_df["TIVT"][AR_unique_df["ID"]==uni_ID]
+                
+                Length=AR_unique_df["length"][AR_unique_df["ID"]==uni_ID]
+                Width=AR_unique_df["width"][AR_unique_df["ID"]==uni_ID]
+                Aspect_Ratio=Length/Width
+                
+                Norm_Age=AR_unique_df["Norm_Age"][AR_unique_df["ID"]==uni_ID]
+                x_number=np.repeat(i+1,IVT.shape[0])
+                m1=ax1.scatter(x_number,
+                            IVT,s=150,marker=markers[i],
+                            color=mark_cls[i],edgecolor="k",
+                            label=str([uni_ID]))
+                marker_entries.append(m1)
+                ax3.scatter(x_number,
+                            Norm_Age,s=150,marker=markers[i],
+                            color=mark_cls[i],edgecolor="k",label=str([uni_ID]))
+                
+                ax2.scatter(x_number,
+                            Length/1000,s=150,marker=markers[i],
+                            color=mark_cls[i],edgecolor="k",label=str([uni_ID]))
+                ax4.scatter(x_number,
+                            Width/1000,s=150,marker=markers[i],
+                            color=mark_cls[i],edgecolor="k",label=str([uni_ID]))
+                
+                i+=1        
+            
+            ax1.set_xticks(np.linspace(1,6,6))
+            ax1.set_ylim([100,600])
+            ax2.set_ylim([2000,10000])
+            ax4.set_ylim([200,1200])
+            ax3.set_ylim([0,1.0])
+            ax1.set_xlim([.9,6.1])
+            ax2.set_xlim([.9,6.1])
+            ax3.set_xlim([.9,6.1])
+            ax4.set_xlim([.9,6.1])
+            
+            for axis in ["left","bottom"]:
+                ax1.spines[axis].set_linewidth(2)
+                ax2.spines[axis].set_linewidth(2)
+                ax3.spines[axis].set_linewidth(2)
+                ax4.spines[axis].set_linewidth(2)
+            
+            ax1.tick_params(length=10,width=3)
+            ax1.set_xticklabels([])
+            ax2.set_xticklabels([])
+            ax3.set_xticklabels(["IOP1","IOP3","IOP5",
+                                 "IOP9","IOP10","IOP12"])
+            ax4.set_xticklabels(["IOP1","IOP3","IOP5",
+                                 "IOP9","IOP10","IOP12"])
+            
+            ax2.tick_params(length=10,width=3)
+            ax3.tick_params(length=10,width=3)
+            ax4.tick_params(length=10,width=3)
+            ax1.set_ylabel("AR-$\overline{\mathrm{IVT}}$ \
+                           (kg$\mathrm{m}^{-1}\mathrm{s}^{-1})$")
+            #ax2.set_ylabel("TIVT (1e8 kg$\mathrm{s}^{-1})$")
+            ax2.set_ylabel("AR-Length (km)")
+            
+            ax4.set_ylabel("AR-Width (km)")
+            ax3.set_ylabel("AR-Normalized Age")
+            sns.despine(offset=10)
+            plt.subplots_adjust(hspace=0.2)
+            plt.subplots_adjust(wspace=0.4)
+            AR_stat_fig.legend(marker_entries,
+                               labels=["Ian","Vladiana","Walpurga",
+                                       "Sanchez","Thor","TPV"],
+                               ncol=6,loc="lower center",
+                               facecolor="lightgrey",edgecolor="black",
+                               bbox_to_anchor=(0.0,-0.005,0.9,1.0),
+                               title="NAWDEX-AR Associated Synoptic Systems:")
+            fplot_name="AR_NAWDEX_Major_Characteristics.png"
+        elif only_IVT:
+            ax1=AR_stat_fig.add_subplot(111)
+            i=0
+            
+                
+            marker_entries=[]
+            for uni_ID in unique_ID:
+                
+                #IVT preprocessing
+                IVT_x=AR_unique_df["IVT_x"][AR_unique_df["ID"]==uni_ID]
+                IVT_y=AR_unique_df["IVT_y"][AR_unique_df["ID"]==uni_ID]
+                IVT=np.sqrt(IVT_x**2+IVT_y**2)
+                x_number=np.repeat(i+1,IVT.shape[0])
+            
+                m1=ax1.scatter(x_number,
+                            IVT,s=250,marker=markers[i],
+                            color=mark_cls[i],edgecolor="k",
+                            label=str([uni_ID]))
+                marker_entries.append(m1)
+                i+=1        
+            
+            ax1.set_xticks(np.linspace(1,6,6))
+            ax1.set_ylim([100,600])
+            ax1.set_xlim([.9,6.1])
+            
+            for axis in ["left","bottom"]:
+                ax1.spines[axis].set_linewidth(2)
+            
+            ax1.tick_params(length=10,width=3)
+            ax1.set_xticklabels(["IOP1","IOP3","IOP5",
+                                 "IOP9","IOP10","IOP12"])
+            
+            ax1.set_ylabel("AR-$\overline{\mathrm{IVT}}$ \
+                           (kg$\mathrm{m}^{-1}\mathrm{s}^{-1})$")
+            sns.despine(offset=10)
+            AR_stat_fig.legend(marker_entries,
+                               labels=["Ian","Vladiana","Walpurga",
+                                       "Sanchez","Thor","TPV"],
+                               ncol=3,loc="lower center",
+                               facecolor="lightgrey",edgecolor="black",
+                               #bbox_to_anchor=(0.5,1.0,0,-0.3),
+                               title="AR Associated Synoptic Systems (NAWDEX):",
+                               fontsize=18,title_fontsize=18)
+            plt.subplots_adjust(bottom=0.22)
+            fplot_name="AR_NAWDEX_IVT_Characteristics.png"
+        plot_path=config_file["Data_Paths"]['campaign_path']+\
+                    config_file["Data_Paths"]["campaign"]+"/plots/"
+        AR_stat_fig.savefig(plot_path+fplot_name,
+                                dpi=300,bbox_inches="tight")
+    #def get_ids_of_ARs_from_campaign_month(self,AR_ds,campaign_cls):
+    #    pass    
     def get_ids_of_ARs_from_HALO_cross_sections(self,AR_ds,campaign_cls,
                                                        config_file,
                                                        single_flight="",
@@ -360,162 +514,8 @@ class Atmospheric_Rivers():
         unique_AR_df["Lifetime"]            = AR_klifetime_s.values
         unique_AR_df["Norm_Age"]            = AR_knormage_s.values
         return unique_AR_df
-    
-    def plot_campaign_AR_statistics(self,AR_unique_df,config_file,only_IVT):
-        import matplotlib
-        import seaborn as sns
-        if not only_IVT:
-            AR_stat_fig=plt.figure(figsize=(16,14))
-        else:
-            AR_stat_fig=plt.figure(figsize=(9,10))
-        matplotlib.rcParams.update({"font.size":25})
-        uniques,indices=np.unique(AR_unique_df["ID"],return_index=True)
-        unique_ID=np.array(AR_unique_df["ID"][np.sort(indices)])
-        
-        markers =["p","o","d","D","s","H"]
-        #flight_colors={"RF01":,"RF02":"paleturquoise","RF03":"salmon",
-        #         "RF04":"peru","RF05":"skyblue","RF06":"moccasin",
-        #         "RF07":"slateblue","RF08":"bisque","RF09":"thistle",
-        #         "RF10":"lightgreen","RF11":"lightpink","RF12":"gold",
-        #         "RF13":"rosybrown"}
-       
-        mark_cls=["grey","salmon","skyblue","bisque","lightgreen","orange"]
-        if not only_IVT:
-            ax1=AR_stat_fig.add_subplot(221)
-            ax2=AR_stat_fig.add_subplot(222)
-            ax3=AR_stat_fig.add_subplot(223)#,sharex=ax1)
-            ax4=AR_stat_fig.add_subplot(224)#,sharex=ax2)
-            
-            i=0
-            marker_entries=[]
-            for uni_ID in unique_ID:
-                
-                #IVT preprocessing
-                IVT_x=AR_unique_df["IVT_x"][AR_unique_df["ID"]==uni_ID]
-                IVT_y=AR_unique_df["IVT_y"][AR_unique_df["ID"]==uni_ID]
-                IVT=np.sqrt(IVT_x**2+IVT_y**2)
-                TIVT=AR_unique_df["TIVT"][AR_unique_df["ID"]==uni_ID]
-                
-                Length=AR_unique_df["length"][AR_unique_df["ID"]==uni_ID]
-                Width=AR_unique_df["width"][AR_unique_df["ID"]==uni_ID]
-                Aspect_Ratio=Length/Width
-                
-                Norm_Age=AR_unique_df["Norm_Age"][AR_unique_df["ID"]==uni_ID]
-                x_number=np.repeat(i+1,IVT.shape[0])
-                m1=ax1.scatter(x_number,
-                            IVT,s=150,marker=markers[i],
-                            color=mark_cls[i],edgecolor="k",
-                            label=str([uni_ID]))
-                marker_entries.append(m1)
-                ax3.scatter(x_number,
-                            Norm_Age,s=150,marker=markers[i],
-                            color=mark_cls[i],edgecolor="k",label=str([uni_ID]))
-                
-                ax2.scatter(x_number,
-                            Length/1000,s=150,marker=markers[i],
-                            color=mark_cls[i],edgecolor="k",label=str([uni_ID]))
-                ax4.scatter(x_number,
-                            Width/1000,s=150,marker=markers[i],
-                            color=mark_cls[i],edgecolor="k",label=str([uni_ID]))
-                
-                i+=1        
-            
-            ax1.set_xticks(np.linspace(1,6,6))
-            ax1.set_ylim([100,600])
-            ax2.set_ylim([2000,10000])
-            ax4.set_ylim([200,1200])
-            ax3.set_ylim([0,1.0])
-            ax1.set_xlim([.9,6.1])
-            ax2.set_xlim([.9,6.1])
-            ax3.set_xlim([.9,6.1])
-            ax4.set_xlim([.9,6.1])
-            
-            for axis in ["left","bottom"]:
-                ax1.spines[axis].set_linewidth(2)
-                ax2.spines[axis].set_linewidth(2)
-                ax3.spines[axis].set_linewidth(2)
-                ax4.spines[axis].set_linewidth(2)
-            
-            ax1.tick_params(length=10,width=3)
-            ax1.set_xticklabels([])
-            ax2.set_xticklabels([])
-            ax3.set_xticklabels(["IOP1","IOP3","IOP5",
-                                 "IOP9","IOP10","IOP12"])
-            ax4.set_xticklabels(["IOP1","IOP3","IOP5",
-                                 "IOP9","IOP10","IOP12"])
-            
-            ax2.tick_params(length=10,width=3)
-            ax3.tick_params(length=10,width=3)
-            ax4.tick_params(length=10,width=3)
-            ax1.set_ylabel("AR-$\overline{\mathrm{IVT}}$ \
-                           (kg$\mathrm{m}^{-1}\mathrm{s}^{-1})$")
-            #ax2.set_ylabel("TIVT (1e8 kg$\mathrm{s}^{-1})$")
-            ax2.set_ylabel("AR-Length (km)")
-            
-            ax4.set_ylabel("AR-Width (km)")
-            ax3.set_ylabel("AR-Normalized Age")
-            sns.despine(offset=10)
-            plt.subplots_adjust(hspace=0.2)
-            plt.subplots_adjust(wspace=0.4)
-            AR_stat_fig.legend(marker_entries,
-                               labels=["Ian","Vladiana","Walpurga",
-                                       "Sanchez","Thor","TPV"],
-                               ncol=6,loc="lower center",
-                               facecolor="lightgrey",edgecolor="black",
-                               bbox_to_anchor=(0.0,-0.005,0.9,1.0),
-                               title="NAWDEX-AR Associated Synoptic Systems:")
-            fplot_name="AR_NAWDEX_Major_Characteristics.png"
-        elif only_IVT:
-            ax1=AR_stat_fig.add_subplot(111)
-            i=0
-            
-                
-            marker_entries=[]
-            for uni_ID in unique_ID:
-                
-                #IVT preprocessing
-                IVT_x=AR_unique_df["IVT_x"][AR_unique_df["ID"]==uni_ID]
-                IVT_y=AR_unique_df["IVT_y"][AR_unique_df["ID"]==uni_ID]
-                IVT=np.sqrt(IVT_x**2+IVT_y**2)
-                x_number=np.repeat(i+1,IVT.shape[0])
-            
-                m1=ax1.scatter(x_number,
-                            IVT,s=250,marker=markers[i],
-                            color=mark_cls[i],edgecolor="k",
-                            label=str([uni_ID]))
-                marker_entries.append(m1)
-                i+=1        
-            
-            ax1.set_xticks(np.linspace(1,6,6))
-            ax1.set_ylim([100,600])
-            ax1.set_xlim([.9,6.1])
-            
-            for axis in ["left","bottom"]:
-                ax1.spines[axis].set_linewidth(2)
-            
-            ax1.tick_params(length=10,width=3)
-            ax1.set_xticklabels(["IOP1","IOP3","IOP5",
-                                 "IOP9","IOP10","IOP12"])
-            
-            ax1.set_ylabel("AR-$\overline{\mathrm{IVT}}$ \
-                           (kg$\mathrm{m}^{-1}\mathrm{s}^{-1})$")
-            sns.despine(offset=10)
-            AR_stat_fig.legend(marker_entries,
-                               labels=["Ian","Vladiana","Walpurga",
-                                       "Sanchez","Thor","TPV"],
-                               ncol=3,loc="lower center",
-                               facecolor="lightgrey",edgecolor="black",
-                               #bbox_to_anchor=(0.5,1.0,0,-0.3),
-                               title="AR Associated Synoptic Systems (NAWDEX):",
-                               fontsize=18,title_fontsize=18)
-            plt.subplots_adjust(bottom=0.22)
-            fplot_name="AR_NAWDEX_IVT_Characteristics.png"
-        plot_path=config_file["Data_Paths"]['campaign_path']+\
-                    config_file["Data_Paths"]["campaign"]+"/plots/"
-        AR_stat_fig.savefig(plot_path+fplot_name,
-                                dpi=300,bbox_inches="tight")
-    
     @staticmethod
+    # Cross-sections
     def look_up_synthetic_AR_cross_sections(campaign,invert_flight=False):
         if campaign=="NAWDEX":
             ARs={}
@@ -691,7 +691,6 @@ class Atmospheric_Rivers():
             ARs["RF08"]["AR1"]={"start":"2022-03-21 09:20",
                                 "end":"2022-03-21 10:25"}
         return ARs
-    
     def locate_AR_cross_section_sectors(HALO_Dict,Hydrometeors,analysed_flight):
         # Get inflow and outflow
         inflow_flight_df  = HALO_Dict[analysed_flight]["inflow"]
@@ -761,7 +760,83 @@ class Atmospheric_Rivers():
         AR_outflow_dict["AR_outflow_cold_sector"]=ar_outflow_cold_sector
         
         return AR_inflow_dict,AR_outflow_dict
-    
+    # AR periods
+    def load_and_cut_AR_data_to_aircraft(day,file_list,bahamas_ds):
+        if day.startswith("202203"):
+            AR_month=xr.open_dataset(file_list[-2])
+        elif day.startswith("202204"):
+            AR_month=xr.open_dataset(file_list[-1])
+        else:
+            raise Exception("Something went wrong")
+        AR_day=AR_month.sel(time=day[0:4]+"-"+day[4:6]+"-"+day[6:8])
+        AR_day["ivt"]=np.sqrt(AR_day["ivtx"]**2+AR_day["ivty"]**2)
+        AR_day=AR_day.assign_coords(lon=(((AR_day.lon+180) % 360)-180)).sortby("lon")
+        AR_day_cutted=AR_day.sel({"lon":slice(bahamas_ds["lon"].values.min()-5,
+                                              bahamas_ds["lon"].values.max()+5)})
+        AR_day_cutted=AR_day_cutted.sel(
+            {"lat":slice(bahamas_ds["lat"].values.min()-2,
+                         bahamas_ds["lat"].values.max()+2)})
+        return AR_day_cutted
+
+    def save_AR_flag(flag_path,flag_file_name,AR_flag):
+        flag_file=flag_path+flag_file_name
+        if not os.path.exists(flag_path):
+            print(flag_path)
+            os.makedirs(flag_path)
+        if not os.path.exists(flag_file):
+            AR_flag.to_csv(path_or_buf=flag_file)
+            print("AR flag saved as:",flag_file)
+
+    def check_and_load_AR_flag(day,campaign_path,flight,campaign,bahamas_ds):
+        working_path= "C:\\Users\\u300737\\Desktop\\Desktop_alter_Rechner\\PhD_UHH_WIMI\\"
+        AR_catalog_path=working_path+"Overall_Data\\AR_Catalogues\\"+\
+            "ARcatalog_ERA5_march_1979-2022\\"
+        file_list=glob.glob(AR_catalog_path+"/*.nc")
+        flag_path=campaign_path+"/AR_flag/"
+        flag_file_name=flight+"_"+campaign+"_"+"AR_flag.csv"
+        flag_file=flag_path+flag_file_name
+        if not os.path.exists(flag_file):
+            AR_flag=Atmospheric_Rivers.create_AR_flag_along_aircraft(
+                day,file_list,bahamas_ds)
+            Atmospheric_Rivers.save_AR_flag(flag_path,flag_file_name,AR_flag)
+        else:
+            AR_flag=pd.read_csv(flag_file,index_col=0)
+        return AR_flag
+
+    def create_AR_flag_along_aircraft(day,file_list,bahamas_ds):
+        import performance as perform
+        
+        AR_data=Atmospheric_Rivers.load_and_cut_AR_data_to_aircraft(
+                        day,file_list,bahamas_ds)
+        AR_flag=pd.DataFrame(data=0,columns=["flag","lat","lon"],
+                        index=pd.DatetimeIndex(np.array(bahamas_ds.time[:])))
+        print(AR_data["lon"].min(),AR_data["lon"].max())
+        print("Test AR flags")
+        # Always take hour of index from hourly ERA5 data
+        time_idx=pd.DatetimeIndex(np.array(bahamas_ds["time"].values[:]))
+        time_idx_h=time_idx.hour
+        halo_lon=pd.Series(data=np.array(bahamas_ds["lon"][:]),
+                           index=time_idx)
+        halo_lat=pd.Series(data=np.array(bahamas_ds["lat"][:]),
+                   index=time_idx)
+        range_idx=bahamas_ds["time"].shape[0]
+        for t in range(range_idx):#):
+            hour_isel=int(time_idx_h[t])
+            lons=pd.Series(data=np.abs(AR_data["lon"]-halo_lon.iloc[t]),
+                           index=AR_data["lon"])
+            lons_min=lons.min()
+            lons_min_idx=lons.argmin()
+            lats=pd.Series(data=np.abs(AR_data["lat"]-halo_lat.iloc[t]),
+                           index=AR_data["lat"])
+            lats_min=lats.min()
+            lats_min_idx=lats.argmin()
+            if np.sqrt(lats_min**2+lons_min**2)<0.3535:
+                if not AR_data["shape"]\
+                [0,hour_isel,0,lats_min_idx,lons_min_idx].isnull():
+                    AR_flag.iloc[t]=1.0
+            perform.performance().updt(range_idx,t)
+        return AR_flag
+    # TIVT
     def calc_TIVT_of_cross_sections_in_AR_sector(AR_inflow,AR_outflow,grid_name):
         if grid_name=="ERA5":
             ivt_var_arg="Interp_IVT"
@@ -905,7 +980,8 @@ def main():
         na_run.specify_flights_of_interest(flights[0])
         na_run.create_directory(directory_types=["data"])
         AR_unique_df= AR.get_ids_of_ARs_from_HALO_cross_sections(
-                                    AR_era_ds,na_run,config_file,AR_cross_sections,
+                                    AR_era_ds,na_run,config_file,
+                                    AR_cross_sections,
                                     single_flight="",single_ARs="")
     else:
         raise Exception("No campaign with this name ",
