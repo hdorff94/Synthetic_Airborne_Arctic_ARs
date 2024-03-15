@@ -101,6 +101,21 @@ def main(figure_to_create="fig13"):
     else:
         pass
 
+    #---------------------------------------------------------------------#
+    # HALO-(AC)3 contribution
+    include_haloac3=True
+    if include_haloac3:
+        haloac3_div=pd.DataFrame(data=np.nan,index=range(8),
+                             columns=["values","sector"])
+        haloac3_div.iloc[0:4,0]  = [0.320,0.369,-0.016,-0.034]
+        haloac3_div.iloc[0:4,1]  = [1,1,1,1]#"Warm\nCONV","Warm\nCONV",
+                                    #"Warm\nCONV","Warm\nCONV"]
+        haloac3_div.iloc[4:8,0]  = [0.162,0.309,-0.432,-0.199]
+        haloac3_div.iloc[4:8,1]  = [2,2,2,2]#"Warm\nADV","Warm\nADV",
+                                    #"Warm\nADV","Warm\nADV"]
+    else:
+        haloac3_div=pd.DataFrame()
+    #---------------------------------------------------------------------#
     # Moisture Classes
     Moisture_CONV=\
         Budgets.Moisture_Convergence(cmpgn_cls,flight,config_file,
@@ -109,12 +124,15 @@ def main(figure_to_create="fig13"):
                  calc_from_scalar_values=scalar_based_div)
     Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,config_file,
                  grid_name=grid_name,do_instantan=do_instantan,
-                 sonde_no=sonde_no,scalar_based_div=scalar_based_div)
+                 sonde_no=sonde_no,scalar_based_div=scalar_based_div,
+                 include_halo_ac3_components=haloac3_div)
     Inst_Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,
                 config_file,grid_name=grid_name,do_instantan=True,
                 sonde_no=sonde_no,scalar_based_div=scalar_based_div)
     on_flight_tracks=True
-    
+    if not haloac3_div.shape[0]==0:
+        save_for_manuscript=False
+        
     if figure_to_create.startswith("fig12"):
         # Create sonde profiles ADV,CONV exemplary case
         Sectors,Ideal_Sectors,cmpgn_cls=\
@@ -224,9 +242,11 @@ def main(figure_to_create="fig13"):
                                 "SRF09":"20160311",#,
                                 "SRF12":"20180225"
                                 }
-        use_era=True
-        use_carra=False
+        use_era=False
+        use_carra=True
         use_icon=False
+        
+        
         na_flights=[*NA_flights_to_analyse.keys()]
         snd_flights=[*SND_flights_to_analyse.keys()]
         
@@ -264,8 +284,8 @@ def main(figure_to_create="fig13"):
 if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig12_single_case_sector_profiles"
-    #figure_to_create="fig13_campaign_divergence_overviews"
-    figure_to_create="fig14_divergence_instantan_errorbars"
+    figure_to_create="fig13_campaign_divergence_overviews"
+    #figure_to_create="fig14_divergence_instantan_errorbars"
     #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
     
     #figure_to_create="fig_supplements_sonde_pos_comparison"

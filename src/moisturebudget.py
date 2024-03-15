@@ -1506,9 +1506,9 @@ class Moisture_Convergence(Moisture_Budgets):
 #-----------------------------------------------------------------------------#
 class Moisture_Budget_Plots(Moisture_Convergence):
     
-    def __init__(self,cmpgn_cls,flight,config_file,
-                 grid_name="ERA5",do_instantan=False,sonde_no=3,
-                 scalar_based_div=True):
+    def __init__(self,cmpgn_cls,flight,config_file,grid_name="ERA5",
+                 do_instantan=False,sonde_no=3, scalar_based_div=True,
+                 include_halo_ac3_components=pd.DataFrame()):
         
         super().__init__(cmpgn_cls,flight,config_file,
                          grid_name,do_instantan)
@@ -1516,6 +1516,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         self.grid_name=grid_name
         self.sonde_no=sonde_no
         self.scalar_based_div=scalar_based_div
+        if not include_halo_ac3_components.shape[0]==0:
+            self.haloac3_div=include_halo_ac3_components
     #-------------------------------------------------------------------------#
     # Preprocessing for plots
     def allocate_budgets(self,Campaign_Budgets={},
@@ -1881,12 +1883,10 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         print("Figure saved as:",fig_plot_path+fig_name)
     # Figure 13
     def moisture_convergence_cases_overview(self,Campaign_Budgets={},
-                                            Campaign_Ideal_Budgets={},
-                                            Campaign_Inst_Budgets={},
-                                            Campaign_Inst_Ideal_Budgets={},
-                                            save_as_manuscript_figure=False,
-                                            instantan_comparison=False,
-                                            with_mean_error=False):
+            Campaign_Ideal_Budgets={},Campaign_Inst_Budgets={},
+            Campaign_Inst_Ideal_Budgets={},save_as_manuscript_figure=False,
+            instantan_comparison=False,with_mean_error=False
+            ):
         """
         This plotting routine is used to create Figure 13 of the manuscript
         being the boxplots of moisture budget contributions in mm/h occuring 
@@ -1958,34 +1958,45 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.yaxis.set_tick_params(width=2,length=10)
                         #ax1.xaxis.spines(width=3)
         ax1.set_ylabel("Contribution to \nMoisture Budget ($\mathrm{mmd}^{-1}$)")
-        sns.boxplot(data=24*budget_regions,width=0.4,linewidth=3.0,
-            notch=False,color="k",palette=["lightgrey"],zorder=1)
-        if with_mean_error:
-            ax12=ax1.twinx()
+        if not hasattr(self, "haloac3_div"):
+            # Plot synthetic sondes    
+            sns.boxplot(data=24*budget_regions,width=0.4,linewidth=3.0,
+                        notch=False,color="k",palette=["lightgrey"],zorder=1)
+        
+            if with_mean_error:
+                ax12=ax1.twinx()
             
-            # Mean difference mean(ideal-sondes)
-            sector_divergence_sonde_errors=\
-                24*(budget_ideal_regions.iloc[:,0:6]-\
+                # Mean difference mean(ideal-sondes)
+                sector_divergence_sonde_errors=\
+                    24*(budget_ideal_regions.iloc[:,0:6]-\
                     budget_regions.iloc[:,0:6])
-            mean_sector_divergence_sonde_errors=sector_divergence_sonde_errors.mean()
+                mean_sector_divergence_sonde_errors=sector_divergence_sonde_errors.mean()
             
-            ax12.scatter(mean_sector_divergence_sonde_errors.index,
+                ax12.scatter(mean_sector_divergence_sonde_errors.index,
                          mean_sector_divergence_sonde_errors,marker="o",s=100,
                          color="red",edgecolor="k")
-            ax12.set_ylim([-2,2])
+                ax12.set_ylim([-2,2])
             
-            ax12.spines["right"].set_linewidth(3.0)
-            ax12.tick_params(axis='y', colors='darkred')
-            ax12.xaxis.set_tick_params(width=2,length=10)
-            ax12.yaxis.set_tick_params(width=2,length=10)
-            ax12.set_ylabel("Mean Error in \n Contribution ($\mathrm{mmd}^{-1}$)",
+                ax12.spines["right"].set_linewidth(3.0)
+                ax12.tick_params(axis='y', colors='darkred')
+                ax12.xaxis.set_tick_params(width=2,length=10)
+                ax12.yaxis.set_tick_params(width=2,length=10)
+                ax12.set_ylabel("Mean Error in \n Contribution ($\mathrm{mmd}^{-1}$)",
                             color="darkred")
-            ax12.spines["left"].set_visible(False)
-            ax12.spines["top"].set_visible(False)
-            ax12.spines["bottom"].set_visible(False)
-        
+                ax12.spines["left"].set_visible(False)
+                ax12.spines["top"].set_visible(False)
+                ax12.spines["bottom"].set_visible(False)
+                ax1.set_ylim([-10,10])
+                
+        else:
+            # Plot synthetic sondes    
+            ax1.scatter([0,0,0,0],-24*self.haloac3_div.iloc[0:4,0],
+                         marker="v",s=500,color="whitesmoke",lw=3,edgecolor="k",zorder=2)
+            ax1.scatter([1,1,1,1],-24*self.haloac3_div.iloc[4:8,0],
+                        marker="v",s=300,color="whitesmoke",lw=3,edgecolor="k",zorder=2)
+            ax1.set_ylim([-15,10])
+            
         sns.despine(ax=ax1,offset=10)
-        ax1.set_ylim([-10,10])
         fileend=".pdf"
         if not self.do_instantan:
             fig_name=self.grid_name+"_Water_Vapour_Budget"
@@ -1996,6 +2007,10 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         fig_name+=fileend
         if not save_as_manuscript_figure:
             plot_path=self.plot_path
+            if hasattr(self,"haloac3_div"):
+                plot_path=self.plot_path+"/../../../../../"+\
+                    "my_GIT/Arctic_ARs_Thesis/plots/"
+                fig_name="Fig3_5_IVTdiv_sector_comparison_synth_CARRA_HALO_AC3"
         else:
             plot_path=self.plot_path+\
                 "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
