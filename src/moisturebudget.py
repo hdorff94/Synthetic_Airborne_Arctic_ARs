@@ -1990,11 +1990,11 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                 
         else:
             # Plot synthetic sondes    
-            ax1.scatter([0,0,0,0],-24*self.haloac3_div.iloc[0:4,0],
+            ax1.scatter([1,1,1,1],-24*self.haloac3_div.iloc[0:4,0],
                          marker="v",s=500,color="whitesmoke",lw=3,edgecolor="k",zorder=2)
-            ax1.scatter([1,1,1,1],-24*self.haloac3_div.iloc[4:8,0],
+            ax1.scatter([0,0,0,0],-24*self.haloac3_div.iloc[4:8,0],
                         marker="v",s=300,color="whitesmoke",lw=3,edgecolor="k",zorder=2)
-            ax1.set_ylim([-15,10])
+            ax1.set_ylim([-15,15])
             
         sns.despine(ax=ax1,offset=10)
         fileend=".pdf"
