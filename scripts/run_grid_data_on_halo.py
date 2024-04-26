@@ -276,7 +276,7 @@ def main(config_file_path=os.getcwd(),
                                             load_save_instantan=do_instantaneous)
                 # so far no synthetic flight track is defined for HALO-AC3.
                 # hence, stop script here.
-                sys.exit()
+            
     #%% -----------------------------------------------------------------------
     else:
          # Flight Campaign is Synthetic
@@ -434,6 +434,27 @@ def main(config_file_path=os.getcwd(),
                                                 halo_df,mwr,
                                                 device="radiometer")
         
+            if campaign=="HALO_AC3" and do_instantaneous:
+                #if flight[0]=="RF05" and ar_of_day=="AR_entire_1":
+                halo_df["leg_type"]="internal"
+                halo_df["leg_type"].iloc[0:100]="inflow"
+                halo_df["leg_type"].iloc[-100:]="outflow"
+                import flight_track_creator
+                Flight_Tracker=flight_track_creator.Flighttracker(
+                                           ac3,flight[0],ar_of_day,
+                                           track_type=track_type,
+                                           shifted_lat=synthetic_icon_lat,
+                                           shifted_lon=synthetic_icon_lon,
+                                           load_save_instantan=do_instantaneous)
+                Flight_Tracker.aircraft_df=halo_df
+                Flight_Tracker.make_dict_from_aircraft_df()
+                Flight_Tracker.make_flight_instantaneous()
+                halo_df,leg_dicts=Flight_Tracker.concat_track_dict_to_df()
+                # minutes of day have to be recalculated
+                halo_df["Hour"]=pd.DatetimeIndex(halo_df.index).hour
+                halo_df["Minutes"]=pd.DatetimeIndex(halo_df.index).minute
+                halo_df["Minutesofday"]=halo_df["Hour"]*60+halo_df["Minutes"]
+                
             # Update halo_df in ERA5_on_HALO class with cutted dataset
             ERA5_on_HALO.update_halo_df(halo_df,change_last_index=True)
             if carra_is_desired:

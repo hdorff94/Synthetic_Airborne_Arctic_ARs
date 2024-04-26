@@ -164,10 +164,13 @@ if __name__=="__main__":
     calc_hmp=False
     calc_hmc=True
     do_plotting=False
-    synthetic_campaign=True
-    ar_of_day=["AR_internal"]#"AR_entire_2"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
-    campaign_name="Second_Synthetic_Study"#"North_Atlantic_Run"#"HALO_AC3"#"
     
+    ar_of_day=["AR_internal"]#["AR_entire_1"]#"AR_internal"]#"AR_entire_2"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
+    campaign_name="Second_Synthetic_Study"#"Second_Synthetic_Study"#"North_Atlantic_Run"#"HALO_AC3"#"
+    if not campaign_name=="HALO_AC3":
+        synthetic_campaign=True
+    else:
+        synthetic_campaign=False
     if synthetic_campaign:
         flights_to_analyse={#"SRF02":"20180224",#,#,
                         #"SRF04":"20190319",#}#,#,m,
@@ -175,9 +178,9 @@ if __name__=="__main__":
                         #"SRF08":"20200419"#,}
         #Second Synthetic Study
         
-        "SRF02":"20110317",
-        "SRF03":"20110423",#,
-        "SRF08":"20150314",#,
+        #"SRF02":"20110317",
+        #"SRF03":"20110423",#,
+        #"SRF08":"20150314",#,
         "SRF09":"20160311",#,
         "SRF12":"20180225"
         }
@@ -186,7 +189,7 @@ if __name__=="__main__":
                             #"RF03":"20220313",
                             #"RF04":"20220314",
                             #"RF05":"20220315",
-                            #"RF06":"20220316",
+                            "RF06":"20220316",
                             #"RF07":"20220320"
                             
                             #"RF10":"20161013"
@@ -196,7 +199,7 @@ if __name__=="__main__":
     use_icon=False
     flights=[*flights_to_analyse.keys()]
     do_instantaneous=True
-    include_hydrometeors=True
+    include_hydrometeors=False
     Hydrometeors,HALO_Dict,cmpgn_cls=main(campaign=campaign_name,flights=flights,
                                           ar_of_days=ar_of_day,
                                           era_is_desired=use_era, 

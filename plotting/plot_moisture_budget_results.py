@@ -39,7 +39,7 @@ def importer():
     paths_dict["plot_figures_path"]  = plot_figures_path
     return paths_dict    
 
-def main(figure_to_create="fig13"):
+def main(figure_to_create="fig13", include_haloac3=False):
     
     paths_dict=importer()
     # Import relevant modules    
@@ -103,18 +103,36 @@ def main(figure_to_create="fig13"):
 
     #---------------------------------------------------------------------#
     # HALO-(AC)3 contribution
-    include_haloac3=True
     if include_haloac3:
-        haloac3_div=pd.DataFrame(data=np.nan,index=range(8),
+        haloac3_div   = pd.DataFrame(data=np.nan,index=range(8),
                              columns=["values","sector"])
-        haloac3_div.iloc[0:4,0]  = [0.320,0.369,-0.016,-0.034]
-        haloac3_div.iloc[0:4,1]  = [1,1,1,1]#"Warm\nCONV","Warm\nCONV",
-                                    #"Warm\nCONV","Warm\nCONV"]
-        haloac3_div.iloc[4:8,0]  = [0.162,0.309,-0.432,-0.199]
-        haloac3_div.iloc[4:8,1]  = [2,2,2,2]#"Warm\nADV","Warm\nADV",
-                                    #"Warm\nADV","Warm\nADV"]
+        era5_div      = pd.DataFrame(data=np.nan,index=range(8),
+                             columns=["values","sector"])
+        inst_era5_div = pd.DataFrame(data=np.nan,index=range(8),
+                             columns=["values","sector"])
+        
+        haloac3_div.iloc[0:4,0]    = [0.497,0.5396,-0.006,-0.035]
+        #haloac3_div.iloc[0:4,0]    = [0.320,0.369,-0.016,-0.034]
+        haloac3_div.iloc[0:4,1]    = [1,1,1,1] #"Warm\nCONV"]
+        haloac3_div.iloc[4:8,0]    = [0.27,0.5539,-0.5935,-0.278]
+        #haloac3_div.iloc[4:8,0]    = [0.162,0.309,-0.432,-0.199]
+        haloac3_div.iloc[4:8,1]    =  [2,2,2,2] #"Warm\nADV"]
+        # Continuous ERA5 for instantaneous intercomparison
+        era5_div.iloc[0:4,0]       = [0.606904,0.539302,0.014326,-0.004315] #warm conv
+        era5_div.iloc[0:4,1]       = [1,1,1,1]
+        era5_div.iloc[4:8,0]       = [-0.000405,0.500588,-0.563,-0.43281] # ADV
+        era5_div.iloc[4:8,1]       = [2,2,2,2]
+        
+        inst_era5_div.iloc[0:4,0]  = [-0.637,1.074779,-0.406,0.247] # Warm CONV
+        inst_era5_div.iloc[0:4,1]  = [1,1,1,1]
+        inst_era5_div.iloc[4:8,0]  = [-0.773947,-0.798314,-0.648433,-1.340648] # Warm ADV
+        inst_era5_div.iloc[4:8,1]  = [2,2,2,2]
+        
+        #inst_haloac3_div
     else:
-        haloac3_div=pd.DataFrame()
+        haloac3_div   = pd.DataFrame()
+        era5_div      = pd.DataFrame()
+        inst_era5_div = pd.DataFrame()
     #---------------------------------------------------------------------#
     # Moisture Classes
     Moisture_CONV=\
@@ -125,10 +143,17 @@ def main(figure_to_create="fig13"):
     Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,config_file,
                  grid_name=grid_name,do_instantan=do_instantan,
                  sonde_no=sonde_no,scalar_based_div=scalar_based_div,
-                 include_halo_ac3_components=haloac3_div)
+                 include_halo_ac3_components=haloac3_div,
+                 include_era5_components=era5_div,
+                 include_inst_components=inst_era5_div,
+                 hours_to_use=1)
     Inst_Budget_plots=Budgets.Moisture_Budget_Plots(cmpgn_cls,flight,
                 config_file,grid_name=grid_name,do_instantan=True,
-                sonde_no=sonde_no,scalar_based_div=scalar_based_div)
+                sonde_no=sonde_no,scalar_based_div=scalar_based_div,
+                include_halo_ac3_components=haloac3_div,
+                include_era5_components=era5_div,
+                include_inst_components=inst_era5_div,
+                hours_to_use=1)
     on_flight_tracks=True
     if not haloac3_div.shape[0]==0:
         save_for_manuscript=False
@@ -156,10 +181,9 @@ def main(figure_to_create="fig13"):
         # so reset the sonde no
         # Instantan Budgets
         Inst_Moisture_CONV=Budgets.Moisture_Convergence(cmpgn_cls,
-                                    flight+"_instantan",config_file,
-                                    flight_dates=flight_dates,
-                                    grid_name=grid_name,do_instantan=True,
-                                    calc_from_scalar_values=scalar_based_div)
+                flight+"_instantan",config_file,flight_dates=flight_dates,
+                grid_name=grid_name,do_instantan=True,
+                calc_from_scalar_values=scalar_based_div)
         #Inst_Moisture_CONV.sonde_no="100"
         Inst_Budgets,Inst_Ideal_Budgets=Inst_Moisture_CONV.get_overall_budgets(
                         use_flight_tracks=on_flight_tracks)
@@ -182,7 +206,7 @@ def main(figure_to_create="fig13"):
                 Campaign_Ideal_Budgets=Campaign_Ideal_Budgets,
                 Campaign_Inst_Budgets={},
                 Campaign_Inst_Ideal_Budgets=Inst_Ideal_Budgets,
-                save_as_manuscript_figure=True,
+                save_as_manuscript_figure=save_for_manuscript,
                 use_flight_tracks=on_flight_tracks,
                 plot_mean_error=True)
         
@@ -284,10 +308,10 @@ def main(figure_to_create="fig13"):
 if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig12_single_case_sector_profiles"
-    figure_to_create="fig13_campaign_divergence_overviews"
+    #figure_to_create="fig13_campaign_divergence_overviews"
     #figure_to_create="fig14_divergence_instantan_errorbars"
-    #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
+    figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
     
     #figure_to_create="fig_supplements_sonde_pos_comparison"
     #figure_to_create="fig12_campaign_divergence_overviews"
-    main(figure_to_create=figure_to_create)
+    main(figure_to_create=figure_to_create, include_haloac3=False)

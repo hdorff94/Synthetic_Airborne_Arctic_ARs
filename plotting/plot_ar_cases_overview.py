@@ -41,7 +41,8 @@ def importer():
     sys.path.insert(5,paths_dict["scripts_path"])
     return paths_dict
 
-def main(save_in_manuscript_path=False,figure_to_create="fig01"):
+def main(save_in_manuscript_path=False,figure_to_create="fig01", 
+         show_AR_detection=True):
     """
     This routine creates overview plots for the ARs depicted (nine cases).
     
@@ -305,6 +306,43 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                    qk.text.set_zorder(50)
                    qk.Q.set_zorder(50)#
                    
+               if show_AR_detection:
+                   use_era5=False
+                   import atmospheric_rivers as AR
+                   AR=AR.Atmospheric_Rivers("ERA",use_era5=use_era5)
+                   AR_era_ds=AR.open_AR_catalogue(
+                       after_2019=int(flight_date[0:4])>2019,
+                       year=[*ar_label.keys()][key][0:4],
+                       month=[*ar_label.keys()][key][4:6])
+                   print([*ar_label.keys()][key][4:6])
+                   AR_era_data=AR.specify_AR_data(AR_era_ds,flight_date)
+                   i=[*era_index_dict.values()][key]
+                   if not use_era5:
+                       if i<6:
+                           hatches=axs[row,col].contourf(AR_era_ds.lon,AR_era_ds.lat,
+                            AR_era_ds.shape[0,AR_era_data["model_runs"].start,0,:,:],
+                            hatches=['//'],cmap="bone_r",alpha=0.8,
+                            transform=ccrs.PlateCarree())
+                       elif 6<=i<12:
+                           hatches=axs[row,col].contourf(AR_era_ds.lon,AR_era_ds.lat,
+                        AR_era_ds.shape[0,AR_era_data["model_runs"].start+1,0,:,:],
+                        hatches=[ '//'],cmap='bone',alpha=0.2,transform=ccrs.PlateCarree())
+                       elif 12<=i<18:
+                           hatches=axs[row,col].contourf(AR_era_ds.lon,AR_era_ds.lat,
+                        AR_era_ds.shape[0,AR_era_data["model_runs"].start+2,0,:,:],
+                        hatches=['//'],cmap='bone_r',alpha=0.2,transform=ccrs.PlateCarree())
+                       else:
+                           hatches=axs[row,col].contourf(AR_era_ds.lon,AR_era_ds.lat,
+                         AR_era_ds.shape[0,AR_era_data["model_runs"].start+3,0,:,:],
+                         hatches=['//'],cmap='bone_r',alpha=0.1,transform=ccrs.PlateCarree())
+                   else:
+                       hatches=axs[row,col].contourf(AR_era_ds.lon,AR_era_ds.lat,
+                         AR_era_ds.shape[0,AR_era_data["model_runs"].start+i,0,:,:],
+                         hatches=["//"],cmap="bone_r",
+                         alpha=0.2,transform=ccrs.PlateCarree())
+                       
+                   for c,collection in enumerate(hatches.collections):
+                       collection.set_edgecolor("k")
                    
                key+=1
         
@@ -314,7 +352,7 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                             wspace=0.05, hspace=0.05)
         # Add a colorbar axis at the bottom of the graph
         cbar_ax = fig.add_axes([0.905, 0.225, 0.02, 0.6])
-        cbar=fig.colorbar(C1, cax=cbar_ax,extend="max")
+        cbar    = fig.colorbar(C1, cax=cbar_ax,extend="max")
         cbar_ax.text(3.2,0.375,meteo_var+" "+met_var_dict["units"][meteo_var],
                      rotation=90,fontsize=18,transform=cbar_ax.transAxes)
         cbar.set_ticks([50,250,500])
@@ -328,7 +366,8 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
         
         return None
     
-    elif figure_to_create.startswith("fig10"):
+    elif figure_to_create.startswith("fig10") or \
+        figure_to_create.startswith("fig02"):
         ar_of_day=["AR_internal"]
         
         NA_flights_to_analyse={"SRF02":"20180224",
@@ -342,20 +381,24 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01"):
                                 "SRF09":"20160311",
                                 "SRF12":"20180225"}
         use_era=True
-        use_carra=True
+        use_carra=False
         use_icon=False
         na_flights=[*NA_flights_to_analyse.keys()]
         snd_flights=[*SND_flights_to_analyse.keys()]
         
         do_instantaneous=True
-        
+        if figure_to_create.startswith("fig02"):
+            include_correlation=False
+        else:
+            include_correlation=True
         import interpdata_plotting
         interpdata_plotting.\
             ar_cross_sections_overview_flights_vertical_profile(
                 flight_dates,use_era,use_carra,use_icon,
-                na_flights,snd_flights,do_meshing=False)
+                na_flights,snd_flights,do_meshing=False,
+                with_correlation=include_correlation)
     else:
         raise Exception("You have given the wrong figure name.",
                         " No figure created")
 if __name__=="__main__":
-    main(save_in_manuscript_path=True,figure_to_create="fig01_")
+    main(save_in_manuscript_path=True,figure_to_create="fig02")

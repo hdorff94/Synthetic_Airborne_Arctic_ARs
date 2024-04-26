@@ -60,6 +60,72 @@ class Moisture_Convergence(Moisture_Budgets):
                             "core":"darkgreen",
                             "cold_sector":"darkblue"}            
     
+    def new_vertically_integrated_divergence(self):
+        scalar_based_div=self.scalar_based_div
+        integrated_divergence={}
+        
+        for sector in self.sector_types:
+            ###################################################################
+            # get mean pressure values
+            p_grid=self.sector_sonde_values[sector]["pres"].mean(axis=1)
+            pres_index=pd.Series(p_grid*100)
+            #print(pres_index)
+            try:
+                pres_index=pres_index.loc[self.div_scalar_mass[sector].index]
+            except:
+                pres_index=pres_index.loc[self.div_vector_mass[sector].index]
+            g=9.82
+            ###################################################################
+            # 
+            integrated_divergence[sector]={}
+            # Values are vector based
+            if isinstance(self.div_vector_mass,pd.Series):
+                    integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
+                        self.div_vector_mass[sector].values/1000,axis=0,
+                    x=pres_index)*1000*3600
+            else:
+                integrated_divergence[sector]["mass_div"]= 1/(g*997)*np.trapz(\
+                    self.div_vector_mass[sector]["val"].values/1000,axis=0,
+                    x=pres_index)*1000*3600
+                #integrated_divergence[sector]["mass_div_min"]=1/(g*997)*np.trapz(\
+                #    (self.div_vector_mass[sector]["val"].values-
+                #     self.div_vector_mass[sector]["unc"].values)*\
+                #        pres_index[::-1])*1000*3600
+                #integrated_divergence[sector]["mass_div_max"]=1/(g*997)*np.trapz(\
+                #    (self.div_vector_mass[sector]["val"].values+
+                #     self.div_vector_mass[sector]["unc"].values)*\
+                #        pres_index[::-1])*1000*3600
+                
+            if isinstance(self.adv_q_vector,pd.Series):
+                integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
+                    self.adv_q_vector[sector].values/1000,
+                    axis=0,x=pres_index)*1000*3600
+            else:
+                integrated_divergence[sector]["q_ADV"]=1/(g*997)*np.trapz(\
+                    self.adv_q_vector[sector]["val"].values/1000,
+                    axis=0,x=pres_index)*1000*3600
+                    
+                #integrated_divergence[sector]["q_ADV_min"]=1/(g*997)*np.trapz(\
+                #    (self.adv_q_vector[sector]["val"].values-
+                #     self.adv_q_vector[sector]["unc"].values)*\
+                #        pres_index)/1000*3600
+                #integrated_divergence[sector]["q_ADV_max"]=1/(g*997)*np.trapz(\
+                #    (self.adv_q_vector[sector]["val"].values+
+                #     self.adv_q_vector[sector]["unc"].values)*\
+                #pres_index)/1000*3600
+            #for term in ["ADV","CONV","TRANSP"]:
+            #        if term=="ADV":
+            #            series_term=term+"_calc"
+            #        else:
+            #            series_term=term
+            #        core_budgets[term].at[campaign_id+flight+\
+            #                              "_sonde_"+str(self.sonde_no)+term]=\
+            #        1/g*np.trapz(core[series_term][::-1],axis=0,x=pres_index[::-1])
+            #        warm_budgets[term].at[campaign_id+flight+\
+            #                              "_sonde_"+str(self.sonde_no)+term]=\
+            #        1/g*np.trapz(warm[series_term][::-1],
+            #                     axis=0,x=pres_index[::-1])
+        self.integrated_divergence=integrated_divergence
     def vertically_integrated_divergence(self):
         scalar_based_div=self.scalar_based_div
         integrated_divergence={}
@@ -473,7 +539,7 @@ class Moisture_Convergence(Moisture_Budgets):
                         del cold["level"],cold_ideal["level"]
         
                 pres_index=pd.Series(core.index*100)
-                g=9.82
+                g=1 #---> division by g happens later
                 for term in ["ADV","CONV","TRANSP"]:
                     if term=="ADV":
                         series_term=term+"_calc"
@@ -1508,7 +1574,10 @@ class Moisture_Budget_Plots(Moisture_Convergence):
     
     def __init__(self,cmpgn_cls,flight,config_file,grid_name="ERA5",
                  do_instantan=False,sonde_no=3, scalar_based_div=True,
-                 include_halo_ac3_components=pd.DataFrame()):
+                 include_halo_ac3_components=pd.DataFrame(),
+                 include_era5_components=pd.DataFrame(),
+                 include_inst_components=pd.DataFrame(),
+                 hours_to_use=24):
         
         super().__init__(cmpgn_cls,flight,config_file,
                          grid_name,do_instantan)
@@ -1518,12 +1587,23 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         self.scalar_based_div=scalar_based_div
         if not include_halo_ac3_components.shape[0]==0:
             self.haloac3_div=include_halo_ac3_components
+        if not include_era5_components.shape[0]==0:
+            self.era5_div=include_era5_components
+        if not include_inst_components.shape[0]==0:
+            self.inst_div=include_inst_components
+        self.hours_to_use=hours_to_use
+        if self.hours_to_use==24:
+            self.unit="$\mathrm{mmd\,}^{-1}$"
+        elif self.hours_to_use==1:
+            self.unit="$\mathrm{mm\,h}^{-1}$"
+        
     #-------------------------------------------------------------------------#
     # Preprocessing for plots
     def allocate_budgets(self,Campaign_Budgets={},
                          Campaign_Ideal_Budgets={},
                          Campaign_Inst_Budgets={},
-                         Campaign_Inst_Ideal_Budgets={}):
+                         Campaign_Inst_Ideal_Budgets={},
+                         already_in_mm_h=True):
         
         if Campaign_Budgets!={}:
             self.Campaign_Budgets=Campaign_Budgets
@@ -1533,7 +1613,16 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             self.Campaign_Inst_Budgets=Campaign_Inst_Budgets
         if Campaign_Inst_Ideal_Budgets!={}:
             self.Campaign_Inst_Ideal_Budgets=Campaign_Inst_Ideal_Budgets
-    
+        
+        self.Campaign_Budgets["in_mm_h"]             = already_in_mm_h
+        self.Campaign_Ideal_Budgets["in_mm_h"]       = already_in_mm_h
+        
+        # Instantaneous attributes are not necessarily given.
+        if hasattr(self,"Campaign_Inst_Budgets"):
+            self.Campaign_Inst_Budgets["in_mm_h"]        = already_in_mm_h
+        if hasattr(self,"Campaign_Inst_Budgets"):
+            self.Campaign_Inst_Ideal_Budgets["in_mm_h"]  = already_in_mm_h
+        
     def calc_budgets_in_mm_h(self):
         """
         
@@ -1542,7 +1631,13 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         sonde based or continuous
         
         """
-        gravit_norm=1/9.82
+        if not self.Campaign_Budgets["in_mm_h"]:
+            gravit_norm=1/9.82
+            time_factor=3600/1000
+        else:
+            gravit_norm=1
+            time_factor=1
+            print("Values are already in mm/h")
         if hasattr(self,"Campaign_Budgets"):
             warm_budgets=self.Campaign_Budgets["warm_sector"]
             core_budgets=self.Campaign_Budgets["core"]
@@ -1550,17 +1645,17 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             self.budget_regions=pd.DataFrame()
             
             self.budget_regions["Warm\nADV"]=gravit_norm*\
-                            warm_budgets["ADV"].values/1000*3600
+                            warm_budgets["ADV"].values*time_factor
             self.budget_regions["Warm\nCONV"]=gravit_norm*\
-                            warm_budgets["CONV"].values/1000*3600
+                            warm_budgets["CONV"].values*time_factor
             self.budget_regions["Core\nADV"]=gravit_norm*\
-                            core_budgets["ADV"].values/1000*3600
+                            core_budgets["ADV"].values*time_factor
             self.budget_regions["Core\nCONV"]=gravit_norm*\
-                            core_budgets["CONV"].values/1000*3600
+                            core_budgets["CONV"].values*time_factor
             self.budget_regions["Cold\nADV"]=gravit_norm*\
-                            cold_budgets["ADV"].values/1000*3600
+                            cold_budgets["ADV"].values*time_factor
             self.budget_regions["Cold\nCONV"]=gravit_norm*\
-                            cold_budgets["CONV"].values/1000*3600
+                            cold_budgets["CONV"].values*time_factor
         
         if hasattr(self,"Campaign_Ideal_Budgets"):
             warm_ideal_budgets=self.Campaign_Ideal_Budgets["warm_sector"]
@@ -1570,17 +1665,17 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             self.budget_ideal_regions=pd.DataFrame()
             
             self.budget_ideal_regions["Warm\nADV"]=gravit_norm*\
-                            warm_ideal_budgets["ADV"].values/1000*3600
+                            warm_ideal_budgets["ADV"].values*time_factor
             self.budget_ideal_regions["Warm\nCONV"]=gravit_norm*\
-                            warm_ideal_budgets["CONV"].values/1000*3600
+                            warm_ideal_budgets["CONV"].values*time_factor
             self.budget_ideal_regions["Core\nADV"]=gravit_norm*\
-                            core_ideal_budgets["ADV"].values/1000*3600
+                            core_ideal_budgets["ADV"].values*time_factor
             self.budget_ideal_regions["Core\nCONV"]=gravit_norm*\
-                            core_ideal_budgets["CONV"].values/1000*3600
+                            core_ideal_budgets["CONV"].values*time_factor
             self.budget_ideal_regions["Cold\nADV"]=gravit_norm*\
-                            cold_ideal_budgets["ADV"].values/1000*3600
+                            cold_ideal_budgets["ADV"].values*time_factor
             self.budget_ideal_regions["Cold\nCONV"]=gravit_norm*\
-                            cold_ideal_budgets["CONV"].values/1000*3600
+                            cold_ideal_budgets["CONV"].values*time_factor
         
         if hasattr(self,"Campaign_Inst_Budgets"):
             warm_inst_budgets=self.Campaign_Inst_Budgets["warm_sector"]
@@ -1589,17 +1684,17 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             
             self.budget_inst_regions=pd.DataFrame()
             self.budget_inst_regions["Warm\nADV"]=gravit_norm*\
-                            warm_inst_budgets["ADV"].values/1000*3600
+                            warm_inst_budgets["ADV"].values*time_factor
             self.budget_inst_regions["Warm\nCONV"]=gravit_norm*\
-                            warm_inst_budgets["CONV"].values/1000*3600
+                            warm_inst_budgets["CONV"].values*time_factor
             self.budget_inst_regions["Core\nADV"]=gravit_norm*\
-                            core_inst_budgets["ADV"].values/1000*3600
+                            core_inst_budgets["ADV"].values*time_factor
             self.budget_inst_regions["Core\nCONV"]=gravit_norm*\
-                            core_inst_budgets["CONV"].values/1000*3600
+                            core_inst_budgets["CONV"].values*time_factor
             self.budget_inst_regions["Cold\nADV"]=gravit_norm*\
-                            cold_inst_budgets["ADV"].values/1000*3600
+                            cold_inst_budgets["ADV"].values*time_factor
             self.budget_inst_regions["Cold\nCONV"]=gravit_norm*\
-                            cold_inst_budgets["CONV"].values/1000*3600
+                            cold_inst_budgets["CONV"].values*time_factor
         
         if hasattr(self,"Campaign_Inst_Ideal_Budgets"):
             warm_inst_ideal_budgets=\
@@ -1612,19 +1707,19 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             self.budget_inst_ideal_regions=pd.DataFrame()
             
             self.budget_inst_ideal_regions["Warm\nADV"]=gravit_norm*\
-                                        warm_inst_ideal_budgets["ADV"].values/\
-                                                        1000*3600
+                                        warm_inst_ideal_budgets["ADV"].values*\
+                                                        time_factor
             self.budget_inst_ideal_regions["Warm\nCONV"]=gravit_norm*\
-                                        warm_inst_ideal_budgets["CONV"].values/\
-                                                        1000*3600
+                                        warm_inst_ideal_budgets["CONV"].values*\
+                                                        time_factor
             self.budget_inst_ideal_regions["Core\nADV"]=gravit_norm*\
-                core_inst_ideal_budgets["ADV"].values/1000*3600
+                core_inst_ideal_budgets["ADV"].values*time_factor
             self.budget_inst_ideal_regions["Core\nCONV"]=gravit_norm*\
-                core_inst_ideal_budgets["CONV"].values/1000*3600
+                core_inst_ideal_budgets["CONV"].values*time_factor
             self.budget_inst_ideal_regions["Cold\nADV"]=gravit_norm*\
-                cold_inst_ideal_budgets["ADV"].values/1000*3600
+                cold_inst_ideal_budgets["ADV"].values*time_factor
             self.budget_inst_ideal_regions["Cold\nCONV"]=gravit_norm*\
-                        cold_inst_ideal_budgets["CONV"].values/1000*3600
+                        cold_inst_ideal_budgets["CONV"].values*time_factor
         
     
     ###############################################################################
@@ -1923,7 +2018,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         """
         # Allocate variables and calc budget contributions in mm/h
         self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
-                              Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets)
+                              Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets,
+                              already_in_mm_h=False)
         self.calc_budgets_in_mm_h()
         #Start plotting
         budget_boxplot=plt.figure(figsize=(12,9), dpi= 300)
@@ -1945,8 +2041,9 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             budget_ideal_regions=-1*budget_ideal_regions
             budget_regions=-1*budget_regions
             
-        sns.boxplot(data=24*budget_ideal_regions,notch=False,
-                       zorder=0,linewidth=3.5,palette=color_palette)
+        sns.boxplot(data=self.hours_to_use*budget_ideal_regions,
+                    notch=False,zorder=0,linewidth=3.5,
+                    palette=color_palette)
         
         for patch in ax1.artists:
             r, g, b, a = patch.get_facecolor()
@@ -1957,44 +2054,58 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.xaxis.set_tick_params(width=2,length=10)
         ax1.yaxis.set_tick_params(width=2,length=10)
                         #ax1.xaxis.spines(width=3)
-        ax1.set_ylabel("Contribution to \nMoisture Budget ($\mathrm{mmd}^{-1}$)")
+        ax1.set_ylabel("Contribution to \nMoisture Budget ("+self.unit+")")
         if not hasattr(self, "haloac3_div"):
             # Plot synthetic sondes    
-            sns.boxplot(data=24*budget_regions,width=0.4,linewidth=3.0,
-                        notch=False,color="k",palette=["lightgrey"],zorder=1)
+            sns.boxplot(data=self.hours_to_use*budget_regions,
+                        width=0.4,linewidth=3.0,notch=False,color="k",
+                        palette=["lightgrey"],zorder=1)
         
             if with_mean_error:
                 ax12=ax1.twinx()
             
                 # Mean difference mean(ideal-sondes)
                 sector_divergence_sonde_errors=\
-                    24*(budget_ideal_regions.iloc[:,0:6]-\
+                    self.hours_to_use*(budget_ideal_regions.iloc[:,0:6]-\
                     budget_regions.iloc[:,0:6])
                 mean_sector_divergence_sonde_errors=sector_divergence_sonde_errors.mean()
             
                 ax12.scatter(mean_sector_divergence_sonde_errors.index,
                          mean_sector_divergence_sonde_errors,marker="o",s=100,
                          color="red",edgecolor="k")
-                ax12.set_ylim([-2,2])
-            
+                if self.hours_to_use==24:
+                    ax12.set_ylim([-5,5])
+                else:
+                    ax12.set_ylim([-0.75,0.75])
+                    ax12.set_yticks([-.75,-.5,-.25,0,.25,.5,.75])
                 ax12.spines["right"].set_linewidth(3.0)
                 ax12.tick_params(axis='y', colors='darkred')
                 ax12.xaxis.set_tick_params(width=2,length=10)
                 ax12.yaxis.set_tick_params(width=2,length=10)
-                ax12.set_ylabel("Mean Error in \n Contribution ($\mathrm{mmd}^{-1}$)",
+                ax12.set_ylabel("Mean Error in \n Contribution ("+self.unit+")",
                             color="darkred")
                 ax12.spines["left"].set_visible(False)
                 ax12.spines["top"].set_visible(False)
                 ax12.spines["bottom"].set_visible(False)
-                ax1.set_ylim([-10,10])
+                if self.hours_to_use==24:
+                    ax1.set_ylim([-40,40])
+                else:
+                    ax1.set_ylim([-2.5,2.5])
                 
         else:
             # Plot synthetic sondes    
-            ax1.scatter([1,1,1,1],-24*self.haloac3_div.iloc[0:4,0],
+            ax1.scatter([1,1,1,1],
+                        -self.hours_to_use*self.haloac3_div.iloc[0:4,0],
                          marker="v",s=500,color="whitesmoke",lw=3,edgecolor="k",zorder=2)
-            ax1.scatter([0,0,0,0],-24*self.haloac3_div.iloc[4:8,0],
-                        marker="v",s=300,color="whitesmoke",lw=3,edgecolor="k",zorder=2)
-            ax1.set_ylim([-15,15])
+            ax1.scatter([0,0,0,0],
+                        -self.hours_to_use*self.haloac3_div.iloc[4:8,0],
+                        marker="v",s=500,color="whitesmoke",lw=3,edgecolor="k",
+                        zorder=2,label="HALO-$(\mathcal{AC})^{3}$ AR")
+            if self.hours_to_use==24:
+                ax1.set_ylim([-40,45])
+            else:
+                ax1.set_ylim([-2,2.5])
+            ax1.legend(loc="upper right")
             
         sns.despine(ax=ax1,offset=10)
         fileend=".pdf"
@@ -2030,7 +2141,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         use_flight_tracks=False):
         """
         This plotting routine is used to create Figure 14 of the manuscript
-        being the boxplots of moisture budget contributions in mm/h occuring 
+        being the boxplots of moisture budget contributions in mm/d occuring 
         from moisture advection (ADV) and mass convergence (CONV) across the 
         frontal sectors. Both continuous representation (flight duration and 
         instantaneous) are contrasted. Mean errors are added if set true.
@@ -2063,7 +2174,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         """
         # Allocate variables and calc budget contributions in mm/h
         self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
-                              Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets)
+                              Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets,
+                              already_in_mm_h=False)
         self.calc_budgets_in_mm_h()
         #Start plotting
         budget_boxplot=plt.figure(figsize=(12,9), dpi= 300)
@@ -2079,8 +2191,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         
         budget_ideal_regions=self.budget_inst_ideal_regions
         if self.grid_name=="CARRA":
-            budget_ideal_regions=-1*budget_ideal_regions
-            budget_continuous_regions=-1*budget_continuous_regions
+            budget_ideal_regions=-budget_ideal_regions
+            budget_continuous_regions=-budget_continuous_regions
         
         budget_continuous_regions["Time"]="Non-instantaneous"
         budget_continuous_regions["Sector_Term"]=budget_continuous_regions.index.copy()
@@ -2096,7 +2208,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             budget_values["Time"][18*com:18*com+18]=budget_regions["Time"].values
             budget_values["Sector_Term"][18*com:18*com+18]=sector_comp                                        
             budget_values["DIV"][18*com:18*com+18]=\
-                                    24*budget_regions[sector_comp].values
+                self.hours_to_use*budget_regions[sector_comp].values
             
         ax1=sns.boxplot(data=budget_values,x="Sector_Term",y="DIV",
                     hue="Time",zorder=0,linewidth=2,color="k",
@@ -2109,10 +2221,13 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             ax1.xaxis.set_tick_params(width=2,length=10)
             ax1.yaxis.set_tick_params(width=2,length=10)
 
-        ax1.set_ylabel("Contribution to \nMoisture Budget ($\mathrm{mmd}^{-1}$)")
+        ax1.set_ylabel("Contribution to \nMoisture Budget ("+self.unit+")")
         ax1.set_xlabel("Frontal Sector and Component")
-        ax1.set_ylim([-10,10])
-        ax1.legend(loc="lower left", title="Time reference")
+        if self.hours_to_use==24:
+            ax1.set_ylim([-50,50])
+        else:
+            ax1.set_ylim([-2.5,2.5])
+        ax1.legend(loc="lower left", title="Time reference",fontsize=20)
         file_end=".pdf"
         if not self.do_instantan:
             fig_name=self.grid_name+"_Water_Vapour_Budget"
@@ -2130,7 +2245,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                 "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
         if plot_mean_error:
             sector_divergence_inst_errors=\
-                24*(budget_continuous_regions.iloc[:,0:6]-\
+                self.hours_to_use*(budget_continuous_regions.iloc[:,0:6]-\
                     budget_ideal_regions.iloc[:,0:6])
             mean_sector_divergence_inst_errors=sector_divergence_inst_errors.mean()
             
@@ -2138,19 +2253,55 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             ax12.scatter(mean_sector_divergence_inst_errors.index,
                          mean_sector_divergence_inst_errors,marker="o",s=100,
                          color="red",edgecolor="k")
-            ax12.set_ylim([-2,2])
+            if self.hours_to_use==24:
+                ax12.set_ylim([-20,20])
+            else:
+                ax12.set_ylim([-.75,.75])
+                ax12.set_yticks([-.75,-.5,-.25,0,.25,.5,.75])
             #for axis in ["right"]:
             ax12.spines["right"].set_linewidth(3.0)
             ax12.tick_params(axis='y', colors='darkred')
             ax12.xaxis.set_tick_params(width=2,length=10)
             ax12.yaxis.set_tick_params(width=2,length=10)
-            ax12.set_ylabel("Mean Error in \n Contribution ($\mathrm{mmd}^{-1}$)",
+            ax12.set_ylabel("Mean Deviation in \n Contribution ("+self.unit+")",
                             color="darkred")
             ax12.spines["left"].set_visible(False)
             ax12.spines["top"].set_visible(False)
             ax12.spines["bottom"].set_visible(False)
+        
+        if hasattr(self, "haloac3_div"):
+            ax1.scatter([-.1,-0.1,-0.1,-0.1],
+                        -self.hours_to_use*self.era5_div.iloc[4:8,0],
+                        marker="v",s=300,color="darkgrey",
+                        edgecolor="k",zorder=2)
+            ax1.scatter([0.1,0.1,0.1,0.1],
+                        -self.hours_to_use*self.inst_div.iloc[4:8,0],
+                        marker="v",s=300,color="whitesmoke",
+                        edgecolor="k",zorder=2)
+            ax1.scatter([0.9,0.9,0.9,0.9],
+                        -self.hours_to_use*self.era5_div.iloc[0:4,0],
+                        marker="v",s=300,color="darkgrey",
+                        edgecolor="k",zorder=2)
+            ax1.scatter([1.1,1.1,1.1,1.1],
+                        -self.hours_to_use*self.inst_div.iloc[0:4,0],
+                        marker="v",s=300,color="whitesmoke",
+                        edgecolor="k",zorder=2)
+            #ax1.scatter([1,1,1,1],-24*self.haloac3_div.iloc[0:4,0],
+            #             marker="v",s=500,color="whitesmoke",
+            #             lw=3,edgecolor="k",zorder=2)
+            #ax1.scatter([0,0,0,0],-24*self.haloac3_div.iloc[4:8,0],
+            #            marker="v",s=500,color="whitesmoke",lw=3,edgecolor="k",
+            #            zorder=2,label="HALO-$(\mathcal{AC})^{3}$ AR")
+            
+        if not save_as_manuscript_figure:
+                plot_path=self.plot_path
+                if hasattr(self,"haloac3_div"):
+                    plot_path=self.plot_path+"/../../../../../"+\
+                        "my_GIT/Arctic_ARs_Thesis/plots/"
+                    fig_name="Fig3_6_IVT_div_inst_comparison_synth_CARRA_HALO_AC3"
+        else:
+            fig_name="fig14_"+fig_name
         sns.despine(ax=ax1,offset=10)
-        fig_name="fig14_"+fig_name
         budget_boxplot.savefig(plot_path+fig_name,
                        dpi=200,bbox_inches="tight")
         print("Figure saved as:",plot_path+fig_name)
@@ -2175,9 +2326,9 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         None.
 
         """
-        budget_inst_ideal_regions=24*self.budget_inst_ideal_regions
-        budget_ideal_regions=24*self.budget_ideal_regions
-        budget_regions=24*self.budget_regions
+        budget_inst_ideal_regions=self.hours_to_use*self.budget_inst_ideal_regions
+        budget_ideal_regions=self.hours_to_use*self.budget_ideal_regions
+        budget_regions=self.hours_to_use*self.budget_regions
         
         sector_divergence_inst_errors=\
                             budget_ideal_regions-budget_inst_ideal_regions
@@ -2234,7 +2385,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.set_xticklabels(rmse_inst.index,fontsize=10)
         ax1.set_xlabel("Frontal Sector and Component")
         
-        ax1.set_ylabel("Error (inst-evolving) in \nIVT Divergence ($\mathrm{mmd}^{-1}$)")
+        ax1.set_ylabel("Deviation (inst-evolving) in \nIVT Divergence ("+self.unit+")")
         # Axis linewidth
         for axis in ["left","bottom"]:
             ax1.spines[axis].set_linewidth(3.0)

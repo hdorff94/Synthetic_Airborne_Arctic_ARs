@@ -499,6 +499,7 @@ def plotter(figures_to_create,flight_dates,reanalysis_to_use):
     
     #import matplotlib.pyplot as plt
     #import seaborn as sns
+    
     plot_fct_dict={"fig07":[create_fig_q_v_vertical_variability],
                    "fig08":[create_fig08_normalised_standard_deviation_q_v],
                    "fig09":[create_summarized_fig09_coherence],
@@ -898,4 +899,4 @@ def create_updated_fig11_q_v_flavor(paths_dict,config_file,
     print("Figure saved as:", paths_dict["plot_figures_path"]+fig_name)                           
 
 if __name__=="__main__":
-    main(figures_to_create="fig09")
+    main(figures_to_create="fig11")#"fig02")

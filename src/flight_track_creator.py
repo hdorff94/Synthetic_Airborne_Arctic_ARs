@@ -456,6 +456,9 @@ class Flighttracker():
                      int(len(self.aircraft_dict["internal"].index)/2)]
          central_timestamp=pd.to_datetime(central_hour*3600,unit="s",
                                                   origin=srf_date)
+         sector_timedelta=5 #"min"
+         if self.cmpgn_cls.name=="HALO_AC3":
+             sector_timedelta=1 #"min"
          s=0
          for ar_sector in self.ar_legs:
              if s==0:
@@ -463,7 +466,7 @@ class Flighttracker():
              else:
                  start_time=self.aircraft_dict[[\
                                     *self.aircraft_dict.keys()][s-1]].index[-1]                    
-             end_time=start_time+pd.Timedelta(5,unit="min")
+             end_time=start_time+pd.Timedelta(sector_timedelta,unit="min")
                      
              self.aircraft_dict[ar_sector]["old_index"]=\
                              self.aircraft_dict[ar_sector].index.values    

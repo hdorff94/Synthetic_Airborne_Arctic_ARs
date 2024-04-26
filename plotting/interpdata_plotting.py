@@ -26,7 +26,7 @@ from matplotlib.legend_handler import HandlerBase
 def ar_cross_sections_overview_flights_vertical_profile(
         flight_dates,use_era,use_carra,
         use_icon,na_flights,snd_flights,do_meshing=True,
-        use_cmasher=True):
+        use_cmasher=True,with_correlation=True):
     from matplotlib.ticker import NullFormatter
     
     ar_of_day=["AR_internal"]
@@ -118,9 +118,10 @@ def ar_cross_sections_overview_flights_vertical_profile(
         pressure=campaign_Hydrometeors[date]["AR_internal"]["u"].\
                                     columns.astype(float)
         
-        corr_levels=pd.Series(data=np.nan,index=pressure)
-        for height in corr_levels.index:
-            corr_levels.loc[height]=wind[str(height)].corr(
+        if with_correlation:
+            corr_levels=pd.Series(data=np.nan,index=pressure)
+            for height in corr_levels.index:
+                corr_levels.loc[height]=wind[str(height)].corr(
                                         moisture[str(height)])
         
         # calc the correlation    
@@ -148,19 +149,20 @@ def ar_cross_sections_overview_flights_vertical_profile(
                 levels=q_levels,cmap=cm.get_cmap(
                     humidity_colormap,len(q_levels)-1),extend="max")
         
-        upper_axes=axes[p].twiny()
-        upper_axes.plot(corr_levels,pressure,ls="-",lw=3,color="k",ms=5)
-        upper_axes.plot(corr_levels,pressure,ls="-.",lw=2,color="white",ms=5)
+        if with_correlation:
+            upper_axes=axes[p].twiny()
+            upper_axes.plot(corr_levels,pressure,ls="-",lw=3,color="k",ms=5)
+            upper_axes.plot(corr_levels,pressure,ls="-.",lw=2,color="white",ms=5)
         
-        upper_axes.invert_yaxis()
-        upper_axes.set_xlim([-1.5,1.5])
-        for corner in ["bottom","left","right","top"]:
-            upper_axes.spines[corner].set_linewidth(0)
-            upper_axes.set_xticks([])
-        if p<3:
-            upper_axes.spines["top"].set_linewidth(2)
-            upper_axes.tick_params(length=4,width=2)
-            upper_axes.set_xticks([-1.0,-0.5,0,0.5,1.0])
+            upper_axes.invert_yaxis()
+            upper_axes.set_xlim([-1.5,1.5])
+            for corner in ["bottom","left","right","top"]:
+                upper_axes.spines[corner].set_linewidth(0)
+                upper_axes.set_xticks([])
+            if p<3:
+                upper_axes.spines["top"].set_linewidth(2)
+                upper_axes.tick_params(length=4,width=2)
+                upper_axes.set_xticks([-1.0,-0.5,0,0.5,1.0])
         moisture_levels=[5,10,20,30,40]
         wind_levels=[15,25,35]
         axes[p].set_xlim([-500,500])
@@ -168,8 +170,11 @@ def ar_cross_sections_overview_flights_vertical_profile(
         if p<6:
             axes[p].set_xticklabels("")
         if p==1:
-            upper_axes.set_xlabel("Correlation coefficient $r_{\mathrm{corr}}$",
+            if with_correlation:
+                upper_axes.set_xlabel("Correlation coefficient $r_{\mathrm{corr}}$",
                                   fontsize=font_size+4)
+            else:
+                pass
         if p==3:
             axes[p].set_ylabel("Pressure (hPa)",fontsize=font_size+4)
         if p==7:
@@ -228,10 +233,14 @@ def ar_cross_sections_overview_flights_vertical_profile(
         grid_name="ERA5_"
     if use_carra:
         grid_name="CARRA_"
+    if with_correlation:
+        fig_number="fig10"
+    else:
+        fig_number="fig02"
     # add a overall colorbar for specific humidity    
     supplement_path=SND_cmpgn_cls.plot_path+\
                 "/../../../Synthetic_AR_Paper/Manuscript/Paper_Plots/"
-    fig_name="fig10_"+grid_name+"AR_inflow_cross_sections_overview.png"
+    fig_name=fig_number+grid_name+"AR_inflow_cross_sections_overview.png"
     cross_section_fig.savefig(supplement_path+fig_name,
                               dpi=300,bbox_inches="tight")
     print("Figure saved as: ",supplement_path+fig_name)
