@@ -118,14 +118,17 @@ def main(figure_to_create="fig13", include_haloac3=False):
         #haloac3_div.iloc[4:8,0]    = [0.162,0.309,-0.432,-0.199]
         haloac3_div.iloc[4:8,1]    =  [2,2,2,2] #"Warm\nADV"]
         # Continuous ERA5 for instantaneous intercomparison
-        era5_div.iloc[0:4,0]       = [0.606904,0.539302,0.014326,-0.004315] #warm conv
+        era5_div.iloc[0:4,0]       = [0.606904,0.539302,
+                                      0.014326,-0.004315] #warm conv
         era5_div.iloc[0:4,1]       = [1,1,1,1]
-        era5_div.iloc[4:8,0]       = [-0.000405,0.500588,-0.563,-0.43281] # ADV
+        era5_div.iloc[4:8,0]       = [-0.000405,0.500588,
+                                      -0.563,-0.43281] # ADV
         era5_div.iloc[4:8,1]       = [2,2,2,2]
         
         inst_era5_div.iloc[0:4,0]  = [-0.637,1.074779,-0.406,0.247] # Warm CONV
         inst_era5_div.iloc[0:4,1]  = [1,1,1,1]
-        inst_era5_div.iloc[4:8,0]  = [-0.773947,-0.798314,-0.648433,-1.340648] # Warm ADV
+        inst_era5_div.iloc[4:8,0]  = [-0.773947,-0.798314,
+                                      -0.648433,-1.340648] # Warm ADV
         inst_era5_div.iloc[4:8,1]  = [2,2,2,2]
         
         #inst_haloac3_div
@@ -309,9 +312,10 @@ if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig12_single_case_sector_profiles"
     #figure_to_create="fig13_campaign_divergence_overviews"
-    #figure_to_create="fig14_divergence_instantan_errorbars"
-    figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
+    figure_to_create="fig14_divergence_instantan_errorbars"
+    #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
     
     #figure_to_create="fig_supplements_sonde_pos_comparison"
     #figure_to_create="fig12_campaign_divergence_overviews"
-    main(figure_to_create=figure_to_create, include_haloac3=False)
+    main(figure_to_create=figure_to_create,
+         include_haloac3=True)

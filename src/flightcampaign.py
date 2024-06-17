@@ -40,8 +40,8 @@ class Campaign:
         self.major_path=major_path
         self.is_synthetic_campaign=False
         
-            
-    #%% General
+    #-------------------------------------------------------------------------#        
+    # General
     def get_instrument_data(self):
         self.data={}
         self.data.keys=self.instruments
@@ -146,8 +146,8 @@ class Campaign:
         if has_saved:
             print("DataFrame has saved successfully as:",
                   save_path+file_name+".csv")
-    
-    #%% Aircraft Data / Bahamas
+    #-------------------------------------------------------------------------#
+    # Aircraft Data / Bahamas
     def get_aircraft_position(self,flights_of_interest,all_flights=False,
                               do_NAWDEX=False):
         """
@@ -369,8 +369,8 @@ class Campaign:
         print(instrument, "-data has been cutted for roll angle thresholds")
         return meas_dict_restricted
     
-    
-    #%% specMACS
+    #-------------------------------------------------------------------------#
+    # specMACS
     def load_specmacs_data(self,day,only_cloudmask=True):
         Specmacs={}
         
@@ -454,11 +454,17 @@ class Campaign:
             Regridded_specMACS["VZA"]           = Regridded_VZA
         
         return Regridded_specMACS    
-    #%% HAMP Combined
+    #-------------------------------------------------------------------------#
+    # HAMP Combined
     def calc_distance_to_IVT_max(self,halo_df,data_df):
         halo_df["distance"]=halo_df["groundspeed"].cumsum()-\
             halo_df["groundspeed"].iloc[0]
-        max_ivt_idx=data_df["Interp_IVT"].argmax()
+        try:
+            max_ivt_idx=data_df["Interp_IVT"].argmax()
+        except:
+            max_ivt_idx=data_df.argmax()
+            data_df=pd.DataFrame(data=data_df.values,index=data_df.index,
+                                 columns=["Interp_IVT"])
         data_df["IVT_max_distance"]=halo_df["distance"]-\
                                         halo_df["distance"].iloc[max_ivt_idx]
         return data_df
@@ -603,11 +609,14 @@ class Campaign:
                         try:
                             date=fileend[flight][0:8]
                             bahamas=xr.open_dataset(
-                                main_path+"BAHAMAS/HALO-DB_bahamas_"+date+"a_"+flight+"_v01.nc")
+                                main_path+"BAHAMAS/HALO-DB_bahamas_"+\
+                                    date+"a_"+flight+"_v01.nc")
                         except:
-                            raise FileNotFoundError("The Bahamas dataset has not yet been downloaded.")
+                            raise FileNotFoundError(
+                            "The Bahamas dataset has not yet been downloaded.")
                         airspeed=pd.Series(data=bahamas["IRS_GS"],
-                                       index=pd.DatetimeIndex(np.array(bahamas["TIME"][:])))
+                                       index=pd.DatetimeIndex(
+                                           np.array(bahamas["TIME"][:])))
                         airspeed=airspeed.resample("1s").mean()
                         df["groundspeed"]=np.array(airspeed)
                     else:
@@ -618,7 +627,8 @@ class Campaign:
                     rf=dataset["dbz"][:]
                     reflectivity_factor=pd.DataFrame(data=np.array(rf),
                             columns=map(str,np.array(dataset["height"][:])))
-                    reflectivity_factor.index=pd.DatetimeIndex(np.array(dataset.time))
+                    reflectivity_factor.index=pd.DatetimeIndex(
+                        np.array(dataset.time))
                     ldr=dataset["ldr"][:]
                     ldr_factor=pd.DataFrame(data=np.array(ldr),
                             columns=map(str,np.array(dataset["height"][:])))
@@ -693,8 +703,8 @@ class Campaign:
                
         # Return the dictionary comprising the measurement data of given device    
         return meas_dict
-    
-    #%% Radar Specific
+    #-------------------------------------------------------------------------#
+    # Radar Specific
     def restrict_data_to_flight_level(self,meas_data,flight_levels,
                                       instrument="radar",
                                       flights="all"):
@@ -900,7 +910,8 @@ class Campaign:
         print("Figure saved as: ",plot_path+fig_name)
         return cfad_df
     
-    #%% Radiometer specific
+    #-------------------------------------------------------------------------#
+    # Radiometer specific
     def plot_hamp_brightness_temperatures(self,Tb_df,flight,date,start,end,
                                           ar_of_day=None,
                                           plot_path=os.getcwd()):
@@ -1440,7 +1451,8 @@ class Campaign:
            Performance.performance.updt(self,upsampled_sondes["Wspeed"].shape[0],int_idx)
            int_idx+=1 
        return retrieval_dict
-    #%% Dropsondes
+    #-------------------------------------------------------------------------#
+    # Dropsondes
     def load_dropsonde_data(self,date,print_arg="yes",dt="all",plotting="no"):
         R_L= 287  #J/(kg*K)
         c_p= 1005 #J(kg*K)
@@ -2221,8 +2233,44 @@ class HALO_AC3(Campaign):
         else:
             print("Overall directory of campaign is: ",
                   self.campaign_path)
+        self.budget_legs={}
+    def define_budget_legs(self,flight,ar_of_day):
+        self.flight    = flight
+        self.ar_of_day = ar_of_day
+        if self.flight[0]=="RF03":
+            if self.ar_of_day=="AR_entire_1":
+                self.inflow_times=["2022-03-13 10:00","2022-03-13 10:35"]
+                self.internal_times=["2022-03-13 10:37","2022-03-13 11:10"]
+                self.outflow_times=["2022-03-13 11:16","2022-03-13 11:40"]
+        if self.flight[0]=="RF05":
+            if self.ar_of_day=="AR_entire_1":
+                self.inflow_times=["2022-03-15 10:11","2022-03-15 11:13"]
+                self.internal_times=["2022-03-15 11:18","2022-03-15 12:14"]
+                self.outflow_times=["2022-03-15 12:20","2022-03-15 13:15"]
+            elif self.ar_of_day=="AR_entire_2":
+                self.inflow_times=["2022-03-15 14:30","2022-03-15 15:25"]
+                self.internal_times=["2022-03-15 13:20","2022-03-15 14:25"]
+                self.outflow_times=["2022-03-15 12:20","2022-03-15 13:15"]
+        if self.flight[0]=="RF06":
+            if self.ar_of_day=="AR_entire_1":
+                self.inflow_times=["2022-03-16 10:45","2022-03-16 11:21"]
+                self.internal_times=["2022-03-16 11:25","2022-03-16 12:10"]
+                self.outflow_times=["2022-03-16 12:15","2022-03-16 12:50"]
+            elif self.ar_of_day=="AR_entire_2":
+                self.inflow_times=["2022-03-16 12:12","2022-03-16 12:55"]
+                self.internal_times=["2022-03-16 12:58","2022-03-16 13:40"]
+                self.outflow_times=["2022-03-16 13:45","2022-03-16 14:18"]
+        if self.flight[0]=="RF16":
+            if self.ar_of_day=="AR_entire_1":
+                self.inflow_times=["2022-04-10 10:40","2022-04-10 11:08"]
+                self.internal_times=["2022-04-10 11:10","2022-04-10 11:36"]
+                self.outflow_times=["2022-04-10 11:57","2022-04-10 12:15"]
+            elif self.ar_of_day=="AR_entire_2":
+                self.inflow_times=["2022-03-16 12:12","2022-03-16 12:55"]
+                self.internal_times=["2022-03-16 12:58","2022-03-16 13:40"]
+                self.outflow_times=["2022-03-16 13:45","2022-03-16 14:18"]
+        return self.inflow_times,self.internal_times,self.outflow_times
 ###############################################################################
-#%% Synthetic Campaign Class
 class Synthetic_Campaign(Campaign):
     flight_day={}
     flight_month={}
@@ -2238,8 +2286,9 @@ class Synthetic_Campaign(Campaign):
         self.interested_flights="all"
         self.major_path=major_path
         self.is_synthetic_campaign=True
-            
-    #%% General
+    
+    #-------------------------------------------------------------------------#        
+    # General
     def specify_flights_of_interest(self,interested_flights):
         if interested_flights==["all"]:
             self.interested_flights=self.flight_days.keys()
@@ -2342,7 +2391,7 @@ class Synthetic_Campaign(Campaign):
             print("DataFrame has saved successfully as:",
                   save_path+file_name+".csv")
     
-    #%% Aircraft Data 
+    # Aircraft Data
     def get_aircraft_waypoints(self,
                                filetype=".ftml"):
         """
@@ -2515,7 +2564,6 @@ class Synthetic_Campaign(Campaign):
     #    track_df,cmpgn_path=Tracker.run_flight_track_creator()
                 
     
-#%%
 # Synthetic Campaign Class HALO_AC3_Dry
 class HALO_AC3_Dry_Run(Synthetic_Campaign):
     def __init__(self,is_flight_campaign,major_path,aircraft,

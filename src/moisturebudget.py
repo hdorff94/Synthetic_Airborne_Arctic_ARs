@@ -10,6 +10,9 @@ import sys
 
 import numpy as np
 import pandas as pd
+
+import metpy.calc as mpcalc
+from metpy.units import units
     
 import matplotlib
 import matplotlib.pyplot as plt
@@ -1570,6 +1573,564 @@ class Moisture_Convergence(Moisture_Budgets):
             print("vector mass convergence saved as: ",
                               save_data_path+vector_mass_conv_file_name)
 #-----------------------------------------------------------------------------#
+class Surface_Evaporation(Moisture_Budgets):
+    def __init__(self,cmpgn_name,flight,major_work_path,flight_dates={},
+                 sector_types=["warm","core","cold"],
+                 ar_of_day="AR",grid_name="ERA5",do_instantan=False):
+        
+        self.cmpgn_name="HALO_AC3"
+        self.grid_name=grid_name
+        self.do_instantan=do_instantan
+        self.flight=flight
+        self.major_work_path=major_work_path
+        self.ar_of_day=ar_of_day
+        self.relevant_sondes_dict={}
+        self.internal_sondes_dict={}
+        """ So far not possible
+        if self.flight[0]=="RF05":
+            if self.ar_of_day=="AR_entire_1":
+                self.relevant_warm_sector_sondes=[0,1,2,3,9,10,11,12]
+                self.relevant_cold_sector_sondes=[4,5,6]
+                self.relevant_warm_internal_sondes=[7,8,13,14]
+                self.relevant_sondes_dict["warm_sector"]        = {}
+                self.relevant_sondes_dict["warm_sector"]["in"]  = \
+                    sonde_times_series.iloc[relevant_warm_sector_sondes[0:4]]
+            relevant_sondes_dict["warm_sector"]["out"] = \ 
+            sonde_times_series.iloc[relevant_warm_sector_sondes[4::]]
+            relevant_sondes_dict["cold_sector"]        = {}
+            relevant_sondes_dict["cold_sector"]["in"]  = \
+                sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+            #relevant_sondes_dict["cold_sector"]["out"] = \
+                sonde_times_series.iloc[relevant_cold_sector_sondes[3::]]
+            synthetic_sonde_times_series=pd.Series(data=["7synth","8synth","9synth"],
+                                     index=pd.DatetimeIndex(["2022-03-15 12:55","2022-03-15 13:05","2022-03-15 13:15"]))
+            
+            relevant_sondes_dict["cold_sector"]["out"] = synthetic_sonde_times_series
+            internal_sondes_dict["warm"]               = sonde_times_series.iloc[relevant_warm_internal_sondes]
+            internal_sondes_dict["cold"]               = ["2022-03-15 11:30:00","2022-03-15 13:35"]   
+        elif ar_of_day=="AR_entire_2":
+            relevant_warm_sector_sondes=[9,10,11,12,15,16,17,18]
+            relevant_cold_sector_sondes=[19,20,21]
+            relevant_warm_internal_sondes=[13,14,22,23]
+            relevant_sondes_dict["warm_sector"]        = {}
+            relevant_sondes_dict["warm_sector"]["in"]  = sonde_times_series.iloc[relevant_warm_sector_sondes[4::]]
+            relevant_sondes_dict["warm_sector"]["out"] = sonde_times_series.iloc[relevant_warm_sector_sondes[0:4]]
+            relevant_sondes_dict["cold_sector"]        = {}
+            relevant_sondes_dict["cold_sector"]["in"]  = pd.Series()#sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+            relevant_sondes_dict["cold_sector"]["out"] = sonde_times_series.iloc[relevant_cold_sector_sondes]
+            internal_sondes_dict["warm"]               = sonde_times_series.iloc[relevant_warm_internal_sondes]
+            elif flight[0]=="RF06":
+                if ar_of_day=="AR_entire_1":
+            relevant_warm_sector_sondes=[0,1,2,8,9,10]
+            relevant_cold_sector_sondes=[3,4,5,11,12]
+            relevant_warm_internal_sondes=[7,22]
+            relevant_sondes_dict["warm_sector"]        = {}
+            relevant_sondes_dict["warm_sector"]["in"]  = sonde_times_series.iloc[relevant_warm_sector_sondes[0:3]]
+            relevant_sondes_dict["warm_sector"]["out"] = sonde_times_series.iloc[relevant_warm_sector_sondes[3:]]
+            relevant_sondes_dict["cold_sector"]        = {}
+            relevant_sondes_dict["cold_sector"]["in"]  = sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+            relevant_sondes_dict["cold_sector"]["out"] = sonde_times_series.iloc[relevant_cold_sector_sondes[3:]]
+            internal_sondes_dict["warm"]               = sonde_times_series.iloc[relevant_warm_internal_sondes]
+            elif ar_of_day=="AR_entire_2":
+                relevant_warm_sector_sondes=[8,9,16,17]
+            relevant_cold_sector_sondes=[10,11,12,18,19]
+            relevant_warm_internal_sondes=[14,15,21,22]
+            relevant_sondes_dict["warm_sector"]        = {}
+            relevant_sondes_dict["warm_sector"]["in"]  = sonde_times_series.iloc[relevant_warm_sector_sondes[0:2]]
+            relevant_sondes_dict["warm_sector"]["out"] = sonde_times_series.iloc[relevant_warm_sector_sondes[2::]]
+            relevant_sondes_dict["cold_sector"]        = {}
+            relevant_sondes_dict["cold_sector"]["in"]  = sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+            relevant_sondes_dict["cold_sector"]["out"] = sonde_times_series.iloc[relevant_cold_sector_sondes[3::]]
+            internal_sondes_dict["warm"]               = sonde_times_series.iloc[relevant_warm_internal_sondes]
+        """
+    def load_sonde_data(self):
+        """
+        ######################################################################
+        From Main Script for running interpolation of griddata on flight path
+        #######################################################################
+        """
+        from simplified_flight_leg_handling import simplified_run_grid_main
+        
+        self.halo_era5,self.halo_df,self.cmpgn_cls,ERA5_on_HALO,radar,Dropsondes=\
+        simplified_run_grid_main(flight=self.flight,
+                config_file_path=self.major_work_path,
+                ar_of_day=self.ar_of_day)
+        if not "Lat" in [*Dropsondes.keys()]:
+            sondes_lon=[[*Dropsondes["reference_lon"].values()][sonde].data[0] \
+                    for sonde in range(Dropsondes["IWV"].shape[0])]
+                    
+            sondes_lat=[[*Dropsondes["reference_lat"].values()][sonde].data[0]\
+                    for sonde in range(Dropsondes["IWV"].shape[0])]
+            Dropsondes["Lat"]=pd.Series(data=np.array(sondes_lat),
+                                                index=Dropsondes["IWV"].index)
+            Dropsondes["Lon"]=pd.Series(data=np.array(sondes_lon),
+                                                index=Dropsondes["IWV"].index)
+            self.sonde_times_series=pd.Series(
+                index=Dropsondes["IWV"].index.values,
+                data=range(Dropsondes["IWV"].shape[0]))
+            self.Dropsondes=Dropsondes
+    
+    def select_surface_data(self):
+        temp_sonde = self.Dropsondes["tdry"].copy()
+        #temp_min   = temp_sonde-temp_sonde_unc
+        #temp_max   = temp_sonde+temp_sonde_unc
+        wspd_sonde = self.Dropsondes["wspd"].copy()
+        shum_sonde = self.Dropsondes["q"].copy()
+        pres_sonde = self.Dropsondes["pres"].copy()
+        sst        = self.halo_era5["Interp_SST"]
+        temp_sonde_unc =0.5
+        sst_unc    = 0.5
+        shum_unc   = 0.0002
+        #sst_min    = sst-sst_unc
+        #sst_max    = sst+sst_unc
+        #shum_min   = shum_sonde-shum_unc
+        #shum_max   = shum_sonde+shum_unc
+        
+        self.surface_data=pd.DataFrame(data=np.nan, 
+            columns=["Temp","Shum","Wind","Pres","ERA5_SST"],
+            index=pd.DatetimeIndex([*temp_sonde.keys()]))
+
+        for n,sonde in enumerate([*temp_sonde.keys()]):
+            max_alt=float(temp_sonde[sonde].isel({"time":slice(0,10)})["gpsalt"].max())
+            # Add threshold if max alt is too high, i.e. sondes did not reach 
+            # the ground. 
+            if max_alt>150:
+                print("Sonde is to high")
+                continue                
+            self.surface_data["Temp"].loc[sonde]=\
+                temp_sonde[sonde].isel({"time":slice(0,10)}).mean()
+            self.surface_data["Wind"].loc[sonde]=\
+                wspd_sonde[sonde].isel({"time":slice(0,10)}).mean()
+            self.surface_data["Shum"].loc[sonde]=\
+                shum_sonde[pd.Timestamp(sonde)].iloc[0:10].mean()
+            self.surface_data["Pres"].loc[sonde]=\
+                pres_sonde[sonde].isel({"time":slice(0,10)}).mean()
+            try:
+                self.surface_data["ERA5_SST"].loc[pd.Timestamp(sonde)]=\
+                    sst.loc[pd.Timestamp(sonde)]
+                
+                print(pd.Timestamp(sonde))
+            except:
+                print("Out of flight pattern")
+            self.surface_data["ERA5_SST_min"]=self.surface_data["ERA5_SST"]-sst_unc
+            self.surface_data["ERA5_SST_max"]=self.surface_data["ERA5_SST"]+sst_unc
+            self.surface_data["Shum_min"]    =self.surface_data["Shum"]-shum_unc
+            self.surface_data["Shum_max"]    =self.surface_data["Shum"]+shum_unc
+            self.surface_data["Temp_min"]    =self.surface_data["Temp"]-temp_sonde_unc
+            self.surface_data["Temp_max"]    =self.surface_data["Temp"]+temp_sonde_unc
+            
+    def calc_sat_q(self):
+        # Get saturated specific humidity for given pressure and SST
+        
+        calc_mrsat=mpcalc.saturation_mixing_ratio
+        calc_q_from_mr=mpcalc.specific_humidity_from_mixing_ratio
+        saturation_mr=calc_mrsat(
+            self.surface_data["Pres"].values*units.hPa,
+            self.surface_data["ERA5_SST"].values*units.K)
+        saturation_mr_max=calc_mrsat(
+            self.surface_data["Pres"].values*units.hPa,
+            self.surface_data["ERA5_SST_max"].values*units.K)
+        saturation_mr_min=calc_mrsat(
+            self.surface_data["Pres"].values*units.hPa,
+            self.surface_data["ERA5_SST_min"].values*units.K)                                                        
+        self.surface_data["Qsat"]=np.array(calc_q_from_mr(saturation_mr))
+        self.surface_data["Qsat_min"]=np.array(calc_q_from_mr(saturation_mr_min))
+        self.surface_data["Qsat_max"]=np.array(calc_q_from_mr(saturation_mr_max))
+    def calc_rho_air(self):
+        calc_mr_from_q=mpcalc.mixing_ratio_from_specific_humidity
+        #MR
+        self.surface_data["Mixr"]=\
+            calc_mr_from_q(self.surface_data["Shum"].values)
+        self.surface_data["Mixr_min"]=calc_mr_from_q(
+            self.surface_data["Shum_min"].values)
+        self.surface_data["Mixr_max"]=calc_mr_from_q(
+            self.surface_data["Shum_max"].values)
+        #Tvir
+        self.surface_data["Tvir"]=(self.surface_data["Temp"]+273.15)*\
+            (1+0.61*self.surface_data["Mixr"])
+        self.surface_data["Tvir_min"]=(self.surface_data["Temp_min"]+273.15)*\
+            (1+0.61*self.surface_data["Mixr_min"])
+        self.surface_data["Tvir_max"]=(self.surface_data["Temp_max"]+273.15)*\
+            (1+0.61*self.surface_data["Mixr_max"])
+        #Rho Air    
+        self.surface_data["RhoA"]=self.surface_data["Pres"]*100/\
+            (287.05*self.surface_data["Tvir"])
+        self.surface_data["RhoA_min"]=self.surface_data["Pres"]*100/\
+            (287.05*self.surface_data["Tvir_max"])
+        self.surface_data["RhoA_max"]=self.surface_data["Pres"]*100/\
+            (287.05*self.surface_data["Tvir_min"])
+
+    def prepare_dropsonde_data(self):     
+        self.load_sonde_data()
+        self.select_surface_data()
+    def define_uncertainties(self):
+        self.surface_data["Wind_unc"]=0.15 #
+        self.surface_data
+    def bulk_evap(self):
+        
+        self.surface_data["Drag"]=1.4e-3
+        self.surface_data["Drag"].loc[self.surface_data["Wind"]>=13]=1.6e-3
+        self.surface_data["Evap"]=self.surface_data["Drag"]*self.surface_data["RhoA"]*\
+            (self.surface_data["Qsat"]-self.surface_data["Shum"])*self.surface_data["Wind"] # units kg/s
+    def calc_evaporation(self,add_uncertainty=True):
+        if not hasattr(self,"surface_data"):
+            self.prepare_dropsonde_data()
+        else:
+            self.calc_sat_q()
+            self.calc_rho_air()
+        
+        self.surface_data["Drag"]=1.4e-3
+        self.surface_data["Drag"].loc[self.surface_data["Wind"]>=13]=1.6e-3
+        self.surface_data["Evap"]=self.surface_data["Drag"]*self.surface_data["RhoA"]*\
+            (self.surface_data["Qsat"]-self.surface_data["Shum"])*\
+                self.surface_data["Wind"] # units kg/s
+        if add_uncertainty:
+            #-----------------------------------------------------------------#
+            # Get uncertainties:
+            # Using min and max values
+            self.surface_data["RhoA_unc"]=np.sqrt((self.surface_data["RhoA_max"]-\
+                                              self.surface_data["RhoA_min"])**2)
+            self.surface_data["Shum_unc"]=np.sqrt((self.surface_data["Shum_max"]-\
+                                              self.surface_data["Shum_min"])**2)
+            self.surface_data["Qsat_unc"]=np.sqrt((self.surface_data["Qsat_max"]-
+                                            self.surface_data["Qsat_min"])**2)
+            self.surface_data["Wind_unc"]=np.sqrt(2)/10# for component-wise unc 0.1
+            print("Rho_unc",self.surface_data["RhoA_unc"].mean())
+            print("Shum_unc",self.surface_data["Shum_unc"].mean())
+            print("Wind_unc",self.surface_data["Wind_unc"].mean())
+            print("Qsat_unc",self.surface_data["Qsat_unc"].mean())
+            #-----------------------------------------------------------------#
+            # Gaussian error propagation
+            #evap=C_drag*x1*(x2-x3)*x4 ### d=(x2-x3)
+            #evap_unc/evap=C_drag*sqrt((u1/x1)**(2)*(u4/x4)**2\
+            #    *(sqrt([u2+u3]**2)/d**2)
+            #-----------------------------------------------------------------#
+            normed_Evap_unc=\
+                np.sqrt((self.surface_data["RhoA_unc"]/\
+                         self.surface_data["RhoA"])**2+\
+                (self.surface_data["Wind_unc"]/self.surface_data["Wind"])**2+\
+                (self.surface_data["Qsat_unc"]**2+self.surface_data["Shum_unc"]**2)/\
+                (self.surface_data["Qsat"]-self.surface_data["Shum"])**2)*\
+                1#*self.surface_data["Drag"]
+            #-----------------------------------------------------------------#
+            # Now it needs to be multiplied with "Evap_unc"
+            self.surface_data["Evap_unc"]=normed_Evap_unc*self.surface_data["Evap"]
+class Surface_Precipitation():
+    
+    def __init__(self,cmpgn_name,cmpgn_cls,flight,
+                 major_work_path,flight_dates={},
+                 sector_types=["warm","core","cold"],
+                 ar_of_day="AR",grid_name="ERA5",do_instantan=False):
+            
+            self.cmpgn_cls=cmpgn_cls
+            self.cmpgn_name="HALO_AC3"
+            self.grid_name=grid_name
+            self.do_instantan=do_instantan
+            self.flight=flight
+            self.major_work_path=major_work_path
+            self.ar_of_day=ar_of_day
+            self.precip_rate_path=self.cmpgn_cls.campaign_data_path+\
+                "/data/precip_rates/"
+
+    
+    def get_relevant_sondes_dict(self,Dropsondes):
+        if not "Lat" in [*Dropsondes.keys()]:
+           sondes_lon=[[*Dropsondes["reference_lon"].values()][sonde].data[0] \
+                    for sonde in range(Dropsondes["IWV"].shape[0])]
+                    
+           sondes_lat=[[*Dropsondes["reference_lat"].values()][sonde].data[0]\
+                    for sonde in range(Dropsondes["IWV"].shape[0])]
+           Dropsondes["Lat"]=pd.Series(data=np.array(sondes_lat),
+                                                index=Dropsondes["IWV"].index)
+           Dropsondes["Lon"]=pd.Series(data=np.array(sondes_lon),
+                                                index=Dropsondes["IWV"].index)
+
+        sonde_times_series=pd.Series(index=Dropsondes["IWV"].index.values,
+                                     data=range(Dropsondes["IWV"].shape[0]))
+        relevant_sondes_dict={}
+
+        if self.flight[0]=="RF05":
+            if self.ar_of_day=="AR_entire_1":
+                relevant_warm_sector_sondes=[0,1,2,3,9,10,11,12]
+                relevant_cold_sector_sondes=[4,5,6]
+                relevant_internal_sondes=[7,8,13,14]
+                relevant_sondes_dict["warm_sector"]        = {}
+                relevant_sondes_dict["warm_sector"]["in"]  = \
+                    sonde_times_series.iloc[relevant_warm_sector_sondes[0:4]]
+                relevant_sondes_dict["warm_sector"]["out"] = \
+                    sonde_times_series.iloc[relevant_warm_sector_sondes[4::]]
+                relevant_sondes_dict["cold_sector"]        = {}
+                relevant_sondes_dict["cold_sector"]["in"]  = \
+                    sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                relevant_sondes_dict["cold_sector"]["out"] = \
+                    sonde_times_series.iloc[relevant_cold_sector_sondes[3::]]
+                relevant_sondes_dict["internal"]           = \
+                    sonde_times_series.iloc[relevant_internal_sondes]
+            elif self.ar_of_day=="AR_entire_2":
+                relevant_warm_sector_sondes=[9,10,11,12,15,16,17,18]
+                relevant_cold_sector_sondes=[19,20,21]
+                relevant_sondes_dict["warm_sector"]        = {}
+                relevant_sondes_dict["warm_sector"]["in"]  = \
+                    sonde_times_series.iloc[relevant_warm_sector_sondes[4::]]
+                relevant_sondes_dict["warm_sector"]["out"] = \
+                    sonde_times_series.iloc[relevant_warm_sector_sondes[0:4]]
+                relevant_sondes_dict["cold_sector"]        = {}
+                relevant_sondes_dict["cold_sector"]["in"]  = pd.Series()#sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                relevant_sondes_dict["cold_sector"]["out"] = \
+                    sonde_times_series.iloc[relevant_cold_sector_sondes]
+    
+        if self.flight[0]=="RF06":
+            if self.ar_of_day=="AR_entire_1":
+                relevant_warm_sector_sondes=[0,1,2,8,9,10]
+                relevant_cold_sector_sondes=[3,4,5,10,11,12]
+                relevant_warm_internal_sondes=[7,22]
+                relevant_sondes_dict["warm_sector"]        = {}
+                relevant_sondes_dict["warm_sector"]["in"]  = \
+                    sonde_times_series.iloc[relevant_warm_sector_sondes[0:3]]
+                relevant_sondes_dict["warm_sector"]["out"] = \
+                    sonde_times_series.iloc[relevant_warm_sector_sondes[3:]]
+                relevant_sondes_dict["cold_sector"]        = {}
+                relevant_sondes_dict["cold_sector"]["in"]  = \
+                    sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                relevant_sondes_dict["cold_sector"]["out"] = \
+                    sonde_times_series.iloc[relevant_cold_sector_sondes[3:]]
+                relevant_sondes_dict["internal"]           = \
+                    sonde_times_series.iloc[relevant_warm_internal_sondes]
+            elif self.ar_of_day=="AR_entire_2":
+                relevant_warm_sector_sondes=[8,9,16,17]
+                relevant_cold_sector_sondes=[10,11,12,18,19]
+                relevant_warm_internal_sondes=[]
+                relevant_sondes_dict["warm_sector"]        = {}
+                relevant_sondes_dict["warm_sector"]["in"]  = \
+                    sonde_times_series.iloc[relevant_warm_sector_sondes[0:2]]
+                relevant_sondes_dict["warm_sector"]["out"] = \
+                    sonde_times_series.iloc[relevant_warm_sector_sondes[2::]]
+                relevant_sondes_dict["cold_sector"]        = {}
+                relevant_sondes_dict["cold_sector"]["in"]  = \
+                    sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                relevant_sondes_dict["cold_sector"]["out"] = \
+                    sonde_times_series.iloc[relevant_cold_sector_sondes[3::]]  
+        self.relevant_sondes_dict=relevant_sondes_dict
+        
+    def get_warm_sector_geoloc_boundaries(self):
+        # radar sector
+        if self.flight[0]=="RF05":
+            if self.ar_of_day=="AR_entire_1":
+                # old
+                #warm_radar_rain=radar_precip_rate.loc[radar_precip_rate["lat"].between(71.412415,76.510696)]
+                #warm_radar_rain=warm_radar_rain.loc[warm_radar_rain["lon"].between(-6.153736,8.080936)]
+                # new
+                max_warm_lat=76.510696
+                max_warm_lon=10.080936
+                min_warm_lat=70.412415
+                min_warm_lon=-6.153736
+                #cold_radar_rain=radar_precip_rate.loc[radar_precip_rate["lat"].between(72.492348,77.000370)]
+                #cold_radar_rain=radar_precip_rate.loc[radar_precip_rate["lon"].between(-15.085639,-4.658210)]
+            elif self.ar_of_day=="AR_entire_2":
+                max_warm_lat=76.510696
+                max_warm_lon=8.080936
+                min_warm_lat=72.850830
+                min_warm_lon=-4.379189
+            else:
+                Exception("no other AR sector defined")# apply sector to icon
+
+        elif self.flight[0]=="RF06":
+            if self.ar_of_day=="AR_entire_1":
+                max_warm_lat=73.430244
+                max_warm_lon=21.382162
+                min_warm_lat=71.144676
+                min_warm_lon=11.011759
+        
+            elif self.ar_of_day=="AR_entire_2":
+                max_warm_lat=75.811005
+                max_warm_lon=25.683155
+                min_warm_lat=72.973465
+                min_warm_lon=18.015015
+        
+        self.max_warm_lat=max_warm_lat
+        self.max_warm_lon=max_warm_lon
+        self.min_warm_lat=min_warm_lat
+        self.min_warm_lon=min_warm_lon
+    
+    def select_warm_precip(self,radar_precip_rate,halo_icon_hmp,include_icon=True):
+        """
+        Caution: this routine uses the lat/lon thresholds to access ALL leg
+        parts that are included in the warm AR sector domain
+
+        Parameters
+        ----------
+        radar_precip_rate : pd.DataFrame
+            DESCRIPTION.
+        halo_icon_hmp : pd.DataFrame
+            DESCRIPTION.
+
+        Returns
+        -------
+        warm_radar_rain : pd.DataFrame
+            DESCRIPTION.
+        warm_icon_rain : pd.DataFrame
+            DESCRIPTION.
+
+        """
+        self.get_warm_sector_geoloc_boundaries()
+        warm_radar_rain=radar_precip_rate.loc[radar_precip_rate["lat"].between(
+            self.min_warm_lat,self.max_warm_lat)]
+        warm_radar_rain=warm_radar_rain.loc[warm_radar_rain["lon"].between(
+            self.min_warm_lon,self.max_warm_lon)]        
+        if include_icon:
+            warm_icon_rain=halo_icon_hmp.loc[warm_radar_rain.index]
+            warm_icon_rain["rate"]=warm_icon_rain["Interp_Precip"]
+        else: 
+            warm_icon_rain=pd.DataFrame()
+        #try:
+        #    cold_icon_rain=halo_icon_hmp.loc[cold_radar_rain.index]
+        #    cold_icon_rain["rate"]=cold_icon_rain["Interp_Precip"]
+        #except:
+        #    print("No cold sector available")
+        return warm_radar_rain,warm_icon_rain
+    def save_precip_rates_series(self,radar_rain_df,sector="all"):
+        precip_file_name=sector+"_precip_"+\
+            self.flight[0]+"_"+self.ar_of_day+".csv"
+        radar_rain_df.to_csv(self.precip_rate_path+precip_file_name)
+        print(sector+" precipitation saved as:",
+              self.precip_rate_path+precip_file_name)
+
+class IWV_tendency(Moisture_Budgets):
+    def __init__(self,cmpgn_name,flight,Dropsondes,IWV_retrieval,
+                 major_work_path,flight_dates={},
+                 sector_types=["warm","core","cold"],
+                 ar_of_day="AR",grid_name="ERA5",do_instantan=False):
+        
+        self.flight=flight
+        self.Dropsondes= Dropsondes
+        self.major_work_path=major_work_path
+        self.ar_of_day=ar_of_day
+        self.relevant_sondes_dict={}
+        self.internal_sondes_dict={}
+        self.cmpgn_name="HALO_AC3"
+        self.grid_name=grid_name
+        self.do_instantan=do_instantan
+        if self.flight[0]=="RF05":
+            if self.ar_of_day=="AR_entire_1":
+                self.inflow_times=["2022-03-15 10:11","2022-03-15 11:13"]
+                self.internal_times=["2022-03-15 11:18","2022-03-15 12:14"]
+                self.outflow_times=["2022-03-15 12:20","2022-03-15 13:15"]
+            elif self.ar_of_day=="AR_entire_2":
+                self.inflow_times=["2022-03-15 14:30","2022-03-15 15:25"]
+                self.internal_times=["2022-03-15 13:20","2022-03-15 14:25"]
+                self.outflow_times=["2022-03-15 12:20","2022-03-15 13:15"]
+        if self.flight[0]=="RF06":
+            if self.ar_of_day=="AR_entire_1":
+                self.inflow_times=["2022-03-16 10:45","2022-03-16 11:21"]
+                self.internal_times=["2022-03-16 11:25","2022-03-16 12:10"]
+                self.outflow_times=["2022-03-16 12:15","2022-03-16 12:50"]
+            elif self.ar_of_day=="AR_entire_2":
+                self.inflow_times=["2022-03-16 12:12","2022-03-16 12:55"]
+                self.internal_times=["2022-03-16 12:58","2022-03-16 13:40"]
+                self.outflow_times=["2022-03-16 13:45","2022-03-16 14:18"]
+        
+    def get_relevant_sondes_dict(self):
+        Dropsondes=self.Dropsondes
+        if not "Lat" in [*Dropsondes.keys()]:
+           sondes_lon=[[*Dropsondes["reference_lon"].values()][sonde].data[0] \
+                    for sonde in range(Dropsondes["IWV"].shape[0])]
+                    
+           sondes_lat=[[*Dropsondes["reference_lat"].values()][sonde].data[0]\
+                    for sonde in range(Dropsondes["IWV"].shape[0])]
+           Dropsondes["Lat"]=pd.Series(data=np.array(sondes_lat),
+                                                index=Dropsondes["IWV"].index)
+           Dropsondes["Lon"]=pd.Series(data=np.array(sondes_lon),
+                                                index=Dropsondes["IWV"].index)
+
+        self.sonde_times_series=pd.Series(index=Dropsondes["IWV"].index.values,
+                                     data=range(Dropsondes["IWV"].shape[0]))
+        relevant_sondes_dict={}
+        internal_sondes_dict={}
+        #---------------------------------------------------------------------#
+        # Define/Select relevant sondes
+        if self.flight[0]=="RF05":
+            if self.ar_of_day=="AR_entire_1":
+                relevant_warm_sector_sondes=[0,1,2,3,9,10,11,12]
+                relevant_cold_sector_sondes=[4,5,6]
+                relevant_warm_internal_sondes=[7,13] #13
+                relevant_sondes_dict["warm_sector"]        = \
+                    {}
+                relevant_sondes_dict["warm_sector"]["in"]  = \
+                    self.sonde_times_series.iloc[relevant_warm_sector_sondes[0:4]]
+                relevant_sondes_dict["warm_sector"]["out"] = \
+                    self.sonde_times_series.iloc[relevant_warm_sector_sondes[4::]]
+                relevant_sondes_dict["cold_sector"]        = \
+                    {}
+                relevant_sondes_dict["cold_sector"]["in"]  = \
+                    self.sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                #relevant_sondes_dict["cold_sector"]["out"] = \
+                #    sonde_times_series.iloc[relevant_cold_sector_sondes[3::]]
+                synthetic_sonde_times_series=\
+                    pd.Series(data=["7synth","8synth","9synth"],
+                        index=pd.DatetimeIndex(
+                            ["2022-03-15 12:55","2022-03-15 13:05",
+                             "2022-03-15 13:15"]))
+                relevant_sondes_dict["cold_sector"]["out"] = \
+                    synthetic_sonde_times_series
+                internal_sondes_dict["warm"]               = \
+                    self.sonde_times_series.iloc[relevant_warm_internal_sondes]
+                internal_sondes_dict["cold"]               = \
+                    ["2022-03-15 11:30:00","2022-03-15 13:35"]   
+            elif self.ar_of_day=="AR_entire_2":
+                relevant_warm_sector_sondes=[9,10,11,12,15,16,17,18]
+                relevant_cold_sector_sondes=[19,20,21]
+                relevant_warm_internal_sondes=[13,22]
+                relevant_sondes_dict["warm_sector"]        = {}
+                relevant_sondes_dict["warm_sector"]["in"]  = \
+                    self.sonde_times_series.iloc[relevant_warm_sector_sondes[4::]]
+                relevant_sondes_dict["warm_sector"]["out"] = \
+                    self.sonde_times_series.iloc[relevant_warm_sector_sondes[0:4]]
+                relevant_sondes_dict["cold_sector"]        = {}
+                relevant_sondes_dict["cold_sector"]["in"]  = pd.Series()#sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                relevant_sondes_dict["cold_sector"]["out"] = \
+                    self.sonde_times_series.iloc[relevant_cold_sector_sondes]
+                internal_sondes_dict["warm"]               = \
+                    self.sonde_times_series.iloc[relevant_warm_internal_sondes]
+        elif self.flight[0]=="RF06":
+            if self.ar_of_day=="AR_entire_1":
+                relevant_warm_sector_sondes=[0,1,2,8,9,10]
+                relevant_cold_sector_sondes=[3,4,5,11,12]
+                relevant_warm_internal_sondes=[7,22]
+                relevant_sondes_dict["warm_sector"]        = {}
+                relevant_sondes_dict["warm_sector"]["in"]  = \
+                    self.sonde_times_series.iloc[relevant_warm_sector_sondes[0:3]]
+                relevant_sondes_dict["warm_sector"]["out"] = \
+                    self.sonde_times_series.iloc[relevant_warm_sector_sondes[3:]]
+                relevant_sondes_dict["cold_sector"]        = {}
+                relevant_sondes_dict["cold_sector"]["in"]  = \
+                    self.sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                relevant_sondes_dict["cold_sector"]["out"] = \
+                    self.sonde_times_series.iloc[relevant_cold_sector_sondes[3:]]
+                internal_sondes_dict["warm"]               = \
+                    self.sonde_times_series.iloc[relevant_warm_internal_sondes]
+            elif self.ar_of_day=="AR_entire_2":
+                relevant_warm_sector_sondes=[8,9,16,17]
+                relevant_cold_sector_sondes=[10,11,12,18,19]
+                relevant_warm_internal_sondes=[14,21]
+                relevant_sondes_dict["warm_sector"]        = {}
+                relevant_sondes_dict["warm_sector"]["in"]  = \
+                    self.sonde_times_series.iloc[relevant_warm_sector_sondes[0:2]]
+                relevant_sondes_dict["warm_sector"]["out"] = \
+                    self.sonde_times_series.iloc[relevant_warm_sector_sondes[2::]]
+                relevant_sondes_dict["cold_sector"]        = {}
+                relevant_sondes_dict["cold_sector"]["in"]  = \
+                    self.sonde_times_series.iloc[relevant_cold_sector_sondes[0:3]]
+                relevant_sondes_dict["cold_sector"]["out"] = \
+                    self.sonde_times_series.iloc[relevant_cold_sector_sondes[3::]]
+                internal_sondes_dict["warm"]               = \
+                    self.sonde_times_series.iloc[relevant_warm_internal_sondes]
+                internal_sondes_dict["warm"].iloc[-1]      = 100
+                internal_sondes_dict["warm"]=internal_sondes_dict["warm"].rename(
+                index={internal_sondes_dict["warm"].index[1]:pd.Timestamp("2022-03-16 17:05")})
+                #-------------------------------------------------------------#
+        self.internal_sondes_dict=internal_sondes_dict
+
+
 class Moisture_Budget_Plots(Moisture_Convergence):
     
     def __init__(self,cmpgn_cls,flight,config_file,grid_name="ERA5",
@@ -2032,10 +2593,23 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.axhline(0,color="grey",ls="--",lw=2,zorder=1)
     
         budget_regions=self.budget_regions
+        budget_regions.columns=["Warm \n$ADV_{\mathrm{q}}$",
+            "Warm \n$DIV_{\mathrm{mass}}$",
+            "Core \n$ADV_{\mathrm{q}}$",
+            "Core \n$DIV_{\mathrm{mass}}$",
+            "Cold \n$ADV_{\mathrm{q}}$",
+            "Cold \n$DIV_{\mathrm{mass}}$"]
+        
         if not instantan_comparison:
             budget_ideal_regions=self.budget_ideal_regions
         else:
             budget_ideal_regions=self.budget_inst_ideal_regions
+        budget_ideal_regions.columns=["Warm \n$ADV_{\mathrm{q}}$",
+            "Warm \n$DIV_{\mathrm{mass}}$",
+            "Core \n$ADV_{\mathrm{q}}$",
+            "Core \n$DIV_{\mathrm{mass}}$",
+            "Cold \n$ADV_{\mathrm{q}}$",
+            "Cold \n$DIV_{\mathrm{mass}}$"]
             
         if self.grid_name=="CARRA":
             budget_ideal_regions=-1*budget_ideal_regions
@@ -2054,7 +2628,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.xaxis.set_tick_params(width=2,length=10)
         ax1.yaxis.set_tick_params(width=2,length=10)
                         #ax1.xaxis.spines(width=3)
-        ax1.set_ylabel("Contribution to \nMoisture Budget ("+self.unit+")")
+        ax1.set_ylabel("Contribution to \nmoisture budget ("+self.unit+")")
+        
         if not hasattr(self, "haloac3_div"):
             # Plot synthetic sondes    
             sns.boxplot(data=self.hours_to_use*budget_regions,
@@ -2121,7 +2696,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             if hasattr(self,"haloac3_div"):
                 plot_path=self.plot_path+"/../../../../../"+\
                     "my_GIT/Arctic_ARs_Thesis/plots/"
-                fig_name="Fig3_5_IVTdiv_sector_comparison_synth_CARRA_HALO_AC3"
+                fig_name="Fig3_5_IVTdiv_sector_comparison_synth_CARRA_HALO_AC3.pdf"
         else:
             plot_path=self.plot_path+\
                 "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
@@ -2298,9 +2873,11 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                 if hasattr(self,"haloac3_div"):
                     plot_path=self.plot_path+"/../../../../../"+\
                         "my_GIT/Arctic_ARs_Thesis/plots/"
-                    fig_name="Fig3_6_IVT_div_inst_comparison_synth_CARRA_HALO_AC3"
+                    fig_name="Fig4_3_IVT_div_inst_comparison_synth_CARRA_HALO_AC3"
         else:
             fig_name="fig14_"+fig_name
+        file_end=".pdf"
+        fig_name+=file_end
         sns.despine(ax=ax1,offset=10)
         budget_boxplot.savefig(plot_path+fig_name,
                        dpi=200,bbox_inches="tight")
@@ -2949,7 +3526,6 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         sector_squared_divergence_sonde_errors= \
             (sector_divergence_sonde_errors)**2
         
-        #%%
         # Add flight specific values as table
         #relative Error
         rel_sec_div_inst_errors=sector_divergence_inst_errors/\

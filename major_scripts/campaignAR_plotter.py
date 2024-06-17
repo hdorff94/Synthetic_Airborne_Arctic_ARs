@@ -9,6 +9,8 @@ import os
 import glob
 import sys
 
+import pandas as pd
+
 def main(campaign="North_Atlantic_Run",flights=["RF10","SRF02",
                                                 "SRF03","SRF04",
                                                 "SRF05","SRF06"],
@@ -161,8 +163,8 @@ if __name__=="__main__":
     # too much. 
     
     # Relevant specifications for running , those are default values
-    calc_hmp=False
-    calc_hmc=True
+    calc_hmp=True
+    calc_hmc=False
     do_plotting=False
     
     ar_of_day=["AR_internal"]#["AR_entire_1"]#"AR_internal"]#"AR_entire_2"]#["AR3"]#"AR_entire"#"#internal"#"AR_entire"
@@ -178,18 +180,18 @@ if __name__=="__main__":
                         #"SRF08":"20200419"#,}
         #Second Synthetic Study
         
-        #"SRF02":"20110317",
+        "SRF02":"20110317",
         #"SRF03":"20110423",#,
         #"SRF08":"20150314",#,
-        "SRF09":"20160311",#,
-        "SRF12":"20180225"
+        #"SRF09":"20160311",#,
+        #"SRF12":"20180225"
         }
     else:
         flights_to_analyse={#"RF02":"20220312",
                             #"RF03":"20220313",
                             #"RF04":"20220314",
                             #"RF05":"20220315",
-                            "RF06":"20220316",
+                            #"RF06":"20220316",
                             #"RF07":"20220320"
                             
                             #"RF10":"20161013"
@@ -198,7 +200,7 @@ if __name__=="__main__":
     use_carra=True
     use_icon=False
     flights=[*flights_to_analyse.keys()]
-    do_instantaneous=True
+    do_instantaneous=False
     include_hydrometeors=False
     Hydrometeors,HALO_Dict,cmpgn_cls=main(campaign=campaign_name,flights=flights,
                                           ar_of_days=ar_of_day,
@@ -218,23 +220,23 @@ if __name__=="__main__":
     #run_plot_IVT_long_term_stats(cmpgn_cls, Hydrometeors,flights_to_analyse)    
     
     ###
-    """
     #%% IVT Variability
     flight_leg_to_take="inflow" # this can be either "inflow" or "outflow" or "both"
     single_flight_to_use=[*flights_to_analyse.keys()][0]
     analysed_flight=single_flight_to_use
     analysed_flight_df=HALO_Dict[analysed_flight][flight_leg_to_take]
-    major_data_pah=config_file["Data_Paths"]\
-                 ["campaign_path"]
+    #major_data_pah=config_file["Data_Paths"]\
+    #             ["campaign_path"]
     # sounding analysis
     # Define number of sondes per cross-section
-    sonde_no=6
+    sonde_no=7
     # Logging
-    import IVT_Variability_handler as IVT_handler
+    import ivtvariability #import IVT_variability as IVT_handler
     
     
     log_file_name="logging_ivt_variability_icon.log"
-    ivt_logger=IVT_handler.ICON_IVT_Logger(log_file_path=os.getcwd(),
+    IVT_handler=ivtvariability.IVT_variability
+    ivt_logger=ivtvariability.ICON_IVT_Logger(log_file_path=os.getcwd(),
                                             file_name=log_file_name)
     ivt_logger.create_plot_logging_file()
     sounding_frequency="standard"    
@@ -332,15 +334,15 @@ if __name__=="__main__":
         else:
             synthetic_flight=False
         
-        IVT_var_Plotter.plot_model_sounding_frequency_comparison(
-                            name_of_grid_data=grid_dict_hmp.name)
-        IVT_var_Plotter.plot_distance_based_IVT(False,
+        #IVT_var_Plotter.plot_model_sounding_frequency_comparison(
+        #                    name_of_grid_data=grid_dict_hmp.name)
+        IVT_var_Plotter.plot_distance_based_IVT(False,cmpgn_cls,
                             synthetic_flight=synthetic_flight,delete_sondes=None,
                             name_of_grid_data=grid_dict_hmp.name)
-        IVT_var_Plotter.plot_distance_based_IVT(False,
-                            synthetic_flight=synthetic_flight,delete_sondes=None,
-                            name_of_grid_data=grid_dict_hmp.name,show_sondes=False)
-        IVT_handler_cls.study_TIVT_sondes_grid_frequency_dependency()
+        #IVT_var_Plotter.plot_distance_based_IVT(False,
+        #                    synthetic_flight=synthetic_flight,delete_sondes=None,
+        #                    name_of_grid_data=grid_dict_hmp.name,show_sondes=False)
+        #IVT_handler_cls.study_TIVT_sondes_grid_frequency_dependency()
         
         if use_era:
             IVT_handler_cls.TIVT["grid_name"]="ERA5"
@@ -357,4 +359,3 @@ if __name__=="__main__":
 
         #    cfad_ar_df=NAWDEX.calculate_cfad_radar_reflectivity(AR_radar)
         #    NAWDEX.plot_cfad_2d_hist(cfad_ar_df,os.getcwd()+"/NAWDEX/plots/",True)
-"""

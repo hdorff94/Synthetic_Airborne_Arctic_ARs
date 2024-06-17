@@ -298,13 +298,12 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01",
                    axs[row,col].add_patch(
                            patches.Polygon(xy=list(zip(x,y)),fill=True,
                            linewidth=1, edgecolor='k', facecolor='lightgrey',
-                           transform=ccrs.Geodetic(),zorder=9,alpha=0.8))
+                           transform=ccrs.Geodetic(),zorder=5,alpha=0.4))
                    qk=axs[row, col].quiverkey(quiver,0.4,0.13,q_typ,
                     label=str(q_typ)+' $\mathrm{kgm}^{-1}\mathrm{s}^{-1}$',
-                    coordinates="axes",labelpos="E",fontproperties={"size":12},
-                    zorder=10)
-                   qk.text.set_zorder(50)
-                   qk.Q.set_zorder(50)#
+                    coordinates="axes",labelpos="E",
+                    fontproperties={"size":12},labelcolor="k",zorder=100)
+                   
                    
                if show_AR_detection:
                    use_era5=False
@@ -356,6 +355,8 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01",
         cbar_ax.text(3.2,0.375,meteo_var+" "+met_var_dict["units"][meteo_var],
                      rotation=90,fontsize=18,transform=cbar_ax.transAxes)
         cbar.set_ticks([50,250,500])
+        #qk.text.set_zorder(100)
+        #qk.Q.set_zorder(100)#
         if not save_in_manuscript_path:
             fig_path=paths_dict["airborne_plotting_module_path"]
         else:
@@ -401,4 +402,4 @@ def main(save_in_manuscript_path=False,figure_to_create="fig01",
         raise Exception("You have given the wrong figure name.",
                         " No figure created")
 if __name__=="__main__":
-    main(save_in_manuscript_path=True,figure_to_create="fig02")
+    main(save_in_manuscript_path=True,figure_to_create="fig01")

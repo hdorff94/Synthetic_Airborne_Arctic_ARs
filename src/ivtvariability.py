@@ -241,7 +241,8 @@ class IVT_variability():
             self.grid_data_name=grid_dict_hmp.name
             self.grid_dict=grid_dict_hmp
         else:
-            if isinstance(grid_dict_hmc,pd.DataFrame) or isinstance(grid_dict_hmc,dict):
+            if isinstance(grid_dict_hmc,pd.DataFrame) or \
+                isinstance(grid_dict_hmc,dict):
                 self.grid_data_name=grid_dict_hmc["name"]
                 self.grid_dict=grid_dict_hmc
         
@@ -1226,7 +1227,7 @@ class IVT_Variability_Plotter(IVT_variability):
     def plot_distance_based_IVT(self,sondes_to_use,
                                 synthetic_flight=False,
                                 delete_sondes=None,name_of_grid_data="ERA5",
-                                show_sondes=True):
+                                show_sondes=True,save_as_manuscript=True):
         if hasattr(self,"sonde_ivt"):
             self.add_vertical_vars_to_ivt_dict(use_sondes=True)
         if hasattr(self,"grid_ivt"):
@@ -1323,7 +1324,7 @@ class IVT_Variability_Plotter(IVT_variability):
                 #         markeredgecolor="k",markersize=20,
                 #     label=sonde_label)
             else:
-                sonde_label="Synthetic DS"
+                sonde_label="Synthetic sondes"
         
             ax1.plot(cum_sum_distance.loc[sonde_ivt_array.index]/1000,
                      sonde_ivt_array,

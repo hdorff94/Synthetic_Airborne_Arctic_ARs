@@ -9,8 +9,6 @@ import sys
 import warnings
     
 # Principal Tools
-#import numpy as np
-#import pandas as pd
 def importer():
     warnings.filterwarnings("ignore")
     #import seaborn as sns
