@@ -1431,8 +1431,25 @@ class Moisture_Convergence(Moisture_Budgets):
                  sector_mean_v.loc[intersect_index])*1000
                 
             self.div_vector_mass[sector] = sector_div_vector_mass
+            
             self.adv_q_vector[sector]    = sector_adv_q_vector
+            
+            self.q_stat                  = {}
+            self.q_stat[sector]          = pd.DataFrame()
+            self.q_stat[sector]["mean"]  = \
+                                    self.sector_sonde_values[sector]["q"].mean(axis=1)
+            self.q_stat[sector]["std"]   = \
+                                    self.sector_sonde_values[sector]["q"].std(axis=1)
+            
+            self.wsp_stat                = {}
+            self.wsp_stat[sector]        = pd.DataFrame()
+            self.wsp_stat[sector]["mean"]= \
+                self.sector_sonde_values[sector]["wind"].mean(axis=1)
+            self.wsp_stat[sector]["std"] = \
+                self.sector_sonde_values[sector]["wind"].std(axis=1)
+            
             self.save_moisture_transport_divergence(sector)
+            
     def perform_entire_sonde_ac3_divergence_scalar_calcs(self,
         Dropsondes,relevant_sector_sondes,with_uncertainty=False):
         
@@ -1546,12 +1563,19 @@ class Moisture_Convergence(Moisture_Budgets):
                                             "_mass_convergence.csv"
         adv_q_file_name             = self.flight[0]+"_"+self.ar_of_day+"_"+\
                                         sector+"_"+self.grid_name+"_adv_q.csv"
+        q_stat_file_name            = self.flight[0]+"_"+self.ar_of_day+"_"+\
+                                        sector+"_"+self.grid_name+\
+                                            "_q_stat.csv"
+        
         vector_mass_conv_file_name  = self.flight[0]+"_"+self.ar_of_day+"_"+\
                                         sector+"_"+self.grid_name+\
                                             "_vector_mass_convergence.csv"
         vector_adv_q_file_name      = self.flight[0]+"_"+self.ar_of_day+"_"+\
                                         sector+"_"+self.grid_name+\
                                             "_vector_adv_q.csv"
+        wsp_stat_file_name          = self.flight[0]+"_"+self.ar_of_day+"_"+\
+                                        sector+"_"+self.grid_name+\
+                                            "_wsp_stat.csv"
         
         if hasattr(self,"div_scalar_mass"):
             self.div_scalar_mass[sector].to_csv(
@@ -1572,6 +1596,14 @@ class Moisture_Convergence(Moisture_Budgets):
                 save_data_path+vector_mass_conv_file_name)
             print("vector mass convergence saved as: ",
                               save_data_path+vector_mass_conv_file_name)
+        # Statistics of quantities
+        if hasattr(self,"q_stat"):
+            self.q_stat[sector].to_csv(save_data_path+q_stat_file_name)
+            print("q statistics saved as: ",save_data_path+q_stat_file_name)
+        if hasattr(self,"wsp_stat"):
+            self.wsp_stat[sector].to_csv(save_data_path+wsp_stat_file_name)
+            print("wsp statistics saved as: ",save_data_path+wsp_stat_file_name)
+            
 #-----------------------------------------------------------------------------#
 class Surface_Evaporation(Moisture_Budgets):
     def __init__(self,cmpgn_name,flight,major_work_path,flight_dates={},
@@ -2593,23 +2625,23 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.axhline(0,color="grey",ls="--",lw=2,zorder=1)
     
         budget_regions=self.budget_regions
-        budget_regions.columns=["Warm \n$ADV_{\mathrm{q}}$",
-            "Warm \n$DIV_{\mathrm{mass}}$",
-            "Core \n$ADV_{\mathrm{q}}$",
-            "Core \n$DIV_{\mathrm{mass}}$",
-            "Cold \n$ADV_{\mathrm{q}}$",
-            "Cold \n$DIV_{\mathrm{mass}}$"]
+        budget_regions.columns=["Warm \n$IADV_{\mathrm{q}}$",
+            "Warm \n$IDIV_{\mathrm{mass}}$",
+            "Core \n$IADV_{\mathrm{q}}$",
+            "Core \n$IDIV_{\mathrm{mass}}$",
+            "Cold \n$IADV_{\mathrm{q}}$",
+            "Cold \n$IDIV_{\mathrm{mass}}$"]
         
         if not instantan_comparison:
             budget_ideal_regions=self.budget_ideal_regions
         else:
             budget_ideal_regions=self.budget_inst_ideal_regions
-        budget_ideal_regions.columns=["Warm \n$ADV_{\mathrm{q}}$",
-            "Warm \n$DIV_{\mathrm{mass}}$",
-            "Core \n$ADV_{\mathrm{q}}$",
-            "Core \n$DIV_{\mathrm{mass}}$",
-            "Cold \n$ADV_{\mathrm{q}}$",
-            "Cold \n$DIV_{\mathrm{mass}}$"]
+        budget_ideal_regions.columns=["Warm \n$IADV_{\mathrm{q}}$",
+            "Warm \n$IDIV_{\mathrm{mass}}$",
+            "Core \n$IADV_{\mathrm{q}}$",
+            "Core \n$IDIV_{\mathrm{mass}}$",
+            "Cold \n$IADV_{\mathrm{q}}$",
+            "Cold \n$IDIV_{\mathrm{mass}}$"]
             
         if self.grid_name=="CARRA":
             budget_ideal_regions=-1*budget_ideal_regions
@@ -2768,6 +2800,18 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         if self.grid_name=="CARRA":
             budget_ideal_regions=-budget_ideal_regions
             budget_continuous_regions=-budget_continuous_regions
+        budget_ideal_regions.columns=["Warm \n$IADV_{\mathrm{q}}$",
+            "Warm \n$IDIV_{\mathrm{mass}}$",
+            "Core \n$IADV_{\mathrm{q}}$",
+            "Core \n$IDIV_{\mathrm{mass}}$",
+            "Cold \n$IADV_{\mathrm{q}}$",
+            "Cold \n$IDIV_{\mathrm{mass}}$"]
+        budget_continuous_regions.columns=["Warm \n$IADV_{\mathrm{q}}$",
+            "Warm \n$IDIV_{\mathrm{mass}}$",
+            "Core \n$IADV_{\mathrm{q}}$",
+            "Core \n$IDIV_{\mathrm{mass}}$",
+            "Cold \n$IADV_{\mathrm{q}}$",
+            "Cold \n$IDIV_{\mathrm{mass}}$"]
         
         budget_continuous_regions["Time"]="Non-instantaneous"
         budget_continuous_regions["Sector_Term"]=budget_continuous_regions.index.copy()
@@ -2775,6 +2819,8 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         budget_ideal_regions["Time"]="Instantaneous"
         budget_ideal_regions["Sector_Term"]=budget_ideal_regions.index.copy()
         budget_ideal_regions.index=np.arange(9)
+        
+        
         budget_regions=pd.concat([budget_continuous_regions,budget_ideal_regions],
                                  ignore_index=True)
         budget_values=pd.DataFrame(data=np.nan,index=range(6*18),
