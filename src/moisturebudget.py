@@ -2625,23 +2625,23 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         ax1.axhline(0,color="grey",ls="--",lw=2,zorder=1)
     
         budget_regions=self.budget_regions
-        budget_regions.columns=["Warm \n$IADV_{\mathrm{q}}$",
-            "Warm \n$IDIV_{\mathrm{mass}}$",
+        budget_regions.columns=["Pre-fr. \n$IADV_{\mathrm{q}}$",
+            "Pre-fr. \n$IDIV_{\mathrm{mass}}$",
             "Core \n$IADV_{\mathrm{q}}$",
             "Core \n$IDIV_{\mathrm{mass}}$",
-            "Cold \n$IADV_{\mathrm{q}}$",
-            "Cold \n$IDIV_{\mathrm{mass}}$"]
+            "Post-fr. \n$IADV_{\mathrm{q}}$",
+            "Post-fr. \n$IDIV_{\mathrm{mass}}$"]
         
         if not instantan_comparison:
             budget_ideal_regions=self.budget_ideal_regions
         else:
             budget_ideal_regions=self.budget_inst_ideal_regions
-        budget_ideal_regions.columns=["Warm \n$IADV_{\mathrm{q}}$",
-            "Warm \n$IDIV_{\mathrm{mass}}$",
-            "Core \n$IADV_{\mathrm{q}}$",
-            "Core \n$IDIV_{\mathrm{mass}}$",
-            "Cold \n$IADV_{\mathrm{q}}$",
-            "Cold \n$IDIV_{\mathrm{mass}}$"]
+        budget_ideal_regions.columns=["$IADV_{\mathrm{q}}$ \n(Pre-\nfrontal)",
+            "$IDIV_{\mathrm{mass}}$ \n(Pre-\nfrontal)",
+            "$IADV_{\mathrm{q}}$ \n(Core)",
+            "$IDIV_{\mathrm{mass}}$ \n(Core)",
+            "$IADV_{\mathrm{q}}$ \n(Post-\nfrontal)",
+            "$IDIV_{\mathrm{mass}}$ \n(Post-\nfrontal)"]
             
         if self.grid_name=="CARRA":
             budget_ideal_regions=-1*budget_ideal_regions
@@ -2800,18 +2800,18 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         if self.grid_name=="CARRA":
             budget_ideal_regions=-budget_ideal_regions
             budget_continuous_regions=-budget_continuous_regions
-        budget_ideal_regions.columns=["Warm \n$IADV_{\mathrm{q}}$",
-            "Warm \n$IDIV_{\mathrm{mass}}$",
-            "Core \n$IADV_{\mathrm{q}}$",
-            "Core \n$IDIV_{\mathrm{mass}}$",
-            "Cold \n$IADV_{\mathrm{q}}$",
-            "Cold \n$IDIV_{\mathrm{mass}}$"]
-        budget_continuous_regions.columns=["Warm \n$IADV_{\mathrm{q}}$",
-            "Warm \n$IDIV_{\mathrm{mass}}$",
-            "Core \n$IADV_{\mathrm{q}}$",
-            "Core \n$IDIV_{\mathrm{mass}}$",
-            "Cold \n$IADV_{\mathrm{q}}$",
-            "Cold \n$IDIV_{\mathrm{mass}}$"]
+        budget_ideal_regions.columns=["$IADV_{\mathrm{q}}$\n(Pre-\nfrontal)",
+            "$IDIV_{\mathrm{mass}}$\n(Pre-\nfrontal)",
+            "$IADV_{\mathrm{q}}$\n(Core)",
+            "$IDIV_{\mathrm{mass}}$\n(Core)",
+            "$IADV_{\mathrm{q}}$\n(Post-\nfrontal)",
+            "$IDIV_{\mathrm{mass}}$\n(Post-\nfrontal)"]
+        budget_continuous_regions.columns=["$IADV_{\mathrm{q}}$\n(Pre-\nfrontal)",
+            "$IDIV_{\mathrm{mass}}$\n(Pre-\nfrontal)",
+            "$IADV_{\mathrm{q}}$\n(Core)",
+            "$IDIV_{\mathrm{mass}}$\n(Core)",
+            "$IADV_{\mathrm{q}}$\n(Post-\nfrontal)",
+            "$IDIV_{\mathrm{mass}}$\n(Post-\nfrontal)"]
         
         budget_continuous_regions["Time"]="Non-instantaneous"
         budget_continuous_regions["Sector_Term"]=budget_continuous_regions.index.copy()
@@ -2843,7 +2843,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             ax1.yaxis.set_tick_params(width=2,length=10)
 
         ax1.set_ylabel("Contribution to \nMoisture Budget ("+self.unit+")")
-        ax1.set_xlabel("Frontal Sector and Component")
+        ax1.set_xlabel("")
         if self.hours_to_use==24:
             ax1.set_ylim([-50,50])
         else:
