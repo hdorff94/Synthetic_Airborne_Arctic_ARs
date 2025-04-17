@@ -172,6 +172,9 @@ def main(figure_to_create="fig13", include_haloac3=False):
         # Budget components (continuous, sonde-based)
         Campaign_Budgets,Campaign_Ideal_Budgets=\
             Moisture_CONV.get_overall_budgets()
+        save_for_manuscript=False
+        if not save_for_manuscript:
+            Budget_plots.fileend=".png"
         if do_plotting:
             Budget_plots.moisture_convergence_cases_overview(
                             Campaign_Budgets,Campaign_Ideal_Budgets,
@@ -311,8 +314,8 @@ def main(figure_to_create="fig13", include_haloac3=False):
 if __name__=="__main__":
     # Figures to create choices:
     #figure_to_create="fig12_single_case_sector_profiles"
-    #figure_to_create="fig13_campaign_divergence_overviews"
-    figure_to_create="fig14_divergence_instantan_errorbars"
+    figure_to_create="fig13_campaign_divergence_overviews"
+    #figure_to_create="fig14_divergence_instantan_errorbars"
     #figure_to_create="fig15_campaign_divergence_overview_instantan_comparison"
     
     #figure_to_create="fig_supplements_sonde_pos_comparison"

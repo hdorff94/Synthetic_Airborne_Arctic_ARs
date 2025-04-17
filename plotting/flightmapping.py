@@ -19,7 +19,6 @@ try:
     from typhon.plots import styles
 except:
     print("Typhon module cannot be imported")
-
 import data_config
 # Real Campaigns
 from flightcampaign import Campaign as flight_campaign
@@ -206,6 +205,239 @@ class FlightMaps(flight_campaign):
     #Create map plots while looping over data
     ###########################################################################
     #ERA5
+    def simplified_flight_map_era(self,campaign_cls,flight,meteo_var,
+                                  plot_hatches=False):
+        """
+        Parameters
+        ----------
+        flight : str
+            research flight to analyse.
+        meteo_var : str
+            meteorological variable from ERA-analysis to map.
+        show_supersites :  bool
+            boolean for showing the three cloud net supersite data if accessible.
+        Returns
+        -------
+        None.
+
+        """
+        import matplotlib
+        import cartopy.crs as ccrs
+        import cartopy.io.img_tiles as cimgt
+        
+        from reanalysis import ERA5
+        class StadiaStamen(cimgt.Stamen):
+            def _image_url(self, tile):
+                x,y,z = tile
+                url = f"https://tiles.stadiamaps.com/tiles/stamen_terrain_background/{z}/{x}/{y}.jpg?api_key=0963bb5f-6e8c-4978-9af0-4cd3a2627df9"
+                return url
+        def add_time_dim(xda):
+            from datetime import datetime
+            xda = xda.expand_dims(time = [datetime.now()])
+            return xda
+        stamen_terrain = StadiaStamen('terrain-background')
+
+        set_font=16
+        matplotlib.rcParams.update({'font.size':set_font})
+        plt.rcParams.update({'hatch.color': 'k'})  
+        plt.rcParams.update({'hatch.linewidth':1.5})
+        
+        # Define the plot specifications for the given variables
+        met_var_dict={}
+        met_var_dict["ERA_name"]    = {"IWV":"tcwv","IVT":"IVT",
+                                       "IVT_u":"IVT_u","IVT_v":"IVT_v"}
+        met_var_dict["colormap"]    = {"IWV":"density","IVT":"ocean_r",
+                                       "IVT_v":"speed",
+                                       "IVT_u":"speed"}
+        met_var_dict["levels"]      = {"IWV":np.linspace(10,25,101),
+                                       "IVT":np.linspace(50,500,101),
+                                       "IVT_v":np.linspace(0,500,101),
+                                       "IVT_u":np.linspace(0,500,101)}
+        met_var_dict["units"]       = {"IWV":"(kg$\mathrm{m}^{-2}$)",
+                                       "IVT":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)",
+                                       "IVT_v":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)",
+                                       "IVT_u":"(kg$\mathrm{m}^{-1}\mathrm{s}^{-1}$)"}
+        
+        flight_date=campaign_cls.year+"-"+campaign_cls.flight_month[flight]
+        flight_date=flight_date+"-"+campaign_cls.flight_day[flight]
+        #Sea ice plot look.
+        orig_map = plt.cm.get_cmap('Blues')
+        reversed_map = orig_map.reversed() # reversing colormap 
+        # get sea-ice data
+        import glob
+        amsr2_sea_ice_path="C://Users//u300737//Desktop//Desktop_alter_Rechner//"+\
+            "PhD_UHH_WIMI//Work//GIT_Repository//hamp_processing_py//"+\
+                "hamp_processing_python//Flight_Data//"+\
+                    "HALO_AC3//sea_ice//"
+        print(amsr2_sea_ice_path)
+        sea_ice_file_list=glob.glob(amsr2_sea_ice_path+"*.nc")
+        sea_ice_ds=xr.open_mfdataset(sea_ice_file_list,combine="nested",
+                       concat_dim='time',
+                       preprocess=add_time_dim)
+        sea_ice_ds["lon"]=sea_ice_ds["lon"][0,:,:]
+        
+        #file_dates=pd.DatetimeIndex(file_date_str_list)
+        seaice=sea_ice_ds["seaice"].mean(dim="time").compute()
+        # Sea ice
+        era5=ERA5(for_flight_campaign=True,campaign=campaign_cls.name,
+                  research_flights=flight,
+                  era_path=campaign_cls.campaign_path+"/data/ERA-5/")
+        plot_path=campaign_cls.campaign_path+"/plots/"+flight+"/"
+        hydrometeor_lvls_path=campaign_cls.campaign_path+"/data/ERA-5/"
+    
+        file_name="total_columns_"+campaign_cls.year+"_"+\
+                                    campaign_cls.flight_month[flight]+"_"+\
+                                    campaign_cls.flight_day[flight]+".nc"    
+        
+        ds,era_path=era5.load_era5_data(file_name)
+        
+        #if meteo_var.startswith("IVT"):
+        ds["IVT_v"]=ds["p72.162"]
+        ds["IVT_u"]=ds["p71.162"]
+        ds["IVT"]=np.sqrt(ds["IVT_u"]**2+ds["IVT_v"]**2)
+        # Load Flight Track
+        halo_dict={}
+        campaign_cls.load_AC3_bahamas_ds(flight)
+        halo_dict=campaign_cls.bahamas_ds
+        
+        if isinstance(halo_dict,pd.DataFrame):
+            halo_df=halo_dict.copy() 
+        elif isinstance(halo_dict,xr.Dataset):
+            halo_df=pd.DataFrame(data=np.nan,columns=["alt","Lon","Lat"],
+                                index=pd.DatetimeIndex(np.array(halo_dict["TIME"][:])))
+            halo_df["Lon"]=halo_dict["IRS_LON"].data
+            halo_df["Lat"]=halo_dict["IRS_LAT"].data
+        else:
+            if len(halo_dict.keys())==1:
+                halo_df=halo_dict.values()[0]
+            else:   
+                    halo_df=pd.concat([halo_dict["inflow"],halo_dict["internal"],
+                                       halo_dict["outflow"]])
+                    halo_df.index=pd.DatetimeIndex(halo_df.index)
+                
+        halo_df["Hour"]=halo_df.index.hour
+        halo_df=halo_df.rename(columns={"Lon":"longitude",
+                                    "Lat":"latitude"})
+        
+        for i in range(24):
+            print("Hour of the day:",i)
+            calc_time=era5.hours[i]
+            map_fig=plt.figure(figsize=(12,9))
+            ax = plt.axes(projection=ccrs.AzimuthalEquidistant(
+                central_longitude=-5.0,central_latitude=70))
+            #ax.gridlines()
+            if (flight=="RF01") or (flight=="RF02") or (flight=="RF03") or \
+                   (flight=="RF04") or (flight=="RF05") or\
+                   (flight=="RF06") or (flight=="RF07") or\
+                   (flight=="RF08") or (flight=="RF16"):
+                   ax.set_extent([-40,30,55,90]) 
+            #-----------------------------------------------------------------#
+            # Meteorological Data plotting
+            # Plot Water Vapour Quantity    
+            # mean sea ice cover
+            ax.pcolormesh(seaice.lon, seaice.lat,np.array(seaice[:]), 
+                transform=ccrs.PlateCarree(), cmap=reversed_map)
+            ax.add_image(stamen_terrain, 5)
+            ax.coastlines(resolution="50m")
+            # overlay image
+            x=np.linspace(-120,120,61)
+            y=np.linspace(35,90,93)
+            
+            x_grid,y_grid=np.meshgrid(x,y)
+            white_overlay= np.zeros((61,93))
+            ax.contourf(x_grid,y_grid,white_overlay.T,cmap="Greys",vmin=0,vmax=1,
+                 transform=ccrs.PlateCarree(),alpha=0.5)
+
+            
+            C1=plt.contourf(ds["longitude"],ds["latitude"],
+                            ds[met_var_dict["ERA_name"][meteo_var]][i,:,:],
+                            levels=met_var_dict["levels"][meteo_var],
+                            extend="max",transform=ccrs.PlateCarree(),
+                            cmap=met_var_dict["colormap"][meteo_var],alpha=0.9)
+            C_lower=plt.contour(ds["longitude"],ds["latitude"],
+                            ds[met_var_dict["ERA_name"][meteo_var]][i,:,:],
+                            levels=[met_var_dict["levels"][meteo_var][0],
+                                    met_var_dict["levels"][meteo_var][-1]],
+                            transform=ccrs.PlateCarree(),
+                            colors="purple",lw=2,alpha=0.9)
+            
+            cb=map_fig.colorbar(C1,ax=ax)
+            cb.set_label(meteo_var+" "+met_var_dict["units"][meteo_var])
+            if meteo_var=="IWV":
+                cb.set_ticks([10,15,20,25])
+            elif meteo_var=="IVT":
+                cb.set_ticks([50,100,200,300,400,500])
+            else:
+                pass
+            # Mean surface level pressure
+            pressure_color="grey"
+            C_p=plt.contour(ds["longitude"],ds["latitude"],
+                            ds["msl"][i,:,:]/100,levels=np.linspace(940,1020,9),
+                            linestyles="-.",linewidths=1,colors=pressure_color,
+                            transform=ccrs.PlateCarree())
+            plt.clabel(C_p, inline=1, fmt='%03d hPa',fontsize=12)
+            #-----------------------------------------------------------------#
+            # Quiver-Plot
+            step=15
+            quiver_lon=np.array(ds["longitude"][::step])
+            quiver_lat=np.array(ds["latitude"][::step])
+            u=ds["IVT_u"][i,::step,::step]
+            v=ds["IVT_v"][i,::step,::step]
+            v=v.where(v>200)
+            v=np.array(v)
+            u=np.array(u)
+            quiver=plt.quiver(quiver_lon,quiver_lat,
+                                  u,v,color="lightgrey",edgecolor="k",lw=1,
+                                  scale=800,scale_units="inches",
+                                  pivot="mid",width=0.008,
+                                  transform=ccrs.PlateCarree())
+            plt.rcParams.update({'hatch.color': 'lightgrey'})
+            if plot_hatches:
+                pass
+                #hatches=plt.contourf(AR_era_ds.lon,AR_era_ds.lat,
+                #                 AR_era_ds.shape[0,AR_era_data["model_runs"].start+i,
+                #                                 0,:,:],
+                #                 hatches=["//"],cmap="bone_r",
+                #                 alpha=0.2,transform=ccrs.PlateCarree())
+                #for c,collection in enumerate(hatches.collections):
+                #            collection.set_edgecolor("k")
+            #-----------------------------------------------------------------#
+            plot_halo_df=halo_df[halo_df.index.hour<i]
+            if i<= pd.DatetimeIndex(halo_df.index).hour[0]:
+                      ax.scatter(halo_df["longitude"].iloc[0],
+                                 halo_df["latitude"].iloc[0],
+                                s=30,marker='x',color="red",
+                                transform=ccrs.PlateCarree())
+            elif i>pd.DatetimeIndex(halo_df.index).hour[-1]+1:
+                     ax.scatter(halo_df["longitude"].iloc[-1],
+                                 halo_df["latitude"].iloc[-1],
+                                s=30,marker='x',color="red",
+                                transform=ccrs.PlateCarree())
+            else:
+                ax.plot(plot_halo_df["longitude"],plot_halo_df["latitude"],
+                          linewidth=3.0,color="red",transform=ccrs.PlateCarree(),
+                          alpha=0.8)
+            #-----------------------------------------------------------------#
+            #plot Dropsonde releases
+            date=campaign_cls.year+campaign_cls.flight_month[flight]
+            date=date+campaign_cls.flight_day[flight]
+            #-----------------------------------------------------------------#
+            ax.set_title(campaign_cls.name+" "+flight+": "+campaign_cls.year+\
+                         "-"+campaign_cls.flight_month[flight]+\
+                         "-"+campaign_cls.flight_day[flight]+" "+calc_time)
+            
+            #Save figure
+            fig_name="Simplified_"+campaign_cls.name+"_"+flight+'_'+era5.hours_time[i][0:2]+\
+                "H"+era5.hours_time[i][3:6]+"_"+str(meteo_var)+".png"
+            fig_path=plot_path+meteo_var+"/"
+            if not os.path.exists(fig_path):
+                os.makedirs(fig_path)
+            map_fig.savefig(fig_path+fig_name,bbox_inches="tight",dpi=150)
+            print("Figure saved as:",fig_path+fig_name)
+            plt.close()
+            
+        return None
+
     def plot_flight_map_era(self,campaign_cls,coords_station,
                             flight,meteo_var,show_AR_detection=True,
                             show_supersites=True,use_era5_ARs=False):
@@ -245,7 +477,7 @@ class FlightMaps(flight_campaign):
         met_var_dict={}
         met_var_dict["ERA_name"]    = {"IWV":"tcwv","IVT":"IVT",
                                        "IVT_u":"IVT_u","IVT_v":"IVT_v"}
-        met_var_dict["colormap"]    = {"IWV":"density","IVT":"ocean_r",
+        met_var_dict["colormap"]    = {"IWV":"BuPu","IVT":"ocean_r",
                                        "IVT_v":"speed",
                                        "IVT_u":"speed"}
         met_var_dict["levels"]      = {"IWV":np.linspace(10,25,101),
@@ -390,7 +622,7 @@ class FlightMaps(flight_campaign):
             cb=map_fig.colorbar(C1,ax=ax)
             cb.set_label(meteo_var+" "+met_var_dict["units"][meteo_var])
             if meteo_var=="IWV":
-                cb.set_ticks([10,15,20,25,30])
+                cb.set_ticks([10,15,20,25])
             elif meteo_var=="IVT":
                 cb.set_ticks([50,100,200,300,400,500])
             else:
@@ -4395,9 +4627,9 @@ def main():
     name="data_config_file"
     config_file_exists=False
     #campaign_name="NAWDEX"
-    campaign_name="NA_February_Run"#"HALO_AC3"#"NA_February_Run"#"HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"#"NA_February_Run"    
-    flights=["SRF08"]#["RF06"]#["SRF03"]#["SRF07"]#["RF07"]#["SRF06"]
-    met_variable="IVT"
+    campaign_name="HALO_AC3"#"NA_February_Run"#"HALO_AC3"#"Second_Synthetic_Study"##"HALO_AC3"#"NA_February_Run"    
+    flights=["RF06"]#["RF06"]#["SRF03"]#["SRF07"]#["RF07"]#["SRF06"]
+    met_variable="IWV"
     ar_of_day="SAR_internal"#"AR1"#"SAR_internal"
     ###Switcher in order to specify maps plots to create
     should_plot_iop_map=False
@@ -4512,11 +4744,12 @@ def main():
         use_era5_ARs=False
         if cmpgn_cls.name=="HALO_AC3":
             use_era5_ARs=True
-        flight_maps.plot_flight_map_era(cmpgn_cls,station_coords,flights[0],
-                                        met_variable,show_AR_detection=True,
-                                        show_supersites=False,
-                                        use_era5_ARs=use_era5_ARs)
-    
+        #flight_maps.plot_flight_map_era(cmpgn_cls,station_coords,flights[0],
+        #                                met_variable,show_AR_detection=True,
+        #                                show_supersites=False,
+        #                                use_era5_ARs=use_era5_ARs)
+        flight_maps.simplified_flight_map_era(cmpgn_cls,flights[0],
+                                        met_variable)
 
 if __name__=="__main__":
     main()

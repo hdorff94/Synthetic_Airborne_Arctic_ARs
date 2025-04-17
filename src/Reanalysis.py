@@ -1075,8 +1075,8 @@ def main(campaign="NAWDEX"):
     era_path=central_path+"/"+campaign+"/data/ERA-5/"
     carra_path=central_path+"/"+campaign+"/data/CARRA/"
     
-    era_is_desired=True
-    carra_is_desired=False
+    era_is_desired=False
+    carra_is_desired=True
     carra_initial="12:00"
     domain="west_domain"
         
@@ -1284,4 +1284,4 @@ def main(campaign="NAWDEX"):
 if __name__=="__main__":
     #main(campaign="NA_February_Run")
     #main(campaign="NA_February_Run")
-    main(campaign="HALO_AC3")#"PAMTRA_Retrieval")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")
+    main(campaign="PAMTRA_Retrieval")#"PAMTRA_Retrieval")#"HALO_AC3")#"Second_Synthetic_Study")

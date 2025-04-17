@@ -2170,7 +2170,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                  include_halo_ac3_components=pd.DataFrame(),
                  include_era5_components=pd.DataFrame(),
                  include_inst_components=pd.DataFrame(),
-                 hours_to_use=24):
+                 fileend=".pdf",hours_to_use=24):
         
         super().__init__(cmpgn_cls,flight,config_file,
                          grid_name,do_instantan)
@@ -2189,7 +2189,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             self.unit="$\mathrm{mmd\,}^{-1}$"
         elif self.hours_to_use==1:
             self.unit="$\mathrm{mm\,h}^{-1}$"
-        
+        self.fileend=fileend
     #-------------------------------------------------------------------------#
     # Preprocessing for plots
     def allocate_budgets(self,Campaign_Budgets={},
@@ -2570,6 +2570,106 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         profile.savefig(fig_plot_path+fig_name,dpi=300,bbox_inches="tight")
         print("Figure saved as:",fig_plot_path+fig_name)
     # Figure 13
+    def plot_simplified_moist_convergence_overview(self,
+            Campaign_Budgets={},Campaign_Ideal_Budgets={},
+            use_pale_colors=True):
+        # Allocate variables and calc budget contributions in mm/h
+        self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
+                              already_in_mm_h=False)
+        self.calc_budgets_in_mm_h()
+        
+        #Start plotting
+        budget_boxplot=plt.figure(figsize=(12,9), dpi= 300)
+        fontsize=24
+        matplotlib.rcParams.update({'font.size': fontsize})
+            
+        color_palette=["red","salmon","lightgreen",
+                   "green","lightblue","blue"]                    
+        if use_pale_colors:
+            color_palette=["indianred", "darksalmon","mediumseagreen",
+                           "forestgreen","lightsteelblue","cornflowerblue"]
+        ax1=budget_boxplot.add_subplot(111)
+        ax1.axhline(0,color="grey",ls="--",lw=2,zorder=1)
+    
+        budget_regions=self.budget_regions
+        budget_ideal_regions=self.budget_ideal_regions
+        budget_regions.columns=["Pre-fr. \n$IADV$",
+            "Pre-fr. \n$IDIV$","Core \n$IADV$",
+            "Core \n$IDIV$","Post-fr. \n$IADV$",
+            "Post-fr. \n$IDIV$"]
+        #    budget_ideal_regions=self.budget_inst_ideal_regions
+        
+        budget_ideal_regions.columns=["Pre-fr. \n$IADV$",
+            "Pre-fr. \n$IDIV$","Core \n$IADV$",
+            "Core \n$IDIV$","Post-fr. \n$IADV$",
+            "Post-fr. \n$IDIV$"]
+        
+        #budget_regions.columns=["Pre-fr. \n$IADV_{\mathrm{q}}$",
+        #    "Pre-fr. \n$IDIV_{\mathrm{mass}}$",
+        #    "Core \n$IADV_{\mathrm{q}}$",
+        #    "Core \n$IDIV_{\mathrm{mass}}$",
+        #    "Post-fr. \n$IADV_{\mathrm{q}}$",
+        #    "Post-fr. \n$IDIV_{\mathrm{mass}}$"]
+        #    budget_ideal_regions=self.budget_inst_ideal_regions
+        #budget_ideal_regions.columns=["$IADV_{\mathrm{q}}$ \n(Pre-\nfrontal)",
+        #    "$IDIV_{\mathrm{mass}}$ \n(Pre-\nfrontal)",
+        #    "$IADV_{\mathrm{q}}$ \n(Core)",
+        #    "$IDIV_{\mathrm{mass}}$ \n(Core)",
+        #    "$IADV_{\mathrm{q}}$ \n(Post-\nfrontal)",
+        #    "$IDIV_{\mathrm{mass}}$ \n(Post-\nfrontal)"]
+        if self.grid_name=="CARRA":
+            budget_ideal_regions=-1*budget_ideal_regions
+            budget_regions=-1*budget_regions
+            
+        sns.boxplot(data=self.hours_to_use*budget_ideal_regions,
+                    notch=False,zorder=0,linewidth=3.5,
+                    palette=color_palette)
+        
+        for patch in ax1.artists:
+            r, g, b, a = patch.get_facecolor()
+            patch.set_facecolor((r, g, b, .5))
+        for axis in ["left","bottom"]:
+            ax1.spines[axis].set_linewidth(3.0)
+        
+        ax1.xaxis.set_tick_params(width=2,length=10)
+        ax1.yaxis.set_tick_params(width=2,length=10)
+                        #ax1.xaxis.spines(width=3)
+        ax1.set_ylabel("Contribution to \nmoisture budget ("+self.unit+")")
+        ax1.axvline(x=1.5,ls="--",color="grey")
+        ax1.axvline(x=3.5,ls="--",color="grey")
+        
+        ax1.text(2.5,1.5,"core",bbox=dict(facecolor='lightgrey',edgecolor="k",
+            boxstyle="round",alpha=0.8),color="green",
+                 ha='center',va='center',fontsize=fontsize+2)
+        ax1.text(4.5,1.5,"post-frontal",bbox=dict(facecolor='lightgrey',
+                edgecolor="k",boxstyle="round",alpha=0.8),ha='center', 
+                 color="slateblue", va='center',fontsize=fontsize+2)
+        ax1.text(0.5,1.5,"pre-frontal",bbox=dict(facecolor='lightgrey',
+                edgecolor="k",boxstyle="round",alpha=0.8),color="red",ha='center',
+                 va='center',fontsize=fontsize+2)
+        if hasattr(self, "haloac3_div"):
+            # Plot synthetic sondes    
+            ax1.scatter([1,1,1,1],
+                        -self.hours_to_use*self.haloac3_div.iloc[0:4,0],
+                         marker="v",s=500,color="whitesmoke",lw=3,edgecolor="k",zorder=2)
+            ax1.scatter([0,0,0,0],
+                        -self.hours_to_use*self.haloac3_div.iloc[4:8,0],
+                        marker="v",s=500,color="whitesmoke",lw=3,edgecolor="k",
+                        zorder=2,label="HALO-$(\mathcal{AC})^{3}$ AR")
+                    
+        sns.despine(ax=ax1,offset=10)
+        fileend=self.fileend
+        fig_name=self.grid_name+"_Water_Vapour_Budget"
+        plot_path=self.plot_path+"/../../../../../"+\
+                "my_GIT/Arctic_ARs_Thesis/plots/"    
+        if hasattr(self,"haloac3_div"):
+            fig_name+="_HALO_AC3"
+            ax1.legend(loc="lower right",fontsize=fontsize-4)
+        fig_name+=fileend
+        budget_boxplot.savefig(plot_path+fig_name,
+                       dpi=300,bbox_inches="tight")
+        print("Figure saved as:",plot_path+fig_name)
+    
     def moisture_convergence_cases_overview(self,Campaign_Budgets={},
             Campaign_Ideal_Budgets={},Campaign_Inst_Budgets={},
             Campaign_Inst_Ideal_Budgets={},save_as_manuscript_figure=False,
@@ -2609,6 +2709,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
         None.
 
         """
+        
         # Allocate variables and calc budget contributions in mm/h
         self.allocate_budgets(Campaign_Budgets,Campaign_Ideal_Budgets,
                               Campaign_Inst_Budgets,Campaign_Inst_Ideal_Budgets,
@@ -2668,9 +2769,10 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                         width=0.4,linewidth=3.0,notch=False,color="k",
                         palette=["lightgrey"],zorder=1)
         
+            
             if with_mean_error:
                 ax12=ax1.twinx()
-            
+                budget_ideal_regions.columns=budget_regions.columns
                 # Mean difference mean(ideal-sondes)
                 sector_divergence_sonde_errors=\
                     self.hours_to_use*(budget_ideal_regions.iloc[:,0:6]-\
@@ -2715,7 +2817,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             ax1.legend(loc="upper right")
             
         sns.despine(ax=ax1,offset=10)
-        fileend=".pdf"
+        fileend=self.fileend
         if not self.do_instantan:
             fig_name=self.grid_name+"_Water_Vapour_Budget"
         else:
@@ -2728,7 +2830,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
             if hasattr(self,"haloac3_div"):
                 plot_path=self.plot_path+"/../../../../../"+\
                     "my_GIT/Arctic_ARs_Thesis/plots/"
-                fig_name="Fig3_5_IVTdiv_sector_comparison_synth_CARRA_HALO_AC3.pdf"
+                fig_name="Fig3_5_IVTdiv_sector_comparison_synth_CARRA_HALO_AC3"
         else:
             plot_path=self.plot_path+\
                 "/../../../../Synthetic_AR_paper/Manuscript/Paper_Plots/"
@@ -2736,6 +2838,7 @@ class Moisture_Budget_Plots(Moisture_Convergence):
                 fig_name="fig13_"+fig_name
             else:
                 fig_name="Fig16_"+fig_name
+        
         budget_boxplot.savefig(plot_path+fig_name,
                        dpi=300,bbox_inches="tight")
         print("Figure saved as:",plot_path+fig_name)
